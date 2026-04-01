@@ -1,0 +1,45 @@
+name: Fetch & Analyse Aditya-L1 Data
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/fetch_and_process.py"
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy scipy requests cdflib python-dotenv tenacity
+
+      - name: Fetch & process data
+        env:
+          PRADAN_EMAIL:    ${{ secrets.PRADAN_EMAIL }}
+          PRADAN_PASSWORD: ${{ secrets.PRADAN_PASSWORD }}
+        run: python scripts/fetch_and_process.py
+
+      - name: Commit updated data files
+        run: |
+          git config user.name  "Aditya-L1 Bot"
+          git config user.email "actions@github.com"
+          git add data/latest.json data/history.json
+          git diff --cached --quiet || git commit -m "data: auto-update $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
