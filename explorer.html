@@ -1,0 +1,1770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aditya-L1 Plasma Explorer</title>
+<style>
+/* ─── CSS Variables ─────────────────────────────────────────────────────── */
+:root {
+  --bg:         #060b14;
+  --bg2:        #0c1425;
+  --bg3:        #111d33;
+  --surface:    #142039;
+  --border:     #1e3058;
+  --text:       #c8d8f0;
+  --muted:      #5a7499;
+  --solar:      #f97316;
+  --solar2:     #fbbf24;
+  --plasma:     #38bdf8;
+  --plasma2:    #818cf8;
+  --proton:     #34d399;
+  --electron:   #f472b6;
+  --accent:     #f97316;
+  --nav-h:      56px;
+  --r:          6px;
+  --mono:       "SF Mono","Fira Mono","Consolas","Courier New",monospace;
+  --sans:       "Gill Sans","Trebuchet MS","Segoe UI",Tahoma,sans-serif;
+  --serif:      Georgia,"Times New Roman",serif;
+}
+[data-theme="light"] {
+  --bg:         #f0f4fa;
+  --bg2:        #e3eaf5;
+  --bg3:        #d6e0ef;
+  --surface:    #ffffff;
+  --border:     #b8cde6;
+  --text:       #1a2a40;
+  --muted:      #5a7499;
+  --solar:      #d05a00;
+  --solar2:     #b87400;
+  --plasma:     #0369a1;
+  --plasma2:    #4338ca;
+  --proton:     #047857;
+  --electron:   #be185d;
+}
+
+/* ─── Reset / Base ──────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  line-height: 1.65;
+  overflow-x: hidden;
+  transition: background .3s, color .3s;
+}
+a { color: var(--plasma); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, .mono { font-family: var(--mono); font-size: .88em; }
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ─── Utility ───────────────────────────────────────────────────────────── */
+.container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+.sr-only { position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
+.badge {
+  display: inline-block; padding: .18em .7em; border-radius: 20px;
+  font-family: var(--mono); font-size: .75em; font-weight: 600;
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--solar2);
+}
+.badge.blue  { color: var(--plasma); }
+.badge.green { color: var(--proton); }
+.badge.pink  { color: var(--electron); }
+
+/* ─── Nav ────────────────────────────────────────────────────────────────── */
+#nav {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  height: var(--nav-h);
+  display: flex; align-items: center;
+  transition: background .3s, border-color .3s;
+}
+#nav .container {
+  display: flex; align-items: center; justify-content: space-between; width: 100%;
+}
+.nav-brand {
+  font-family: var(--mono); font-size: .95rem; font-weight: 700;
+  color: var(--solar); letter-spacing: .08em;
+}
+.nav-brand span { color: var(--plasma); }
+.nav-links {
+  display: flex; gap: .2rem; list-style: none;
+}
+.nav-links a {
+  font-family: var(--mono); font-size: .72rem; letter-spacing: .05em;
+  color: var(--muted); padding: .35em .7em; border-radius: var(--r);
+  transition: color .2s, background .2s;
+}
+.nav-links a:hover, .nav-links a:focus {
+  color: var(--text); background: var(--surface); text-decoration: none;
+}
+#theme-btn {
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); cursor: pointer; border-radius: var(--r);
+  font-size: .85rem; padding: .3em .6em;
+  transition: color .2s, border-color .2s;
+}
+#theme-btn:hover { color: var(--solar); border-color: var(--solar); }
+.nav-right { display: flex; align-items: center; gap: .8rem; }
+#hamburger {
+  display: none; background: none; border: 1px solid var(--border);
+  color: var(--muted); cursor: pointer; border-radius: var(--r);
+  font-size: 1.1rem; padding: .3em .55em;
+}
+@media (max-width:760px) {
+  .nav-links { display: none; flex-direction: column; position: absolute;
+    top: var(--nav-h); left: 0; right: 0; background: var(--bg2);
+    border-bottom: 1px solid var(--border); padding: .5rem; gap: .1rem; }
+  .nav-links.open { display: flex; }
+  #hamburger { display: block; }
+}
+
+/* ─── Section base ──────────────────────────────────────────────────────── */
+section { padding: 5rem 0; position: relative; }
+section:nth-child(even) { background: var(--bg2); }
+.section-label {
+  font-family: var(--mono); font-size: .72rem; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--solar); margin-bottom: .6rem;
+}
+h2.section-title {
+  font-family: var(--serif); font-size: clamp(1.6rem,3.5vw,2.3rem);
+  font-weight: 700; color: var(--text);
+  border-left: 3px solid var(--solar); padding-left: 1rem;
+  margin-bottom: 1rem;
+}
+.section-desc { color: var(--muted); max-width: 680px; margin-bottom: 2.5rem; }
+
+/* ─── Hero ───────────────────────────────────────────────────────────────── */
+#hero {
+  min-height: 100vh; display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  text-align: center; overflow: hidden; position: relative; padding: 2rem 1.5rem;
+}
+#hero-canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+}
+.hero-content { position: relative; z-index: 2; max-width: 820px; }
+.hero-eyebrow {
+  font-family: var(--mono); font-size: .75rem; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--solar); margin-bottom: 1.2rem;
+  opacity: 0; animation: fadeUp .8s .2s forwards;
+}
+h1.hero-title {
+  font-family: var(--serif); font-size: clamp(2.4rem,6vw,4.4rem);
+  font-weight: 700; line-height: 1.1;
+  color: #fff; margin-bottom: .5rem;
+  opacity: 0; animation: fadeUp .8s .35s forwards;
+}
+h1.hero-title em { color: var(--solar); font-style: normal; }
+.hero-subtitle {
+  font-size: clamp(1rem,2vw,1.2rem); color: var(--muted); max-width: 600px;
+  margin: 1rem auto 2.2rem;
+  opacity: 0; animation: fadeUp .8s .5s forwards;
+}
+.hero-badges {
+  display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center;
+  margin-bottom: 2.5rem;
+  opacity: 0; animation: fadeUp .8s .65s forwards;
+}
+.hero-stats {
+  display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center;
+  opacity: 0; animation: fadeUp .8s .8s forwards;
+}
+.stat { text-align: center; }
+.stat-val {
+  font-family: var(--mono); font-size: 1.7rem; font-weight: 700;
+  color: var(--solar2); display: block;
+}
+.stat-lbl { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+.hero-scroll {
+  position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+  font-family: var(--mono); font-size: .7rem; color: var(--muted);
+  letter-spacing: .1em; text-transform: uppercase;
+  display: flex; flex-direction: column; align-items: center; gap: .4rem;
+  animation: bounce 2s infinite;
+}
+.hero-scroll::after {
+  content: ''; width: 1px; height: 36px; background: var(--muted); opacity: .4;
+}
+
+/* ─── Animations ─────────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(22px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes bounce {
+  0%,100% { transform:translateX(-50%) translateY(0); }
+  50%      { transform:translateX(-50%) translateY(8px); }
+}
+@keyframes pulse { 0%,100%{opacity:.6} 50%{opacity:1} }
+@keyframes spin { to { transform: rotate(360deg); } }
+.reveal {
+  opacity: 0; transform: translateY(24px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+.reveal.visible { opacity: 1; transform: none; }
+
+/* ─── Info Grid ──────────────────────────────────────────────────────────── */
+.info-grid {
+  display: grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr));
+  gap: 1.2rem;
+}
+.info-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 1.5rem;
+  transition: border-color .2s, transform .2s;
+  position: relative; overflow: hidden;
+}
+.info-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--solar), var(--plasma));
+  opacity: 0; transition: opacity .2s;
+}
+.info-card:hover { border-color: var(--plasma); transform: translateY(-2px); }
+.info-card:hover::before { opacity: 1; }
+.card-icon { font-size: 1.6rem; margin-bottom: .8rem; }
+.card-title {
+  font-family: var(--mono); font-size: .82rem; font-weight: 700;
+  color: var(--solar); letter-spacing: .05em; margin-bottom: .4rem;
+  text-transform: uppercase;
+}
+.card-body { font-size: .9rem; color: var(--muted); }
+
+/* ─── Spacecraft SVG ─────────────────────────────────────────────────────── */
+#spacecraft { text-align: center; }
+.sc-wrap {
+  display: flex; flex-wrap: wrap; gap: 2.5rem;
+  align-items: flex-start; justify-content: center;
+}
+.sc-svg-box {
+  flex: 0 0 auto; max-width: 480px; width: 100%;
+}
+.sc-desc { flex: 1 1 280px; max-width: 440px; text-align: left; }
+.sc-desc h3 {
+  font-family: var(--serif); font-size: 1.1rem; color: var(--solar);
+  margin-bottom: .5rem;
+}
+.sc-desc p { font-size: .9rem; color: var(--muted); margin-bottom: .9rem; }
+.legend { list-style: none; display: flex; flex-direction: column; gap: .5rem; }
+.legend li { display: flex; align-items: center; gap: .7rem; font-size: .85rem; }
+.legend-dot {
+  width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+}
+
+/* ─── Tabs ───────────────────────────────────────────────────────────────── */
+.tab-bar {
+  display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1.8rem;
+  border-bottom: 1px solid var(--border); padding-bottom: .8rem;
+}
+.tab-btn {
+  background: none; border: 1px solid transparent;
+  color: var(--muted); cursor: pointer;
+  font-family: var(--mono); font-size: .78rem; letter-spacing: .06em;
+  padding: .4em 1.1em; border-radius: 20px;
+  transition: all .2s; text-transform: uppercase;
+}
+.tab-btn:hover { color: var(--text); border-color: var(--border); }
+.tab-btn.active {
+  background: var(--solar); color: #000;
+  border-color: var(--solar); font-weight: 700;
+}
+.tab-panel { display: none; animation: fadeUp .3s forwards; }
+.tab-panel.active { display: block; }
+
+/* Instrument detail grid */
+.inst-grid {
+  display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+  gap: 1rem; margin-bottom: 1.4rem;
+}
+.inst-card {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 1.1rem;
+}
+.inst-label {
+  font-family: var(--mono); font-size: .7rem; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--muted); margin-bottom: .3rem;
+}
+.inst-value {
+  font-family: var(--mono); font-size: .88rem; color: var(--text); font-weight: 600;
+}
+.inst-note {
+  background: var(--bg3); border-left: 3px solid var(--solar2);
+  border-radius: 0 var(--r) var(--r) 0; padding: 1rem 1.2rem;
+  font-size: .88rem; color: var(--muted); margin-top: .8rem;
+}
+.inst-note strong { color: var(--solar2); }
+.inst-goals { margin-top: 1.2rem; }
+.inst-goals h4 {
+  font-family: var(--mono); font-size: .78rem; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--plasma); margin-bottom: .6rem;
+}
+.inst-goals ul { padding-left: 1.3em; }
+.inst-goals li { font-size: .88rem; color: var(--muted); margin-bottom: .3rem; }
+
+/* ─── Pipeline ───────────────────────────────────────────────────────────── */
+.pipeline {
+  display: flex; flex-direction: column; gap: 0;
+}
+.pipe-step {
+  display: flex; gap: 1.2rem; position: relative;
+  padding-bottom: 2rem;
+}
+.pipe-step::after {
+  content: ''; position: absolute; left: 19px; top: 40px; bottom: 0;
+  width: 2px; background: var(--border);
+}
+.pipe-step:last-child::after { display: none; }
+.pipe-num {
+  flex-shrink: 0; width: 40px; height: 40px;
+  background: var(--surface); border: 2px solid var(--solar);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: .78rem; font-weight: 700; color: var(--solar);
+  z-index: 1;
+}
+.pipe-body h4 {
+  font-family: var(--mono); font-size: .85rem; font-weight: 700;
+  color: var(--text); margin-bottom: .3rem;
+}
+.pipe-body p { font-size: .88rem; color: var(--muted); }
+.pipe-body code {
+  background: var(--bg3); padding: .15em .45em; border-radius: 3px;
+  color: var(--plasma2); font-size: .82em;
+}
+.pipe-tags { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .5rem; }
+
+/* ─── Questions ──────────────────────────────────────────────────────────── */
+.questions-grid {
+  display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+  gap: 1rem;
+}
+.q-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 1.4rem;
+  display: flex; gap: 1rem; align-items: flex-start;
+  transition: border-color .2s;
+}
+.q-card:hover { border-color: var(--plasma); }
+.q-num {
+  font-family: var(--mono); font-size: 1.4rem; font-weight: 700;
+  color: var(--border); flex-shrink: 0; line-height: 1;
+}
+.q-text { font-size: .92rem; color: var(--text); }
+.q-sub  { font-size: .8rem; color: var(--muted); margin-top: .3rem; }
+
+/* ─── Interactive Panels ─────────────────────────────────────────────────── */
+.interactive-grid {
+  display: grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr));
+  gap: 1.4rem;
+}
+.int-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); overflow: hidden;
+}
+.int-header {
+  background: var(--bg3); border-bottom: 1px solid var(--border);
+  padding: .7rem 1rem;
+  font-family: var(--mono); font-size: .75rem; font-weight: 700;
+  color: var(--solar); text-transform: uppercase; letter-spacing: .08em;
+  display: flex; align-items: center; gap: .5rem;
+}
+.int-header .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--solar); animation: pulse 1.8s infinite;
+}
+.int-body { padding: 1rem; }
+
+/* Spectrogram */
+.spectrogram { width: 100%; height: 110px; position: relative; overflow: hidden; border-radius: 3px; }
+
+/* STEPS compass */
+.steps-compass { display: flex; flex-direction: column; align-items: center; gap: .8rem; }
+.steps-ring { position: relative; width: 160px; height: 160px; }
+.steps-ring svg { width: 100%; height: 100%; }
+.steps-legend { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center; }
+.det-btn {
+  background: none; border: 1px solid var(--border); border-radius: 20px;
+  font-family: var(--mono); font-size: .68rem; color: var(--muted);
+  padding: .2em .7em; cursor: pointer; transition: all .2s;
+}
+.det-btn:hover, .det-btn.sel { background: var(--solar); border-color: var(--solar); color: #000; font-weight: 700; }
+
+/* Plasma moments */
+.pm-display { display: flex; flex-direction: column; gap: .7rem; }
+.pm-row { display: flex; align-items: center; gap: .8rem; }
+.pm-label { font-family: var(--mono); font-size: .72rem; color: var(--muted); width: 100px; flex-shrink: 0; }
+.pm-bar-wrap { flex: 1; height: 10px; background: var(--bg3); border-radius: 5px; overflow: hidden; }
+.pm-bar { height: 100%; border-radius: 5px; transition: width 1s ease; }
+.pm-val { font-family: var(--mono); font-size: .75rem; color: var(--text); width: 90px; text-align: right; flex-shrink: 0; }
+.pm-btn {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--muted); border-radius: var(--r); padding: .35em 1em;
+  font-family: var(--mono); font-size: .72rem; cursor: pointer;
+  transition: all .2s; margin-top: .5rem; width: 100%;
+}
+.pm-btn:hover { border-color: var(--solar); color: var(--solar); }
+
+/* IMF viz */
+.imf-wrap { display: flex; justify-content: center; }
+.imf-info { font-family: var(--mono); font-size: .75rem; color: var(--muted); margin-top: .6rem; text-align: center; }
+
+/* ─── Data Release ───────────────────────────────────────────────────────── */
+.release-grid {
+  display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+  gap: 1rem; margin-bottom: 1.8rem;
+}
+.r-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 1.3rem;
+}
+.r-card h4 {
+  font-family: var(--mono); font-size: .78rem; font-weight: 700;
+  color: var(--solar2); text-transform: uppercase; letter-spacing: .08em;
+  margin-bottom: .5rem;
+}
+.r-card p { font-size: .88rem; color: var(--muted); }
+.pipeline-diagram {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 1.5rem;
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: .6rem; justify-content: center;
+}
+.pd-node {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: .5rem 1rem;
+  font-family: var(--mono); font-size: .78rem; color: var(--text);
+  text-align: center; transition: border-color .2s;
+}
+.pd-node:hover { border-color: var(--solar); }
+.pd-arrow { color: var(--solar); font-size: 1.1rem; opacity: .6; }
+
+/* ─── Cautions ───────────────────────────────────────────────────────────── */
+.caution-list { display: flex; flex-direction: column; gap: .8rem; }
+.caution {
+  display: flex; gap: 1rem; align-items: flex-start;
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid var(--solar);
+  border-radius: 0 var(--r) var(--r) 0; padding: 1rem 1.2rem;
+  font-size: .9rem;
+}
+.caution-icon { font-size: 1.2rem; flex-shrink: 0; }
+.caution-text strong { color: var(--solar2); display: block; margin-bottom: .2rem; }
+.caution-text span { color: var(--muted); font-size: .88rem; }
+
+/* ─── Footer ─────────────────────────────────────────────────────────────── */
+footer {
+  background: var(--bg); border-top: 1px solid var(--border);
+  padding: 2.5rem 0; text-align: center;
+}
+.footer-inner { display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: space-between; align-items: flex-start; }
+.footer-col { flex: 1; min-width: 180px; }
+.footer-col h5 {
+  font-family: var(--mono); font-size: .72rem; text-transform: uppercase;
+  letter-spacing: .12em; color: var(--solar); margin-bottom: .7rem;
+}
+.footer-col p, .footer-col a {
+  font-size: .82rem; color: var(--muted); display: block; margin-bottom: .3rem;
+}
+.footer-copy {
+  font-family: var(--mono); font-size: .72rem; color: var(--muted);
+  margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border);
+  text-align: center;
+}
+/* ─── Tooltip ────────────────────────────────────────────────────────────── */
+[data-tooltip] { cursor: help; border-bottom: 1px dashed var(--muted); }
+[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text); font-size: .78rem; padding: .4em .8em;
+  border-radius: var(--r); white-space: nowrap; z-index: 200;
+  font-family: var(--sans); font-weight: normal; pointer-events: none;
+}
+[data-tooltip] { position: relative; }
+
+/* ─── Focus styles ───────────────────────────────────────────────────────── */
+:focus-visible { outline: 2px solid var(--solar); outline-offset: 3px; }
+
+/* ─── Misc ───────────────────────────────────────────────────────────────── */
+.highlight { color: var(--solar); font-weight: 600; }
+.text-plasma { color: var(--plasma); }
+.text-proton { color: var(--proton); }
+hr.divider { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+</style>
+</head>
+<body data-theme="dark">
+
+<!-- ─── Navigation ─────────────────────────────────────────────────────── -->
+<nav id="nav" role="navigation" aria-label="Main navigation">
+  <div class="container">
+    <div class="nav-brand">ADITYA&#8209;L1 <span>// PLASMA</span></div>
+    <ul class="nav-links" id="nav-links" role="list">
+      <li><a href="#why-l1">L1 Point</a></li>
+      <li><a href="#spacecraft">Spacecraft</a></li>
+      <li><a href="#payloads">Payloads</a></li>
+      <li><a href="#data-release">Data</a></li>
+      <li><a href="#workflow">Workflow</a></li>
+      <li><a href="#questions">Science</a></li>
+      <li><a href="#interactive">Interactive</a></li>
+      <li><a href="#cautions">Cautions</a></li>
+    </ul>
+    <div class="nav-right">
+      <button id="theme-btn" aria-label="Toggle dark/light mode">☀︎</button>
+      <button id="hamburger" aria-label="Toggle menu" aria-expanded="false">☰</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── Hero ─────────────────────────────────────────────────────────────── -->
+<section id="hero" aria-labelledby="hero-h1">
+  <canvas id="hero-canvas" aria-hidden="true"></canvas>
+  <div class="hero-content">
+    <p class="hero-eyebrow">ISRO ∙ In-Situ Plasma Science ∙ Sun–Earth L1 Lagrange Point</p>
+    <h1 class="hero-title" id="hero-h1">Aditya&#8209;L1<br><em>Plasma Explorer</em></h1>
+    <p class="hero-subtitle">
+      A technical reference for in-situ plasma measurements aboard India's first dedicated solar observatory:
+      ASPEX, PAPA, and the onboard Magnetometer.
+    </p>
+    <div class="hero-badges">
+      <span class="badge">ASPEX / SWIS</span>
+      <span class="badge">ASPEX / STEPS</span>
+      <span class="badge blue">PAPA</span>
+      <span class="badge green">Magnetometer</span>
+      <span class="badge pink">1.5 × 10⁶ km from Earth</span>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-val">L1</span><span class="stat-lbl">Lagrange Point</span></div>
+      <div class="stat"><span class="stat-val">3</span><span class="stat-lbl">In-situ suites</span></div>
+      <div class="stat"><span class="stat-val">6</span><span class="stat-lbl">STEPS detectors</span></div>
+      <div class="stat"><span class="stat-val">~1%</span><span class="stat-lbl">Earth–Sun distance</span></div>
+    </div>
+  </div>
+  <div class="hero-scroll" aria-hidden="true">Scroll</div>
+</section>
+
+<!-- ─── Why L1 ─────────────────────────────────────────────────────────── -->
+<section id="why-l1" aria-labelledby="why-l1-h2">
+  <div class="container">
+    <p class="section-label reveal">Mission Context</p>
+    <h2 class="section-title reveal" id="why-l1-h2">Why the L1 Lagrange Point?</h2>
+    <p class="section-desc reveal">
+      The Sun–Earth L1 point, located approximately 1.5 million km sunward of Earth (roughly 1% of the Earth–Sun
+      distance), is a dynamically favoured location for solar monitoring. A spacecraft at L1 can maintain a
+      near-constant view of the Sun and sample the solar wind before it reaches Earth's magnetosphere.
+    </p>
+    <div class="info-grid">
+      <div class="info-card reveal">
+        <div class="card-icon">🌐</div>
+        <div class="card-title">Gravitational Balance</div>
+        <div class="card-body">At L1, the gravitational pull of the Sun and Earth plus centrifugal force are in
+        equilibrium, allowing a spacecraft to remain there with minimal station-keeping fuel expenditure.</div>
+      </div>
+      <div class="info-card reveal">
+        <div class="card-icon">☀️</div>
+        <div class="card-title">Continuous Solar View</div>
+        <div class="card-body">No Earth or lunar occultation at L1 enables <em>continuous, uninterrupted</em>
+        observation of the Sun and sampling of the unperturbed solar wind — ideal for space weather monitoring.</div>
+      </div>
+      <div class="info-card reveal">
+        <div class="card-icon">💨</div>
+        <div class="card-title">~20–60 Minute Warning</div>
+        <div class="card-body">Solar wind structures detected at L1 typically reach Earth's magnetosphere
+        20–60 minutes later, providing an advance warning window for geomagnetic storm prediction.</div>
+      </div>
+      <div class="info-card reveal">
+        <div class="card-icon">🔭</div>
+        <div class="card-title">Remote vs. In-Situ</div>
+        <div class="card-body">
+          <strong class="highlight">Remote-sensing</strong> instruments (VELC, SUIT, HEL1OS, SoLEXS) observe the
+          Sun from a distance. <strong class="text-plasma">In-situ</strong> instruments (ASPEX, PAPA, MAG) directly
+          sample the plasma and fields at L1 — the spacecraft is <em>inside</em> the measurement medium.
+        </div>
+      </div>
+      <div class="info-card reveal">
+        <div class="card-icon">🧲</div>
+        <div class="card-title">Interplanetary Magnetic Field</div>
+        <div class="card-body">The IMF at L1 reflects the solar magnetic field carried outward by the solar
+        wind. Its orientation (particularly the B<sub>z</sub> component) governs geomagnetic coupling efficiency.</div>
+      </div>
+      <div class="info-card reveal">
+        <div class="card-icon">⚛️</div>
+        <div class="card-title">Energetic Particle Access</div>
+        <div class="card-body">L1 sits outside Earth's magnetosphere, providing access to the
+        full energy spectrum of solar energetic particles (SEPs) and galactic cosmic rays without
+        geomagnetic shielding effects.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Spacecraft ─────────────────────────────────────────────────────── -->
+<section id="spacecraft" aria-labelledby="sc-h2">
+  <div class="container">
+    <p class="section-label reveal">Platform</p>
+    <h2 class="section-title reveal" id="sc-h2">Spacecraft Configuration</h2>
+    <p class="section-desc reveal">
+      Aditya-L1 carries seven payloads. Remote-sensing instruments are permanently Sun-facing; in-situ
+      instruments sample the local plasma environment at L1.
+    </p>
+    <div class="sc-wrap">
+      <div class="sc-svg-box reveal">
+        <!-- Inline SVG Schematic -->
+        <svg viewBox="0 0 480 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Aditya-L1 spacecraft schematic">
+          <defs>
+            <marker id="arrow-sw" markerWidth="8" markerHeight="8" refX="4" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L7,3 z" fill="#f97316"/>
+            </marker>
+            <marker id="arrow-wh" markerWidth="8" markerHeight="8" refX="4" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L7,3 z" fill="#38bdf8"/>
+            </marker>
+            <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#1e3058"/>
+              <stop offset="100%" stop-color="#0c1425"/>
+            </linearGradient>
+            <linearGradient id="panelGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#172d55"/>
+              <stop offset="100%" stop-color="#1a3568"/>
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="2.5" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <!-- Sun wind direction arrows -->
+          <g opacity=".7">
+            <line x1="20" y1="160" x2="90" y2="200" stroke="#f97316" stroke-width="1.5" marker-end="url(#arrow-sw)" stroke-dasharray="5,3"/>
+            <line x1="20" y1="200" x2="90" y2="210" stroke="#f97316" stroke-width="1.5" marker-end="url(#arrow-sw)" stroke-dasharray="5,3"/>
+            <line x1="20" y1="240" x2="90" y2="220" stroke="#f97316" stroke-width="1.5" marker-end="url(#arrow-sw)" stroke-dasharray="5,3"/>
+          </g>
+          <text x="12" y="145" font-family="monospace" font-size="9" fill="#f97316" opacity=".8">SOLAR</text>
+          <text x="12" y="157" font-family="monospace" font-size="9" fill="#f97316" opacity=".8">WIND</text>
+
+          <!-- Sun symbol (schematic) -->
+          <circle cx="38" cy="370" r="26" fill="none" stroke="#f97316" stroke-width="1.5" opacity=".5"/>
+          <circle cx="38" cy="370" r="14" fill="#f97316" opacity=".3"/>
+          <text x="38" y="375" text-anchor="middle" font-size="9" fill="#f97316" opacity=".7">SUN</text>
+          <line x1="55" y1="355" x2="95" y2="340" stroke="#f97316" stroke-width="1" stroke-dasharray="4,3" opacity=".4"/>
+
+          <!-- Solar panel left -->
+          <rect x="88" y="150" width="70" height="25" rx="3" fill="url(#panelGrad)" stroke="#1e3058" stroke-width="1"/>
+          <!-- panel cells -->
+          <line x1="105" y1="150" x2="105" y2="175" stroke="#38bdf8" stroke-width=".5" opacity=".4"/>
+          <line x1="122" y1="150" x2="122" y2="175" stroke="#38bdf8" stroke-width=".5" opacity=".4"/>
+          <line x1="139" y1="150" x2="139" y2="175" stroke="#38bdf8" stroke-width=".5" opacity=".4"/>
+          <rect x="88" y="183" width="70" height="25" rx="3" fill="url(#panelGrad)" stroke="#1e3058" stroke-width="1"/>
+          <line x1="105" y1="183" x2="105" y2="208" stroke="#38bdf8" stroke-width=".5" opacity=".4"/>
+          <line x1="122" y1="183" x2="122" y2="208" stroke="#38bdf8" stroke-width=".5" opacity=".4"/>
+          <line x1="139" y1="183" x2="139" y2="208" stroke="#38bdf8" stroke-width=".5" opacity=".4"/>
+          <text x="123" y="246" text-anchor="middle" font-size="9" fill="#5a7499">Solar Panel</text>
+
+          <!-- Bus body -->
+          <rect x="165" y="145" width="150" height="150" rx="6" fill="url(#bodyGrad)" stroke="#1e4080" stroke-width="1.5"/>
+          <!-- Stripes -->
+          <rect x="165" y="145" width="150" height="6" rx="3" fill="#1e3058" opacity=".7"/>
+
+          <!-- Sun-facing side (right = sunward) -->
+          <rect x="315" y="155" width="20" height="35" rx="3" fill="#1a2a50" stroke="#38bdf8" stroke-width="1.2"/>
+          <text x="344" y="168" font-size="8" fill="#38bdf8">VELC</text>
+          <rect x="315" y="197" width="20" height="28" rx="3" fill="#1a2a50" stroke="#38bdf8" stroke-width="1.2"/>
+          <text x="344" y="208" font-size="8" fill="#38bdf8">SUIT</text>
+          <rect x="315" y="232" width="20" height="22" rx="3" fill="#1a2a50" stroke="#38bdf8" stroke-width="1.2"/>
+          <text x="344" y="244" font-size="8" fill="#38bdf8">HEL1OS</text>
+
+          <!-- "SUN-FACING" label -->
+          <line x1="335" y1="155" x2="390" y2="145" stroke="#38bdf8" stroke-width=".8" stroke-dasharray="3,2" opacity=".5"/>
+          <text x="392" y="148" font-size="8" fill="#38bdf8" opacity=".7">⟵ TOWARD SUN</text>
+
+          <!-- ASPEX -->
+          <rect x="195" y="140" width="40" height="22" rx="4" fill="#0f2040" stroke="#f97316" stroke-width="1.5"/>
+          <text x="215" y="130" text-anchor="middle" font-size="9" fill="#f97316" font-weight="bold">ASPEX</text>
+          <line x1="215" y1="138" x2="215" y2="140" stroke="#f97316" stroke-width="1" opacity=".7"/>
+          <text x="215" y="120" text-anchor="middle" font-size="7" fill="#f97316" opacity=".7">(SWIS + STEPS)</text>
+
+          <!-- PAPA -->
+          <rect x="250" y="140" width="40" height="22" rx="4" fill="#0f2040" stroke="#f472b6" stroke-width="1.5"/>
+          <text x="270" y="130" text-anchor="middle" font-size="9" fill="#f472b6" font-weight="bold">PAPA</text>
+          <line x1="270" y1="138" x2="270" y2="140" stroke="#f472b6" stroke-width="1" opacity=".7"/>
+
+          <!-- Magnetometer boom (bottom) -->
+          <line x1="240" y1="295" x2="240" y2="360" stroke="#34d399" stroke-width="2"/>
+          <circle cx="240" cy="363" r="7" fill="#0f2040" stroke="#34d399" stroke-width="2" filter="url(#glow)"/>
+          <text x="250" y="360" font-size="9" fill="#34d399" font-weight="bold">MAG</text>
+          <text x="250" y="370" font-size="7" fill="#34d399" opacity=".7">BOOM</text>
+
+          <!-- Solar panel right -->
+          <rect x="322" y="150" width="70" height="25" rx="3" fill="url(#panelGrad)" stroke="#1e3058" stroke-width="1"/>
+          <line x1="339" y1="150" x2="339" y2="175" stroke="#38bdf8" stroke-width=".5" opacity=".4"/>
+          <line x1="356" y1="150" x2="356" y2="175" stroke="#38bdf8" stroke-width=".5" opacity=".4"/>
+          <line x1="373" y1="150" x2="373" y2="175" stroke="#38bdf8" stroke-width=".5" opacity=".4"/>
+          <rect x="322" y="183" width="70" height="25" rx="3" fill="url(#panelGrad)" stroke="#1e3058" stroke-width="1"/>
+          <line x1="339" y1="183" x2="339" y2="208" stroke="#38bdf8" stroke-width=".5" opacity=".4"/>
+          <line x1="356" y1="183" x2="356" y2="208" stroke="#38bdf8" stroke-width=".5" opacity=".4"/>
+          <line x1="373" y1="183" x2="373" y2="208" stroke="#38bdf8" stroke-width=".5" opacity=".4"/>
+          <text x="357" y="246" text-anchor="middle" font-size="9" fill="#5a7499">Solar Panel</text>
+
+          <!-- Bus label -->
+          <text x="240" y="230" text-anchor="middle" font-size="10" fill="#5a7499">ADITYA-L1</text>
+          <text x="240" y="244" text-anchor="middle" font-size="9" fill="#3a5070">BUS</text>
+
+          <!-- Caption -->
+          <text x="240" y="410" text-anchor="middle" font-size="9" fill="#3a5070">Schematic — not to scale. In-situ instruments sample local L1 plasma.</text>
+        </svg>
+      </div>
+      <div class="sc-desc reveal">
+        <h3>Instrument Placement Rationale</h3>
+        <p>Remote-sensing instruments point continuously toward the Sun, observing solar atmospheric phenomena
+        at photospheric, chromospheric, and coronal levels.</p>
+        <p>In-situ instruments are oriented to sample the local plasma and electromagnetic environment at L1.
+        Unlike telescopes, they measure what flows <em>through</em> and <em>around</em> the spacecraft.</p>
+        <p>The Magnetometer is deployed on a dedicated boom to minimise magnetic interference from the spacecraft
+        bus and electronic subsystems.</p>
+        <ul class="legend">
+          <li>
+            <span class="legend-dot" style="background:#f97316"></span>
+            <span><strong style="color:#f97316">ASPEX</strong> — Solar wind ions, suprathermal & energetic particles</span>
+          </li>
+          <li>
+            <span class="legend-dot" style="background:#f472b6"></span>
+            <span><strong style="color:#f472b6">PAPA</strong> — Solar wind electrons & ions (moments)</span>
+          </li>
+          <li>
+            <span class="legend-dot" style="background:#34d399"></span>
+            <span><strong style="color:#34d399">MAG</strong> — Vector interplanetary magnetic field (boom-mounted)</span>
+          </li>
+          <li>
+            <span class="legend-dot" style="background:#38bdf8"></span>
+            <span><strong style="color:#38bdf8">VELC / SUIT / HEL1OS</strong> — Remote-sensing, Sun-facing</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Payloads ────────────────────────────────────────────────────────── -->
+<section id="payloads" aria-labelledby="payloads-h2">
+  <div class="container">
+    <p class="section-label reveal">Instrument Details</p>
+    <h2 class="section-title reveal" id="payloads-h2">Plasma Payloads</h2>
+    <p class="section-desc reveal">
+      Interactive reference cards for each in-situ plasma instrument. Select an instrument tab to explore its
+      measurement specifications, viewing geometry, data products, and science objectives.
+    </p>
+    <div class="tab-bar reveal" role="tablist" aria-label="Instrument selection">
+      <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-aspex" id="btn-aspex" onclick="switchTab('aspex')">ASPEX Overview</button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-swis" id="btn-swis" onclick="switchTab('swis')">SWIS</button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-steps" id="btn-steps" onclick="switchTab('steps')">STEPS</button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-papa" id="btn-papa" onclick="switchTab('papa')">PAPA</button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-mag" id="btn-mag" onclick="switchTab('mag')">Magnetometer</button>
+    </div>
+
+    <!-- ASPEX Overview -->
+    <div class="tab-panel active" id="tab-aspex" role="tabpanel" aria-labelledby="btn-aspex">
+      <div class="inst-grid">
+        <div class="inst-card"><div class="inst-label">Suite Name</div><div class="inst-value">ASPEX — Aditya Solar wind Particle EXperiment</div></div>
+        <div class="inst-card"><div class="inst-label">Sub-instruments</div><div class="inst-value">SWIS + STEPS</div></div>
+        <div class="inst-card"><div class="inst-label">Overall Energy Range</div><div class="inst-value">~100 eV/q → ~6 MeV/nucleon</div></div>
+        <div class="inst-card"><div class="inst-label">Particle Species</div><div class="inst-value">Protons, α-particles, electrons, heavy ions (SEPs)</div></div>
+        <div class="inst-card"><div class="inst-label">Primary Technique</div><div class="inst-value">Electrostatic analysers + solid-state telescopes</div></div>
+        <div class="inst-card"><div class="inst-label">Data Products</div><div class="inst-value">Flux spectra, pitch-angle distributions, composition ratios</div></div>
+      </div>
+      <div class="inst-note">
+        <strong>⚑ Note:</strong> ASPEX combines two complementary sensors covering an exceptionally wide energy
+        range from solar wind thermal energies through suprathermal to SEP energies. For exact cadences and
+        file-format specifications, refer to the official ASPEX payload documentation distributed via ISSDC/PRADAN.
+      </div>
+      <div class="inst-goals">
+        <h4>Science Goals</h4>
+        <ul>
+          <li>Characterise solar wind ion composition and energy distributions at L1</li>
+          <li>Track the evolution of suprathermal tails in the solar wind</li>
+          <li>Identify particle acceleration sites (shocks, reconnection, wave-particle interactions)</li>
+          <li>Monitor solar energetic particle (SEP) events in real time for space weather</li>
+          <li>Probe magnetic connectivity via field-aligned beams and pitch-angle anisotropy</li>
+          <li>Correlate with remote-sensing VELC/SUIT observations of source regions</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- SWIS -->
+    <div class="tab-panel" id="tab-swis" role="tabpanel" aria-labelledby="btn-swis">
+      <div class="inst-grid">
+        <div class="inst-card"><div class="inst-label">Full Name</div><div class="inst-value">Solar Wind Ion Spectrometer</div></div>
+        <div class="inst-card"><div class="inst-label">Particle Species</div><div class="inst-value">Protons (H⁺), Alpha particles (He²⁺)</div></div>
+        <div class="inst-card"><div class="inst-label">Energy Range</div><div class="inst-value">~100 eV/q – ~20 keV/q</div></div>
+        <div class="inst-card"><div class="inst-label">Analyser Type</div><div class="inst-value">Electrostatic analyser (ESA)</div></div>
+        <div class="inst-card"><div class="inst-label">Detector</div><div class="inst-value">Imaging / position-sensitive detector</div></div>
+        <div class="inst-card"><div class="inst-label">Angular Coverage</div><div class="inst-value">~360° (fan-like FOV in ecliptic)</div></div>
+        <div class="inst-card"><div class="inst-label">Key Data Products</div><div class="inst-value">Ion velocity distribution functions, bulk speed, density, temperature, α/p ratio</div></div>
+        <div class="inst-card"><div class="inst-label">Measurement Level</div><div class="inst-value">3D VDFs → plasma moments via ground processing</div></div>
+      </div>
+      <div class="inst-note">
+        <strong>⚑ Note:</strong> Actual energy sweep tables, telemetry cadence, and angular resolution per sector
+        are instrument-specific. Consult SWIS payload documentation for exact values. The ~360° field of view
+        ensures solar wind ions are captured across approach directions.
+      </div>
+      <div class="inst-goals">
+        <h4>Science Goals</h4>
+        <ul>
+          <li>Measure bulk solar wind properties: proton density (n<sub>p</sub>), bulk velocity (V<sub>sw</sub>), thermal speed (v<sub>th</sub>)</li>
+          <li>Determine the α/p abundance ratio as a probe of coronal source regions</li>
+          <li>Identify solar wind stream structures: slow/fast wind, co-rotating interaction regions (CIRs)</li>
+          <li>Monitor proton temperature anisotropy (T<sub>⊥</sub>/T<sub>‖</sub>) relative to IMF</li>
+          <li>Provide real-time solar wind context for geomagnetic storm forecasting</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- STEPS -->
+    <div class="tab-panel" id="tab-steps" role="tabpanel" aria-labelledby="btn-steps">
+      <div class="inst-grid">
+        <div class="inst-card"><div class="inst-label">Full Name</div><div class="inst-value">SupraThermal & Energetic Particle Spectrometer</div></div>
+        <div class="inst-card"><div class="inst-label">Energy Range</div><div class="inst-value">~20 keV/n – ~6 MeV/n</div></div>
+        <div class="inst-card"><div class="inst-label">Detector Type</div><div class="inst-value">Solid-state silicon detectors (6 units)</div></div>
+        <div class="inst-card"><div class="inst-label">Number of Directions</div><div class="inst-value">6 directional telescopes</div></div>
+        <div class="inst-card"><div class="inst-label">Viewing Directions</div><div class="inst-value">Sun radial, antisunward, Parker spiral ±, ecliptic normal ±</div></div>
+        <div class="inst-card"><div class="inst-label">Particle Species</div><div class="inst-value">Protons, helium, heavier ions (Z ≥ 1); electrons (energy-dependent)</div></div>
+        <div class="inst-card"><div class="inst-label">Key Data Products</div><div class="inst-value">Differential particle flux spectra, directional anisotropy, event time series</div></div>
+        <div class="inst-card"><div class="inst-label">Science Domain</div><div class="inst-value">Suprathermal particle populations, SEP events, CIR-accelerated ions</div></div>
+      </div>
+      <div class="inst-note">
+        <strong>⚑ Note:</strong> Exact energy channel boundaries, geometric factors, and angular response functions
+        require STEPS payload documentation. Six-directional coverage enables first-order pitch-angle distribution
+        reconstruction when combined with MAG data. Do not assume uniform energy bins.
+      </div>
+      <div class="inst-goals">
+        <h4>Science Goals</h4>
+        <ul>
+          <li>Characterise suprathermal tail populations (strahl, halo) in the solar wind</li>
+          <li>Detect and profile solar energetic particle (SEP) events: onset, peak, decay</li>
+          <li>Distinguish between IP shock-accelerated and flare-accelerated particles</li>
+          <li>Reconstruct pitch-angle distributions for magnetic connectivity studies</li>
+          <li>Monitor particle anisotropy to infer SEP propagation direction and scatter mean free path</li>
+          <li>Correlate with CIR/CME structures for particle acceleration mechanism studies</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- PAPA -->
+    <div class="tab-panel" id="tab-papa" role="tabpanel" aria-labelledby="btn-papa">
+      <div class="inst-grid">
+        <div class="inst-card"><div class="inst-label">Full Name</div><div class="inst-value">Plasma Analyser Package for Aditya</div></div>
+        <div class="inst-card"><div class="inst-label">Species Measured</div><div class="inst-value">Solar wind ions AND electrons</div></div>
+        <div class="inst-card"><div class="inst-label">Analyser Type</div><div class="inst-value">Electrostatic analyser (hemispherical / retarding)</div></div>
+        <div class="inst-card"><div class="inst-label">Key Data Products</div><div class="inst-value">Plasma density, bulk velocity vector, electron temperature, ion distribution</div></div>
+        <div class="inst-card"><div class="inst-label">Measurement Focus</div><div class="inst-value">Full plasma moments (n, V, T, pressure tensor)</div></div>
+        <div class="inst-card"><div class="inst-label">Complementarity</div><div class="inst-value">Electrons from PAPA + Ions from SWIS = full plasma characterisation</div></div>
+      </div>
+      <div class="inst-note">
+        <strong>⚑ Note:</strong> PAPA's exact energy range, field of view, and angular resolution are defined in
+        its instrument documentation. Electron measurements are particularly sensitive to spacecraft charging
+        effects at low energies — calibration notes in the documentation should be reviewed before scientific
+        analysis of electron distributions below a few tens of eV.
+      </div>
+      <div class="inst-goals">
+        <h4>Science Goals</h4>
+        <ul>
+          <li>Derive full set of solar wind plasma moments: electron density, temperature, heat flux</li>
+          <li>Compare proton and electron temperatures as probes of non-equilibrium solar wind heating</li>
+          <li>Measure electron pitch-angle distributions: strahl beam as magnetic field topology tracer</li>
+          <li>Identify bi-directional electron strahls from magnetically closed structures (CME flux ropes)</li>
+          <li>Complement MAG and SWIS for complete MHD characterisation of solar wind structures</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Magnetometer -->
+    <div class="tab-panel" id="tab-mag" role="tabpanel" aria-labelledby="btn-mag">
+      <div class="inst-grid">
+        <div class="inst-card"><div class="inst-label">Instrument Type</div><div class="inst-value">Fluxgate Magnetometer (dual sensor, boom-mounted)</div></div>
+        <div class="inst-card"><div class="inst-label">Measurement</div><div class="inst-value">3-axis vector IMF: B<sub>x</sub>, B<sub>y</sub>, B<sub>z</sub> (GSE/GSM coordinates)</div></div>
+        <div class="inst-card"><div class="inst-label">Boom Configuration</div><div class="inst-value">Deployed boom to reduce spacecraft magnetic interference</div></div>
+        <div class="inst-card"><div class="inst-label">Key Data Products</div><div class="inst-value">B-field magnitude, components, sector structure, rotation periods</div></div>
+        <div class="inst-card"><div class="inst-label">Critical Parameter</div><div class="inst-value">B<sub>z</sub> (southward IMF → enhanced geomagnetic coupling)</div></div>
+        <div class="inst-card"><div class="inst-label">Sensitivity</div><div class="inst-value">Refer to payload documentation for resolution and noise floor</div></div>
+      </div>
+      <div class="inst-note">
+        <strong>⚑ Note:</strong> Exact dynamic range, noise spectral density, and sample rates are defined in the
+        MAG instrument document. The dual-sensor boom design allows magnetic cleanliness verification by comparing
+        near and far sensor readings. Coordinate system transformations (RTN ↔ GSE ↔ GSM) are essential
+        before scientific comparison with other datasets.
+      </div>
+      <div class="inst-goals">
+        <h4>Science Goals</h4>
+        <ul>
+          <li>Monitor IMF sector structure, polarity and Heliospheric Current Sheet (HCS) crossings</li>
+          <li>Detect magnetic discontinuities: rotational (RD) and tangential (TD) discontinuities</li>
+          <li>Measure IMF B<sub>z</sub> for real-time space weather prediction (southward B<sub>z</sub> = geoeffective)</li>
+          <li>Characterise flux rope magnetic structure inside CMEs (ICME flux ropes)</li>
+          <li>Provide field context for STEPS pitch-angle distributions and PAPA electron strahl analysis</li>
+          <li>Identify Alfvénic fluctuations, MHD waves, and turbulence in solar wind</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Data Release ─────────────────────────────────────────────────────── -->
+<section id="data-release" aria-labelledby="data-h2">
+  <div class="container">
+    <p class="section-label reveal">Archive & Access</p>
+    <h2 class="section-title reveal" id="data-h2">Data Release Model</h2>
+    <p class="section-desc reveal">
+      Aditya-L1 data is archived and distributed through ISRO's Space Science Data Centre (ISSDC) via the
+      PRADAN (PRocess Archive and Data ANalysis) portal. The release model is designed for broad scientific access.
+    </p>
+    <div class="release-grid">
+      <div class="r-card reveal">
+        <h4>📡 Archive Portal</h4>
+        <p>Data is hosted on the <strong>ISSDC PRADAN</strong> portal. Registered users can browse, query, and
+        download datasets. PRADAN URL: <code>pradan.issdc.gov.in</code> (verify current URL via ISRO official channels).</p>
+      </div>
+      <div class="r-card reveal">
+        <h4>⏱ Target-of-Opportunity</h4>
+        <p>For significant solar events (major flares, CMEs, SEP events), selected data may be released on an
+        <strong>expedited ~24–48 hour</strong> timeline following event detection and preliminary processing.</p>
+      </div>
+      <div class="r-card reveal">
+        <h4>🔓 Proprietary Period</h4>
+        <p>Aditya-L1 operates with a relatively <strong>short proprietary period</strong> compared to some
+        international missions. Processed Level-2 data is released for community access on a rolling basis
+        after calibration validation by the PI teams.</p>
+      </div>
+      <div class="r-card reveal">
+        <h4>📦 Data Levels</h4>
+        <p><strong>Level-0:</strong> Raw telemetry. <strong>Level-1:</strong> Calibrated instrument counts /
+        physical units. <strong>Level-2:</strong> Science-ready data products (moments, spectra, magnetic field
+        vectors). Always use the highest available level for analysis.</p>
+      </div>
+      <div class="r-card reveal">
+        <h4>📋 Milestone Releases</h4>
+        <p>ISRO/ISSDC periodically announces milestone dataset releases corresponding to specific
+        observation periods or event catalogues. Monitor official ISRO and ISSDC communications for
+        such announcements.</p>
+      </div>
+      <div class="r-card reveal">
+        <h4>⚠ Session Timeout</h4>
+        <p>PRADAN sessions may <strong>timeout after approximately 30 minutes</strong> of inactivity.
+        Plan bulk downloads accordingly. Use the bulk download mechanism for large datasets to avoid
+        repeated re-authentication.</p>
+      </div>
+    </div>
+
+    <h3 style="font-family:var(--mono);font-size:.88rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:1rem;" class="reveal">Data Flow Pipeline</h3>
+    <div class="pipeline-diagram reveal">
+      <div class="pd-node">☀️ Sun<br><small style="color:var(--muted)">Source</small></div>
+      <span class="pd-arrow">→</span>
+      <div class="pd-node">💨 Solar Wind<br><small style="color:var(--muted)">Propagation</small></div>
+      <span class="pd-arrow">→</span>
+      <div class="pd-node">🛰 Aditya-L1<br><small style="color:var(--muted)">ASPEX · PAPA · MAG</small></div>
+      <span class="pd-arrow">→</span>
+      <div class="pd-node">📡 ISTRAC<br><small style="color:var(--muted)">Ground Segment</small></div>
+      <span class="pd-arrow">→</span>
+      <div class="pd-node">🗄 ISSDC<br><small style="color:var(--muted)">PRADAN Archive</small></div>
+      <span class="pd-arrow">→</span>
+      <div class="pd-node">💻 Scientist<br><small style="color:var(--muted)">Analysis Notebook</small></div>
+      <span class="pd-arrow">→</span>
+      <div class="pd-node">🔬 Science<br><small style="color:var(--muted)">Insight</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Analysis Workflow ─────────────────────────────────────────────────── -->
+<section id="workflow" aria-labelledby="wf-h2">
+  <div class="container">
+    <p class="section-label reveal">Methods</p>
+    <h2 class="section-title reveal" id="wf-h2">Analysis Workflow</h2>
+    <p class="section-desc reveal">
+      A recommended step-by-step pipeline for working with Aditya-L1 in-situ plasma data, from initial
+      data discovery through to scientific interpretation.
+    </p>
+    <div class="pipeline reveal">
+      <div class="pipe-step">
+        <div class="pipe-num">01</div>
+        <div class="pipe-body">
+          <h4>Discover Datasets</h4>
+          <p>Browse the ISSDC PRADAN portal. Filter by instrument (ASPEX/PAPA/MAG), date range, and data level.
+          Cross-reference ISRO science team announcements for validated dataset versions.</p>
+          <div class="pipe-tags">
+            <span class="badge">PRADAN</span>
+            <span class="badge blue">ISSDC</span>
+          </div>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">02</div>
+        <div class="pipe-body">
+          <h4>Download Data (Mind Session Timeout)</h4>
+          <p>PRADAN sessions timeout after <strong>~30 minutes</strong>. For large data pulls, use the
+          bulk/batch download facility. Verify file checksums after download. Keep notes on which
+          data version (Level-1 vs Level-2) you downloaded.</p>
+          <div class="pipe-tags">
+            <span class="badge">CDF files</span>
+            <span class="badge">FITS files</span>
+            <span class="badge blue">~30 min timeout</span>
+          </div>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">03</div>
+        <div class="pipe-body">
+          <h4>Understand Data Levels</h4>
+          <p><strong>Level-1:</strong> Calibrated physical quantities in instrument coordinates. Units and
+          calibration applied, but no higher-level processing. <strong>Level-2:</strong> Science-ready derived
+          quantities (plasma moments, field vectors in standard frames). Prefer Level-2 for most analyses.</p>
+          <div class="pipe-tags">
+            <span class="badge green">L1: Calibrated</span>
+            <span class="badge">L2: Science-ready</span>
+          </div>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">04</div>
+        <div class="pipe-body">
+          <h4>Set Up Analysis Environment</h4>
+          <p>Recommended stack for in-situ solar wind data:</p>
+          <div class="pipe-tags">
+            <span class="badge blue">Python 3.x</span>
+            <span class="badge">NumPy</span>
+            <span class="badge">Matplotlib</span>
+            <span class="badge blue">SunPy</span>
+            <span class="badge green">SpacePy (CDF)</span>
+            <span class="badge">Astropy (FITS)</span>
+            <span class="badge pink">SpiceyPy (SPICE)</span>
+          </div>
+          <p style="margin-top:.6rem">Install CDF library and <code>spacepy.pycdf</code> for CDF file reading.
+          Use <code>spiceypy</code> with ISRO/SPICE kernels for coordinate transforms.</p>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">05</div>
+        <div class="pipe-body">
+          <h4>Core Analysis: Time Series</h4>
+          <p>Plot plasma moments: proton density (n<sub>p</sub>), bulk speed (V<sub>sw</sub>), proton
+          temperature (T<sub>p</sub>), and IMF components vs. time. Use <code>matplotlib.dates</code> and
+          ensure UTC time handling. Identify structures: stream interfaces, shocks, ICMEs.</p>
+          <div class="pipe-tags">
+            <span class="badge blue">n, V, T time series</span>
+            <span class="badge">IMF Bx By Bz</span>
+            <span class="badge green">Event identification</span>
+          </div>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">06</div>
+        <div class="pipe-body">
+          <h4>Flux & Spectral Analysis</h4>
+          <p>Produce differential energy flux spectra (counts or physical flux vs. energy channel) from
+          SWIS and STEPS data. Energy–time spectrograms (colour-coded flux vs. time and energy) reveal
+          particle acceleration events and SEP onset characteristics.</p>
+          <div class="pipe-tags">
+            <span class="badge">Differential flux</span>
+            <span class="badge blue">E-t spectrogram</span>
+            <span class="badge pink">Spectral index fits</span>
+          </div>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">07</div>
+        <div class="pipe-body">
+          <h4>Directional & Pitch-Angle Analysis</h4>
+          <p>Combine STEPS 6-directional fluxes with MAG B-vector to construct pitch-angle distributions
+          (PADs). Anisotropy index and PAD symmetry indicate particle injection geometry and
+          magnetic connectivity quality.</p>
+          <div class="pipe-tags">
+            <span class="badge">PAD construction</span>
+            <span class="badge blue">B-field alignment</span>
+            <span class="badge green">Anisotropy index</span>
+          </div>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">08</div>
+        <div class="pipe-body">
+          <h4>Multi-Instrument Correlation</h4>
+          <p>Correlate in-situ plasma events with remote-sensing data (VELC/SUIT) for source region
+          identification. Cross-reference SEP events with NOAA/GOES X-ray flare catalogs, LASCO CME
+          catalogs (CACTus/CDAW), and HEK solar event databases for context.</p>
+          <div class="pipe-tags">
+            <span class="badge">VELC/SUIT context</span>
+            <span class="badge blue">LASCO CME catalog</span>
+            <span class="badge green">NOAA flare list</span>
+            <span class="badge pink">HEK database</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Scientific Questions ─────────────────────────────────────────────── -->
+<section id="questions" aria-labelledby="q-h2">
+  <div class="container">
+    <p class="section-label reveal">Open Problems</p>
+    <h2 class="section-title reveal" id="q-h2">Key Scientific Questions</h2>
+    <p class="section-desc reveal">
+      Aditya-L1's in-situ plasma dataset uniquely addresses the following outstanding questions in solar and
+      heliospheric physics.
+    </p>
+    <div class="questions-grid">
+      <div class="q-card reveal">
+        <div class="q-num">01</div>
+        <div>
+          <div class="q-text">How does the solar wind ion composition (especially α/p ratio) evolve between
+          the corona and 1 AU?</div>
+          <div class="q-sub">Probe: SWIS α/p ratio vs. solar wind speed and source region type</div>
+        </div>
+      </div>
+      <div class="q-card reveal">
+        <div class="q-num">02</div>
+        <div>
+          <div class="q-text">What acceleration mechanisms operate at interplanetary shocks and within
+          CIR/CME structures to produce suprathermal populations?</div>
+          <div class="q-sub">Probe: STEPS spectral indices and timing relative to shock passages</div>
+        </div>
+      </div>
+      <div class="q-card reveal">
+        <div class="q-num">03</div>
+        <div>
+          <div class="q-text">What is the origin and spatial extent of the suprathermal seed population
+          for SEP events?</div>
+          <div class="q-sub">Probe: STEPS pre-event background + SWIS suprathermal tails</div>
+        </div>
+      </div>
+      <div class="q-card reveal">
+        <div class="q-num">04</div>
+        <div>
+          <div class="q-text">How does magnetic connectivity to SEP source regions vary with solar wind
+          structure and Heliospheric Current Sheet proximity?</div>
+          <div class="q-sub">Probe: MAG sector polarity + STEPS onset anisotropy + Parker spiral modeling</div>
+        </div>
+      </div>
+      <div class="q-card reveal">
+        <div class="q-num">05</div>
+        <div>
+          <div class="q-text">What is the relationship between IMF B<sub>z</sub> orientation, solar wind
+          dynamic pressure, and geomagnetic storm intensity?</div>
+          <div class="q-sub">Probe: MAG B<sub>z</sub> + SWIS V/n combined with ground Dst index</div>
+        </div>
+      </div>
+      <div class="q-card reveal">
+        <div class="q-num">06</div>
+        <div>
+          <div class="q-text">How are electrons and ions heated differently in the solar wind, and does
+          this vary across different wind types?</div>
+          <div class="q-sub">Probe: PAPA electron T<sub>e</sub> vs. SWIS proton T<sub>p</sub> in fast/slow wind</div>
+        </div>
+      </div>
+      <div class="q-card reveal">
+        <div class="q-num">07</div>
+        <div>
+          <div class="q-text">What is the detailed 3D magnetic structure of ICMEs at 1 AU, and do
+          they preserve their coronal flux rope topology?</div>
+          <div class="q-sub">Probe: MAG flux rope fitting + PAPA bi-directional electron strahls</div>
+        </div>
+      </div>
+      <div class="q-card reveal">
+        <div class="q-num">08</div>
+        <div>
+          <div class="q-text">How do Alfvénic fluctuations and turbulence in the solar wind affect
+          particle transport and scatter mean free paths?</div>
+          <div class="q-sub">Probe: MAG power spectral density + STEPS directional anisotropy decay</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Interactive ──────────────────────────────────────────────────────── -->
+<section id="interactive" aria-labelledby="int-h2">
+  <div class="container">
+    <p class="section-label reveal">Visualisation Ideas</p>
+    <h2 class="section-title reveal" id="int-h2">Interactive Analysis Concepts</h2>
+    <p class="section-desc reveal">
+      Illustrative mockups of analysis products derived from Aditya-L1 plasma data. These are
+      <strong>conceptual demonstrations</strong> only — not real observational data.
+    </p>
+    <div class="interactive-grid">
+
+      <!-- Energy-Time Spectrogram -->
+      <div class="int-card reveal">
+        <div class="int-header"><span class="dot"></span>STEPS Energy-Time Spectrogram (Mock)</div>
+        <div class="int-body">
+          <canvas id="spectrogram-canvas" width="320" height="110" style="width:100%;border-radius:4px;"></canvas>
+          <p style="font-size:.75rem;color:var(--muted);margin-top:.5rem;">
+            Colour: log₁₀(differential flux). Energy channels ↑ vertical, time → horizontal.
+            Simulated SEP event onset visible as high-energy enhancement. <em>Illustrative only.</em>
+          </p>
+        </div>
+      </div>
+
+      <!-- STEPS Directional Explorer -->
+      <div class="int-card reveal">
+        <div class="int-header"><span class="dot" style="background:var(--plasma);animation-delay:.3s"></span>STEPS Directional Explorer</div>
+        <div class="int-body">
+          <div class="steps-compass">
+            <div class="steps-ring">
+              <svg id="steps-svg" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="80" cy="80" r="70" fill="none" stroke="var(--border)" stroke-width="1"/>
+                <circle cx="80" cy="80" r="50" fill="none" stroke="var(--border)" stroke-width="1" stroke-dasharray="4,4"/>
+                <circle cx="80" cy="80" r="5" fill="var(--surface)" stroke="var(--muted)" stroke-width="1.5"/>
+                <!-- Parker spiral -->
+                <path d="M80,80 Q120,60 150,90" stroke="var(--solar2)" stroke-width="1.2" fill="none" stroke-dasharray="5,3" opacity=".5"/>
+                <!-- Labels -->
+                <text x="80" y="10" text-anchor="middle" font-size="8" fill="var(--muted)" font-family="monospace">SUN</text>
+                <text x="80" y="158" text-anchor="middle" font-size="8" fill="var(--muted)" font-family="monospace">ANTI-SUN</text>
+                <text x="5" y="84" font-size="8" fill="var(--muted)" font-family="monospace">EAST</text>
+                <text x="130" y="84" font-size="8" fill="var(--muted)" font-family="monospace">WEST</text>
+                <!-- 6 detectors -->
+                <g id="det-arrows"></g>
+              </svg>
+            </div>
+            <div class="steps-legend" id="steps-btns">
+              <button class="det-btn sel" data-det="0">D1 Sun-radial</button>
+              <button class="det-btn" data-det="1">D2 Anti-sun</button>
+              <button class="det-btn" data-det="2">D3 Parker+</button>
+              <button class="det-btn" data-det="3">D4 Parker−</button>
+              <button class="det-btn" data-det="4">D5 Normal+</button>
+              <button class="det-btn" data-det="5">D6 Normal−</button>
+            </div>
+          </div>
+          <p style="font-size:.74rem;color:var(--muted);margin-top:.6rem;text-align:center">
+            Toggle detectors to see their look directions (schematic). Actual FOV angles from payload docs.
+          </p>
+        </div>
+      </div>
+
+      <!-- Plasma Moments Explorer -->
+      <div class="int-card reveal">
+        <div class="int-header"><span class="dot" style="background:var(--proton);animation-delay:.6s"></span>Plasma Moments Explorer</div>
+        <div class="int-body">
+          <div class="pm-display" id="pm-display">
+            <div class="pm-row">
+              <span class="pm-label">n<sub>p</sub> [cm⁻³]</span>
+              <div class="pm-bar-wrap"><div class="pm-bar" id="bar-np" style="background:var(--proton);width:55%"></div></div>
+              <span class="pm-val" id="val-np">5.4</span>
+            </div>
+            <div class="pm-row">
+              <span class="pm-label">V<sub>sw</sub> [km/s]</span>
+              <div class="pm-bar-wrap"><div class="pm-bar" id="bar-v" style="background:var(--plasma);width:60%"></div></div>
+              <span class="pm-val" id="val-v">430</span>
+            </div>
+            <div class="pm-row">
+              <span class="pm-label">T<sub>p</sub> [eV]</span>
+              <div class="pm-bar-wrap"><div class="pm-bar" id="bar-t" style="background:var(--solar);width:35%"></div></div>
+              <span class="pm-val" id="val-t">12</span>
+            </div>
+            <div class="pm-row">
+              <span class="pm-label">|B| [nT]</span>
+              <div class="pm-bar-wrap"><div class="pm-bar" id="bar-b" style="background:var(--electron);width:45%"></div></div>
+              <span class="pm-val" id="val-b">6.2</span>
+            </div>
+            <div class="pm-row">
+              <span class="pm-label">β<sub>p</sub></span>
+              <div class="pm-bar-wrap"><div class="pm-bar" id="bar-beta" style="background:var(--solar2);width:42%"></div></div>
+              <span class="pm-val" id="val-beta">0.91</span>
+            </div>
+          </div>
+          <button class="pm-btn" id="pm-randomise">↻ Simulate New Wind Parcel</button>
+          <p style="font-size:.73rem;color:var(--muted);margin-top:.5rem">
+            β<sub>p</sub> = 8πnkT/B² — ratio of plasma to magnetic pressure. Values are illustrative.
+          </p>
+        </div>
+      </div>
+
+      <!-- IMF Orientation -->
+      <div class="int-card reveal">
+        <div class="int-header"><span class="dot" style="background:var(--electron);animation-delay:.9s"></span>IMF B<sub>z</sub> Orientation Visualiser</div>
+        <div class="int-body">
+          <div class="imf-wrap">
+            <svg id="imf-svg" viewBox="0 0 220 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:260px">
+              <defs>
+                <marker id="arr" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+                  <path d="M0,0 L0,6 L8,3 z" fill="var(--electron)"/>
+                </marker>
+                <marker id="arr-g" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+                  <path d="M0,0 L0,6 L8,3 z" fill="var(--proton)"/>
+                </marker>
+              </defs>
+              <!-- Earth -->
+              <circle cx="110" cy="80" r="24" fill="#0c1425" stroke="var(--plasma)" stroke-width="1.5"/>
+              <circle cx="110" cy="80" r="16" fill="#142039" opacity=".8"/>
+              <text x="110" y="84" text-anchor="middle" font-size="9" fill="var(--plasma)" font-family="monospace">EARTH</text>
+              <!-- Magnetosphere outline -->
+              <path d="M95,56 Q55,80 95,104" stroke="var(--plasma2)" stroke-width="1" fill="none" stroke-dasharray="4,3" opacity=".5"/>
+              <path d="M135,65 Q185,80 135,95" stroke="var(--plasma2)" stroke-width="1.5" fill="none" stroke-dasharray="3,3" opacity=".5"/>
+              <!-- B vector (dynamic) -->
+              <line id="bz-line" x1="110" y1="80" x2="110" y2="30" stroke="var(--electron)" stroke-width="2.5" marker-end="url(#arr)"/>
+              <!-- Labels -->
+              <text id="bz-lbl" x="118" y="35" font-size="9" fill="var(--electron)" font-family="monospace">Bz = +5 nT</text>
+              <text x="110" y="155" text-anchor="middle" font-size="8" fill="var(--muted)" font-family="monospace">← Solar wind →</text>
+            </svg>
+          </div>
+          <div class="imf-info" id="imf-status">B<sub>z</sub> = <span id="bz-val" style="color:var(--proton)">+5 nT</span> — Northward (weakly geoeffective)</div>
+          <input type="range" id="bz-slider" min="-15" max="15" value="5"
+            style="width:100%;margin-top:.8rem;accent-color:var(--electron)"
+            aria-label="Adjust IMF Bz from -15 to +15 nT">
+          <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.68rem;color:var(--muted);margin-top:.2rem">
+            <span>−15 nT (Southward)</span><span>+15 nT (Northward)</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ─── Cautions ─────────────────────────────────────────────────────────── -->
+<section id="cautions" aria-labelledby="caut-h2">
+  <div class="container">
+    <p class="section-label reveal">Data Caveats</p>
+    <h2 class="section-title reveal" id="caut-h2">Archive Access & Analysis Cautions</h2>
+    <p class="section-desc reveal">
+      Working with space mission data requires careful attention to instrument characteristics, data formats,
+      and archive behaviour. Do not assume values not explicitly documented.
+    </p>
+    <div class="caution-list">
+      <div class="caution reveal">
+        <span class="caution-icon">⏰</span>
+        <div class="caution-text">
+          <strong>Session Timeout (~30 minutes)</strong>
+          <span>PRADAN portal sessions expire after approximately 30 minutes of inactivity. Re-authenticate
+          before initiating large downloads. Use bulk download tools where provided.</span>
+        </div>
+      </div>
+      <div class="caution reveal">
+        <span class="caution-icon">📂</span>
+        <div class="caution-text">
+          <strong>Do NOT Assume File Formats</strong>
+          <span>CDF and FITS are common formats for space physics data, but verify the actual file format
+          for each instrument and data level in the official ISSDC documentation before writing read routines.</span>
+        </div>
+      </div>
+      <div class="caution reveal">
+        <span class="caution-icon">🕐</span>
+        <div class="caution-text">
+          <strong>Do NOT Assume Data Cadence</strong>
+          <span>Instrument sampling cadences may vary by mode, operational configuration, or event-triggered
+          burst modes. Never hard-code time step assumptions. Parse timestamps from file headers.</span>
+        </div>
+      </div>
+      <div class="caution reveal">
+        <span class="caution-icon">🌐</span>
+        <div class="caution-text">
+          <strong>Coordinate System Clarity</strong>
+          <span>Confirm whether magnetic field and velocity data are in RTN, GSE, or GSM coordinates.
+          Comparisons with other datasets (ACE, Wind, DSCOVR) require consistent coordinate transforms.
+          Use SPICE kernels for accurate transforms.</span>
+        </div>
+      </div>
+      <div class="caution reveal">
+        <span class="caution-icon">⚡</span>
+        <div class="caution-text">
+          <strong>Spacecraft Charging Effects</strong>
+          <span>Low-energy (especially electron) measurements below a few tens of eV can be affected by
+          spacecraft potential. Review payload calibration notes for contamination thresholds before
+          interpreting sub-100 eV features.</span>
+        </div>
+      </div>
+      <div class="caution reveal">
+        <span class="caution-icon">📄</span>
+        <div class="caution-text">
+          <strong>Always Refer to Official Payload Documentation</strong>
+          <span>This site is a reference guide only. For instrument-specific geometric factors, energy
+          table definitions, noise floors, and calibration procedures, always consult the official
+          payload/instrument documentation distributed by the PI teams via ISRO/ISSDC.</span>
+        </div>
+      </div>
+      <div class="caution reveal">
+        <span class="caution-icon">🔢</span>
+        <div class="caution-text">
+          <strong>Unknown / Undocumented Values Are Labelled</strong>
+          <span>Where specific values (exact cadence, sensitivity thresholds, angular resolution) are not
+          publicly documented or confirmed, they are deliberately omitted or labelled "refer to documentation"
+          in this guide. Do not fill gaps with assumptions.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Footer ───────────────────────────────────────────────────────────── -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-col">
+        <h5>Mission</h5>
+        <p>Aditya-L1 is ISRO's first dedicated solar observatory, launched 2 September 2023. It was inserted
+        into its L1 halo orbit on 6 January 2024.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Attribution</h5>
+        <p>Mission: Indian Space Research Organisation (ISRO)</p>
+        <p>Data Archive: ISSDC / PRADAN</p>
+        <p>Payload PIs: ASPEX, PAPA, MAG instrument teams</p>
+      </div>
+      <div class="footer-col">
+        <h5>Key Resources</h5>
+        <a href="https://www.isro.gov.in/Aditya_L1.html" target="_blank" rel="noopener">ISRO Aditya-L1 Page</a>
+        <a href="https://pradan.issdc.gov.in" target="_blank" rel="noopener">ISSDC PRADAN Portal</a>
+        <a href="https://www.issdc.gov.in" target="_blank" rel="noopener">ISSDC Homepage</a>
+        <a href="https://sunpy.org" target="_blank" rel="noopener">SunPy (Analysis Tools)</a>
+      </div>
+      <div class="footer-col">
+        <h5>Note</h5>
+        <p>Refer to official ASPEX, PAPA, and MAG payload documentation for all instrument-specific
+        specifications, calibration files, and data format details. This guide is for educational
+        and reference purposes.</p>
+      </div>
+    </div>
+    <div class="footer-copy">
+      Aditya-L1 Plasma Explorer — Educational Reference Guide ·
+      Data &amp; specifications: ISRO / ISSDC · Not an official ISRO product
+    </div>
+  </div>
+</footer>
+
+<!-- ─── JavaScript ────────────────────────────────────────────────────────── -->
+<script>
+/* ── Theme toggle ─────────────────────────────────────────────────────── */
+const themeBtn = document.getElementById('theme-btn');
+let dark = true;
+themeBtn.addEventListener('click', () => {
+  dark = !dark;
+  document.body.setAttribute('data-theme', dark ? 'dark' : 'light');
+  themeBtn.textContent = dark ? '☀︎' : '☾';
+});
+
+/* ── Hamburger ─────────────────────────────────────────────────────────── */
+const ham = document.getElementById('hamburger');
+const navLinks = document.getElementById('nav-links');
+ham.addEventListener('click', () => {
+  const open = navLinks.classList.toggle('open');
+  ham.setAttribute('aria-expanded', open);
+});
+document.addEventListener('click', e => {
+  if (!ham.contains(e.target) && !navLinks.contains(e.target)) {
+    navLinks.classList.remove('open');
+    ham.setAttribute('aria-expanded','false');
+  }
+});
+
+/* ── Tabs ──────────────────────────────────────────────────────────────── */
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected','false');
+  });
+  document.getElementById('tab-'+id).classList.add('active');
+  const btn = document.getElementById('btn-'+id);
+  btn.classList.add('active');
+  btn.setAttribute('aria-selected','true');
+}
+
+/* ── Scroll reveal ─────────────────────────────────────────────────────── */
+const revealEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+  });
+}, { threshold: 0.07, rootMargin: '0px 0px -40px 0px' });
+revealEls.forEach(el => io.observe(el));
+
+/* ── Hero canvas (solar wind particle field) ───────────────────────────── */
+(function() {
+  const canvas = document.getElementById('hero-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+
+  function resize() {
+    W = canvas.width = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+    init();
+  }
+
+  function rand(a, b) { return a + Math.random() * (b - a); }
+
+  function init() {
+    particles = [];
+    const n = Math.floor(W * H / 6000);
+    for (let i = 0; i < n; i++) {
+      particles.push({
+        x: rand(0, W), y: rand(0, H),
+        vx: rand(0.4, 1.4),
+        vy: rand(-0.15, 0.15),
+        r: rand(0.8, 2.2),
+        alpha: rand(0.15, 0.55),
+        hue: rand(20, 50)
+      });
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    // Background gradient
+    const grad = ctx.createRadialGradient(W*0.5, H*0.5, 0, W*0.5, H*0.5, Math.max(W,H)*0.6);
+    grad.addColorStop(0, '#0e1a2e');
+    grad.addColorStop(1, '#060b14');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Stars
+    ctx.fillStyle = '#c8d8f0';
+    for (let i = 0; i < 120; i++) {
+      const sx = (i * 137.5 * W / 100) % W;
+      const sy = (i * 97.3 * H / 100) % H;
+      ctx.globalAlpha = 0.08 + (i % 5) * 0.06;
+      ctx.beginPath(); ctx.arc(sx, sy, 0.6, 0, Math.PI*2); ctx.fill();
+    }
+
+    // Particle trails (solar wind)
+    particles.forEach(p => {
+      ctx.globalAlpha = p.alpha;
+      ctx.fillStyle = `hsl(${p.hue}, 90%, 60%)`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+      // tiny trail
+      ctx.globalAlpha = p.alpha * 0.3;
+      ctx.fillStyle = `hsl(${p.hue}, 80%, 70%)`;
+      ctx.fillRect(p.x - p.vx * 4, p.y, p.vx * 4, 1);
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  function update() {
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x > W + 5) { p.x = -5; p.y = rand(0, H); }
+      if (p.y < 0) p.y = H;
+      if (p.y > H) p.y = 0;
+    });
+  }
+
+  let raf;
+  function loop() { update(); draw(); raf = requestAnimationFrame(loop); }
+
+  const ro = new ResizeObserver(resize);
+  ro.observe(canvas.parentElement);
+  resize();
+  loop();
+})();
+
+/* ── Energy-Time Spectrogram (mock canvas) ─────────────────────────────── */
+(function() {
+  const canvas = document.getElementById('spectrogram-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cols = 80, rows = 22;
+  const cw = W / cols, rh = H / rows;
+
+  function heatColor(v) {
+    // 0=dark, 1=bright
+    const r = Math.min(255, Math.floor(v * 3 * 255));
+    const g = Math.min(255, Math.max(0, Math.floor((v - 0.33) * 3 * 255)));
+    const b = Math.min(255, Math.max(0, Math.floor((v - 0.66) * 3 * 255)));
+    return `rgb(${r},${g},${b})`;
+  }
+
+  // Generate mock spectrogram data
+  const data = [];
+  for (let r = 0; r < rows; r++) {
+    data[r] = [];
+    for (let c = 0; c < cols; c++) {
+      // Background: power-law decrease with energy
+      let v = 0.6 - (r / rows) * 0.45 + (Math.random() - 0.5) * 0.1;
+      // SEP event at col 50-70, high energies (low row index)
+      if (c > 50 && r < 10) {
+        const bump = (1 - r / 10) * (c - 50) / 20 * 0.5;
+        v += bump * (Math.random() * 0.4 + 0.6);
+      }
+      data[r][c] = Math.max(0, Math.min(1, v));
+    }
+  }
+
+  ctx.clearRect(0, 0, W, H);
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      ctx.fillStyle = heatColor(data[r][c]);
+      ctx.fillRect(c * cw, r * rh, cw + 0.5, rh + 0.5);
+    }
+  }
+
+  // Axis labels
+  ctx.fillStyle = 'rgba(90,116,153,0.9)';
+  ctx.font = '8px monospace';
+  ctx.fillText('6 MeV', 2, 9);
+  ctx.fillText('20 keV', 2, H - 3);
+  ctx.fillStyle = 'rgba(249,115,22,0.8)';
+  ctx.fillText('← SEP onset', W - 72, 10);
+})();
+
+/* ── STEPS directional compass ─────────────────────────────────────────── */
+(function() {
+  const svg = document.getElementById('det-arrows');
+  if (!svg) return;
+  const detectors = [
+    { angle: 270, label: 'D1', color: '#f97316' },
+    { angle: 90,  label: 'D2', color: '#38bdf8' },
+    { angle: 315, label: 'D3', color: '#fbbf24' },
+    { angle: 225, label: 'D4', color: '#a78bfa' },
+    { angle: 0,   label: 'D5', color: '#34d399' },
+    { angle: 180, label: 'D6', color: '#f472b6' }
+  ];
+  const cx = 80, cy = 80, R = 58;
+
+  function toRad(d) { return d * Math.PI / 180; }
+
+  function renderDets(active) {
+    svg.innerHTML = '';
+    detectors.forEach((d, i) => {
+      if (!active.has(i)) return;
+      const x2 = cx + R * Math.cos(toRad(d.angle));
+      const y2 = cy + R * Math.sin(toRad(d.angle));
+      const ns = 'http://www.w3.org/2000/svg';
+      const mid = document.createElementNS(ns, 'marker');
+      mid.setAttribute('id','a'+i);
+      mid.setAttribute('markerWidth','7');
+      mid.setAttribute('markerHeight','6');
+      mid.setAttribute('refX','5');
+      mid.setAttribute('refY','3');
+      mid.setAttribute('orient','auto');
+      const p = document.createElementNS(ns, 'path');
+      p.setAttribute('d','M0,0 L0,6 L7,3 z');
+      p.setAttribute('fill', d.color);
+      mid.appendChild(p);
+      svg.closest('svg').querySelector('defs') || svg.closest('svg').insertBefore(document.createElementNS(ns,'defs'),svg.closest('svg').firstChild);
+      svg.closest('svg').querySelector('defs').appendChild(mid);
+      const line = document.createElementNS(ns,'line');
+      line.setAttribute('x1',cx); line.setAttribute('y1',cy);
+      line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+      line.setAttribute('stroke', d.color);
+      line.setAttribute('stroke-width','2');
+      line.setAttribute('marker-end','url(#a'+i+')');
+      svg.appendChild(line);
+    });
+  }
+
+  let active = new Set([0]);
+  renderDets(active);
+
+  document.getElementById('steps-btns').addEventListener('click', e => {
+    const btn = e.target.closest('.det-btn');
+    if (!btn) return;
+    const i = parseInt(btn.dataset.det);
+    if (active.has(i)) { active.delete(i); btn.classList.remove('sel'); }
+    else { active.add(i); btn.classList.add('sel'); }
+    renderDets(active);
+  });
+})();
+
+/* ── Plasma moments randomiser ─────────────────────────────────────────── */
+(function() {
+  const presets = [
+    { np:5.4, v:430, t:12, b:6.2 },  // typical slow wind
+    { np:8.1, v:380, t:8,  b:5.0 },  // dense slow wind
+    { np:2.2, v:650, t:28, b:4.5 },  // fast wind
+    { np:14,  v:520, t:18, b:12  },  // CME sheath-like
+    { np:3.0, v:750, t:35, b:3.8 },  // high-speed stream
+    { np:6.8, v:410, t:10, b:7.5 },  // CIR
+  ];
+
+  function beta(d) {
+    const n = d.np * 1e6; // m^-3
+    const T = d.t * 1.6e-19; // J
+    const B = d.b * 1e-9; // T
+    const mu0 = 1.256637e-6;
+    const kb = 1.38e-23;
+    const val = (n * kb * (d.t * 11605)) / (B * B / (2 * mu0));
+    return val.toFixed(2);
+  }
+
+  function setBar(id, val, maxVal) {
+    document.getElementById('bar-'+id).style.width = Math.min(100, val / maxVal * 100) + '%';
+  }
+
+  function update(d) {
+    const b = parseFloat(beta(d));
+    document.getElementById('val-np').textContent = d.np.toFixed(1);
+    document.getElementById('val-v').textContent = d.v;
+    document.getElementById('val-t').textContent = d.t;
+    document.getElementById('val-b').textContent = d.b.toFixed(1);
+    document.getElementById('val-beta').textContent = b;
+    setBar('np', d.np, 20);
+    setBar('v',  d.v,  800);
+    setBar('t',  d.t,  50);
+    setBar('b',  d.b,  20);
+    setBar('beta', b,  3);
+  }
+
+  document.getElementById('pm-randomise').addEventListener('click', () => {
+    const d = presets[Math.floor(Math.random() * presets.length)];
+    // slight jitter
+    update({
+      np: +(d.np + (Math.random()-.5)*1.2).toFixed(1),
+      v:  Math.round(d.v  + (Math.random()-.5)*40),
+      t:  +(d.t  + (Math.random()-.5)*4).toFixed(0),
+      b:  +(d.b  + (Math.random()-.5)*1.5).toFixed(1)
+    });
+  });
+})();
+
+/* ── IMF Bz slider ─────────────────────────────────────────────────────── */
+(function() {
+  const slider = document.getElementById('bz-slider');
+  const line   = document.getElementById('bz-line');
+  const lbl    = document.getElementById('bz-lbl');
+  const status = document.getElementById('imf-status');
+  const bzVal  = document.getElementById('bz-val');
+
+  function update(v) {
+    v = parseFloat(v);
+    // Map Bz to arrow: positive = up (toward north), negative = down (toward south)
+    const x1 = 110, y1 = 80;
+    const len = Math.abs(v) / 15 * 50 + 20;
+    const y2 = v >= 0 ? y1 - len : y1 + len;
+    line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+    line.setAttribute('x2', x1); line.setAttribute('y2', y2);
+
+    const col = v < 0 ? '#f97316' : '#34d399';
+    line.setAttribute('stroke', col);
+    line.setAttribute('marker-end', v < 0 ? 'url(#arr)' : 'url(#arr-g)');
+
+    lbl.textContent = `Bz = ${v > 0 ? '+' : ''}${v} nT`;
+    lbl.setAttribute('fill', col);
+    lbl.setAttribute('y', Math.min(y1 - 5, y2 - 5));
+
+    bzVal.style.color = col;
+    bzVal.innerHTML = `${v > 0 ? '+' : ''}${v} nT`;
+
+    let desc;
+    if (v <= -10)      desc = '🔴 Strongly southward — highly geoeffective';
+    else if (v < 0)    desc = '🟠 Southward — geoeffective';
+    else if (v === 0)  desc = '⚪ Neutral — minimal coupling';
+    else if (v < 8)    desc = '🟢 Northward — weakly geoeffective';
+    else               desc = '🟢 Strongly northward — minimal geomagnetic coupling';
+
+    document.getElementById('imf-status').innerHTML = `B<sub>z</sub> = <span id="bz-val" style="color:${col}">${v > 0 ? '+' : ''}${v} nT</span> — ${desc}`;
+  }
+
+  slider.addEventListener('input', e => update(e.target.value));
+  update(5);
+})();
+
+/* ── Keyboard nav for tabs ─────────────────────────────────────────────── */
+document.querySelectorAll('.tab-btn').forEach((btn, i, arr) => {
+  btn.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') { arr[(i+1)%arr.length].focus(); arr[(i+1)%arr.length].click(); }
+    if (e.key === 'ArrowLeft')  { arr[(i-1+arr.length)%arr.length].focus(); arr[(i-1+arr.length)%arr.length].click(); }
+  });
+});
+</script>
+</body>
+</html>

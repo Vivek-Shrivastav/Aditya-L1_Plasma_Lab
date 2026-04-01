@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aditya-L1 Plasma Observatory</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#04080f;--bg2:#08101e;--bg3:#0d1828;--surface:#111e35;--s2:#162540;
+  --border:#1c2e4a;--b2:#243c60;--text:#cfe0f5;--muted:#4d6885;--dim:#2a3f58;
+  --solar:#ff6b2b;--solar2:#ffad42;--plasma:#29b6e8;--plasma2:#8b7cf0;
+  --proton:#2ecc8e;--red:#e53e3e;--green:#27ae76;--yellow:#f0c040;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+  --gutter:1.5rem;
+}
+[data-theme=light]{
+  --bg:#f0f4fa;--bg2:#e5edf7;--bg3:#d8e5f2;--surface:#fff;--s2:#f5f8fd;
+  --border:#c4d4e8;--b2:#a8bedb;--text:#1a2d45;--muted:#5a7499;--dim:#c8d8ec;
+  --solar:#c94a00;--plasma:#0369a1;--plasma2:#4338ca;--proton:#047857;--red:#dc2626;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:15px}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.7;overflow-x:hidden}
+a{color:var(--plasma);text-decoration:none}
+a:hover{text-decoration:underline}
+h1,h2,h3,h4{line-height:1.25;font-weight:700}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:4px}
+
+/* NAV */
+#nav{
+  position:sticky;top:0;z-index:200;
+  background:rgba(4,8,15,.9);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 var(--gutter);height:58px;gap:1rem;
+}
+.brand{
+  display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:1rem;
+  background:linear-gradient(90deg,var(--solar),var(--solar2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  white-space:nowrap;
+}
+.nav-links{display:flex;gap:1.3rem;font-size:.82rem;align-items:center}
+.nav-links a{color:var(--muted);font-weight:500;transition:color .2s;white-space:nowrap}
+.nav-links a:hover{color:var(--solar);text-decoration:none}
+.nav-links a.cta{
+  background:var(--solar);color:#000;padding:.3rem .9rem;
+  border-radius:20px;font-weight:600;
+}
+.nav-links a.cta:hover{opacity:.88;text-decoration:none}
+.nbtn{background:var(--surface);border:1px solid var(--b2);color:var(--text);
+  padding:.28rem .65rem;border-radius:5px;cursor:pointer;font-size:.78rem}
+.nbtn:hover{border-color:var(--solar);color:var(--solar)}
+
+/* HERO */
+#hero{
+  min-height:90vh;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;padding:4rem var(--gutter) 3rem;
+  position:relative;overflow:hidden;
+}
+.hero-bg{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 50% at 50% 30%,rgba(255,107,43,.07) 0%,transparent 70%),
+             radial-gradient(ellipse 40% 30% at 80% 70%,rgba(41,182,232,.05) 0%,transparent 60%);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:.5rem;
+  background:rgba(255,107,43,.1);border:1px solid rgba(255,107,43,.3);
+  color:var(--solar2);font-size:.75rem;font-family:var(--mono);font-weight:500;
+  padding:.3em 1em;border-radius:20px;margin-bottom:1.5rem;
+}
+.hero-badge::before{content:'';width:7px;height:7px;border-radius:50%;
+  background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+#hero h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;line-height:1.15;
+  max-width:700px;margin-bottom:1.2rem}
+.grad{background:linear-gradient(135deg,var(--solar),var(--solar2),var(--plasma));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#hero p{font-size:1.05rem;color:var(--muted);max-width:560px;margin-bottom:2.5rem;line-height:1.7}
+.hero-btns{display:flex;gap:.9rem;flex-wrap:wrap;justify-content:center}
+.btn-primary{
+  background:linear-gradient(135deg,var(--solar),var(--solar2));
+  color:#000;border:none;padding:.75rem 1.7rem;border-radius:8px;
+  font-weight:700;font-size:.9rem;cursor:pointer;transition:opacity .2s;
+  text-decoration:none;display:inline-block;
+}
+.btn-primary:hover{opacity:.87;text-decoration:none}
+.btn-secondary{
+  background:transparent;border:1px solid var(--b2);color:var(--text);
+  padding:.75rem 1.5rem;border-radius:8px;font-size:.9rem;cursor:pointer;
+  text-decoration:none;display:inline-block;transition:border-color .2s,color .2s;
+}
+.btn-secondary:hover{border-color:var(--solar);color:var(--solar);text-decoration:none}
+.hero-stats{
+  display:flex;gap:2.5rem;flex-wrap:wrap;justify-content:center;
+  margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border);
+  width:100%;max-width:600px;
+}
+.hs-item{text-align:center}
+.hs-val{font-size:1.5rem;font-weight:800;font-family:var(--mono);color:var(--solar2)}
+.hs-lbl{font-size:.72rem;color:var(--muted);margin-top:.1rem}
+
+/* SECTION CONTAINER */
+section{padding:4rem var(--gutter);max-width:1100px;margin:0 auto}
+.section-tag{
+  display:inline-block;font-size:.7rem;font-family:var(--mono);font-weight:600;
+  color:var(--solar);border:1px solid rgba(255,107,43,.3);
+  background:rgba(255,107,43,.06);padding:.2em .75em;border-radius:20px;
+  letter-spacing:.06em;margin-bottom:.75rem;
+}
+section h2{font-size:clamp(1.4rem,3vw,1.9rem);margin-bottom:.6rem}
+section>p{color:var(--muted);max-width:640px;margin-bottom:2rem;font-size:.95rem}
+.section-div{border-top:1px solid var(--border);margin:0}
+
+/* WHY L1 */
+.l1-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+.l1-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:1.2rem;transition:border-color .2s}
+.l1-card:hover{border-color:var(--b2)}
+.l1-card h4{font-size:.9rem;margin-bottom:.4rem;display:flex;align-items:center;gap:.5rem}
+.l1-card p{font-size:.8rem;color:var(--muted);line-height:1.55}
+.l1-icon{font-size:1.2rem}
+
+/* MISSION DIAGRAM SVG */
+.diagram-wrap{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:1.5rem;margin-bottom:2rem;overflow-x:auto;
+}
+.diagram-wrap svg{min-width:560px}
+
+/* INSTRUMENTS */
+.inst-tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.2rem}
+.itab{
+  padding:.45rem 1rem;border-radius:6px;border:1px solid var(--border);
+  font-size:.8rem;font-weight:600;font-family:var(--mono);cursor:pointer;
+  background:var(--bg3);color:var(--muted);transition:all .2s;
+}
+.itab.active,.itab:hover{background:var(--solar);color:#000;border-color:var(--solar)}
+.ipanel{display:none}
+.ipanel.active{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+@media(max-width:640px){.ipanel.active{grid-template-columns:1fr}}
+.icard{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.1rem}
+.icard h4{font-size:.85rem;color:var(--solar2);margin-bottom:.5rem;font-family:var(--mono)}
+.icard table{width:100%;border-collapse:collapse;font-size:.76rem}
+.icard td{padding:.28rem .4rem;border-bottom:1px solid var(--border);vertical-align:top}
+.icard td:first-child{color:var(--muted);width:38%;font-weight:500}
+.icard td:last-child{font-family:var(--mono);color:var(--plasma)}
+.icard p{font-size:.79rem;color:var(--muted);line-height:1.5;margin-top:.6rem}
+
+/* TUTORIAL */
+.tutorial-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.2rem}
+.tut-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:1.2rem;position:relative;overflow:hidden;
+}
+.tut-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--accent,var(--plasma))}
+.tut-card h4{font-size:.92rem;margin-bottom:.3rem;display:flex;align-items:center;gap:.5rem}
+.tut-card .symbol{font-family:var(--mono);font-size:1.1rem;color:var(--accent,var(--plasma));
+  font-weight:700}
+.tut-card p{font-size:.79rem;color:var(--muted);margin-top:.4rem;line-height:1.55}
+.tut-card .formula{
+  font-family:var(--mono);font-size:.75rem;color:var(--plasma2);
+  background:var(--bg3);padding:.3rem .6rem;border-radius:5px;
+  margin-top:.5rem;display:block;border:1px solid var(--border);
+}
+.tut-card .range{font-size:.72rem;color:var(--proton);margin-top:.3rem;font-family:var(--mono)}
+
+/* METHODS */
+.method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
+.method-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:1.1rem;cursor:pointer;transition:border-color .2s,transform .15s;
+}
+.method-card:hover{border-color:var(--b2);transform:translateY(-2px)}
+.method-num{font-size:.7rem;font-family:var(--mono);color:var(--solar);
+  font-weight:700;letter-spacing:.05em;margin-bottom:.3rem}
+.method-card h4{font-size:.88rem;margin-bottom:.35rem}
+.method-card p{font-size:.77rem;color:var(--muted);line-height:1.5}
+.method-ref{font-size:.68rem;color:var(--dim);margin-top:.5rem;font-family:var(--mono)}
+.go-btn{
+  display:inline-block;margin-top:.6rem;font-size:.74rem;font-weight:600;
+  color:var(--solar);border:1px solid rgba(255,107,43,.3);
+  padding:.2em .6em;border-radius:4px;
+}
+
+/* ARCHIVE */
+.archive-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
+.astep{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:1rem;display:flex;gap:.7rem;
+}
+.astep-num{
+  width:28px;height:28px;border-radius:50%;background:var(--solar);
+  color:#000;font-weight:800;font-size:.85rem;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;
+}
+.astep h4{font-size:.85rem;margin-bottom:.2rem}
+.astep p{font-size:.76rem;color:var(--muted);line-height:1.5}
+.caution{
+  background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.3);
+  border-radius:8px;padding:.8rem 1rem;font-size:.8rem;color:var(--yellow);
+  margin-top:1rem;
+}
+
+/* CTA SECTION */
+#cta-section{
+  background:linear-gradient(135deg,rgba(255,107,43,.08),rgba(41,182,232,.06));
+  border:1px solid var(--border);border-radius:14px;
+  padding:3rem 2rem;text-align:center;margin:2rem var(--gutter) 4rem;
+}
+#cta-section h2{font-size:1.7rem;margin-bottom:.6rem}
+#cta-section p{color:var(--muted);max-width:480px;margin:0 auto 2rem;font-size:.92rem}
+.cta-btns{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+
+/* FOOTER */
+footer{
+  border-top:1px solid var(--border);padding:1.5rem var(--gutter);
+  text-align:center;font-size:.75rem;color:var(--muted);
+}
+footer a{color:var(--muted)}
+
+/* RESPONSIVE */
+@media(max-width:600px){
+  .nav-links .hide-sm{display:none}
+  #hero h1{font-size:1.7rem}
+  .ipanel.active{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="brand">
+    <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+      <circle cx="13" cy="13" r="12" stroke="#ff6b2b" stroke-width="1.3" fill="none" opacity=".4"/>
+      <circle cx="13" cy="13" r="5.5" fill="#ff6b2b"/>
+      <circle cx="13" cy="13" r="9.5" stroke="#ffad42" stroke-width=".7" fill="none" stroke-dasharray="3 2"/>
+      <circle cx="24" cy="13" r="2" fill="#29b6e8"/>
+    </svg>
+    Aditya-L1 Observatory
+  </div>
+  <div class="nav-links">
+    <a href="#instruments" class="hide-sm">Instruments</a>
+    <a href="#tutorial" class="hide-sm">Tutorial</a>
+    <a href="#methods" class="hide-sm">Methods</a>
+    <a href="dashboard.html">Live Dashboard</a>
+    <a href="visualizer.html">Data Visualizer</a>
+    <a href="lab.html" class="cta">Analysis Lab →</a>
+  </div>
+  <button class="nbtn" id="theme-btn">☀</button>
+</nav>
+
+<!-- ══════════════ HERO ══════════════ -->
+<section id="hero" style="max-width:none;padding:4rem var(--gutter) 3rem">
+  <div class="hero-bg"></div>
+  <div class="hero-badge">
+    <span></span> ISRO Aditya-L1 · Sun–Earth L1 Lagrange Point · In-situ Plasma Science
+  </div>
+  <h1>The Complete <span class="grad">Aditya-L1</span><br>Plasma Observatory</h1>
+  <p>Learn the physics. Study the instruments. Visualize any data window. Run analysis tools grounded in the ISSI SR-001 methodology. One repository — everything from mission context to interactive MVA.</p>
+  <div class="hero-btns">
+    <a href="#why-l1" class="btn-primary">Start Learning ↓</a>
+    <a href="dashboard.html" class="btn-secondary">Live Dashboard →</a>
+    <a href="visualizer.html" class="btn-secondary">Open Visualizer →</a>
+  </div>
+  <div class="hero-stats">
+    <div class="hs-item"><div class="hs-val">5</div><div class="hs-lbl">In-situ instruments</div></div>
+    <div class="hs-item"><div class="hs-val">L1</div><div class="hs-lbl">Sun–Earth Lagrange point</div></div>
+    <div class="hs-item"><div class="hs-val">6h</div><div class="hs-lbl">Auto-update cadence</div></div>
+    <div class="hs-item"><div class="hs-val">∞</div><div class="hs-lbl">Science potential</div></div>
+  </div>
+</section>
+
+<hr class="section-div">
+
+<!-- ══════════════ WHY L1 ══════════════ -->
+<section id="why-l1">
+  <div class="section-tag">MISSION CONTEXT</div>
+  <h2>Why the L1 Lagrange Point?</h2>
+  <p>The Sun–Earth L1 point is ~1.5 million km from Earth — a gravitational saddle where a spacecraft can orbit the Sun synchronously with Earth, maintaining an unobstructed view of the Sun and continuous solar wind sampling.</p>
+
+  <!-- Mission geometry SVG -->
+  <div class="diagram-wrap">
+    <svg width="100%" viewBox="0 0 640 180">
+      <!-- Sun -->
+      <circle cx="50" cy="90" r="32" fill="#ff6b2b" opacity=".85"/>
+      <circle cx="50" cy="90" r="38" fill="none" stroke="#ffad42" stroke-width=".8" stroke-dasharray="4 3" opacity=".4"/>
+      <text style="fill:#ffad42;font-size:11px;font-family:JetBrains Mono" x="50" y="94" text-anchor="middle">SUN</text>
+      <!-- Solar wind arrows -->
+      <line x1="88" y1="65" x2="160" y2="65" stroke="#ff6b2b" stroke-width="1.2" marker-end="url(#a2)" opacity=".5"/>
+      <line x1="88" y1="90" x2="540" y2="90" stroke="#ff6b2b" stroke-width="1.5" marker-end="url(#a2)" opacity=".6"/>
+      <line x1="88" y1="115" x2="160" y2="115" stroke="#ff6b2b" stroke-width="1.2" marker-end="url(#a2)" opacity=".5"/>
+      <text style="fill:#ff6b2b;font-size:10px;font-family:JetBrains Mono" x="170" y="60">Solar wind V ≈ 400 km/s</text>
+      <!-- L1 point + spacecraft -->
+      <circle cx="370" cy="90" r="14" fill="#ffad42" opacity=".15" stroke="#ffad42" stroke-width="1"/>
+      <circle cx="370" cy="90" r="5" fill="#ffad42"/>
+      <text style="fill:#ffad42;font-size:10px;font-family:JetBrains Mono" x="370" y="74" text-anchor="middle">L1</text>
+      <text style="fill:#ffad42;font-size:9px;font-family:JetBrains Mono" x="370" y="116" text-anchor="middle">Aditya-L1</text>
+      <text style="fill:#4d6885;font-size:9px;font-family:JetBrains Mono" x="370" y="130" text-anchor="middle">~1.5×10⁶ km</text>
+      <!-- Earth -->
+      <circle cx="580" cy="90" r="18" fill="#29b6e8" opacity=".7"/>
+      <text style="fill:#29b6e8;font-size:10px;font-family:JetBrains Mono" x="580" y="94" text-anchor="middle">EARTH</text>
+      <!-- Distance bracket -->
+      <line x1="370" y1="148" x2="580" y2="148" stroke="#2a3f58" stroke-width="1"/>
+      <line x1="370" y1="144" x2="370" y2="152" stroke="#2a3f58" stroke-width="1"/>
+      <line x1="580" y1="144" x2="580" y2="152" stroke="#2a3f58" stroke-width="1"/>
+      <text style="fill:#4d6885;font-size:9px;font-family:JetBrains Mono" x="475" y="162" text-anchor="middle">≈ 1% of 1 AU ahead of Earth</text>
+      <!-- Halo orbit indicator -->
+      <ellipse cx="370" cy="90" rx="26" ry="40" fill="none" stroke="#ffad42" stroke-width=".6" stroke-dasharray="3 2" opacity=".4"/>
+      <text style="fill:#4d6885;font-size:9px;font-family:JetBrains Mono" x="414" y="56">Halo orbit</text>
+      <!-- 45-min warning label -->
+      <text style="fill:#2ecc8e;font-size:9px;font-family:JetBrains Mono" x="475" y="78">~45–60 min early warning</text>
+      <line x1="455" y1="82" x2="390" y2="90" stroke="#2ecc8e" stroke-width=".8" marker-end="url(#ag)" opacity=".7"/>
+      <defs>
+        <marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#ff6b2b" stroke-width="2"/>
+        </marker>
+        <marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#2ecc8e" stroke-width="2"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+
+  <div class="l1-grid">
+    <div class="l1-card">
+      <h4><span class="l1-icon">⏱</span> 45–60 Min Early Warning</h4>
+      <p>Solar wind at L1 reaches Earth ~45–60 minutes later. This advance warning enables space weather alerts before CMEs and high-speed streams arrive and compress Earth's magnetosphere.</p>
+    </div>
+    <div class="l1-card">
+      <h4><span class="l1-icon">🔭</span> Unobstructed Sun View</h4>
+      <p>L1 allows continuous Sun-facing observation. Remote sensing instruments (VELC, SUIT) always see the Sun, while in-situ instruments (ASPEX, PAPA, MAG) sample the undisturbed solar wind arriving from the Sun.</p>
+    </div>
+    <div class="l1-card">
+      <h4><span class="l1-icon">🌊</span> Pristine Solar Wind</h4>
+      <p>Unlike measurements inside Earth's magnetosphere, L1 samples the solar wind before it interacts with the geomagnetic field — the "upstream" boundary conditions that drive all space weather at Earth.</p>
+    </div>
+    <div class="l1-card">
+      <h4><span class="l1-icon">📡</span> Continuous Monitoring</h4>
+      <p>Aditya-L1's halo orbit maintains near-continuous line-of-sight to both the Sun and Earth simultaneously — essential for the uninterrupted data relay that makes real-time space weather monitoring possible.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="section-div">
+
+<!-- ══════════════ INSTRUMENTS ══════════════ -->
+<section id="instruments">
+  <div class="section-tag">INSTRUMENTS</div>
+  <h2>In-Situ Plasma Payloads</h2>
+  <p>Aditya-L1 carries seven instruments. Three are remote sensing (Sun-facing). Four are in-situ: they physically sample the solar wind plasma at L1. This observatory focuses on the in-situ suite.</p>
+
+  <div class="inst-tabs">
+    <button class="itab active" onclick="showInst('aspex')">ASPEX</button>
+    <button class="itab" onclick="showInst('swis')">SWIS</button>
+    <button class="itab" onclick="showInst('steps')">STEPS</button>
+    <button class="itab" onclick="showInst('papa')">PAPA</button>
+    <button class="itab" onclick="showInst('mag')">MAG</button>
+  </div>
+
+  <div id="inst-aspex" class="ipanel active">
+    <div class="icard">
+      <h4>ASPEX — Aditya Solar Wind Particle EXperiment</h4>
+      <table>
+        <tr><td>Full name</td><td>Aditya Solar Wind Particle EXperiment</td></tr>
+        <tr><td>Sub-instruments</td><td>SWIS + STEPS</td></tr>
+        <tr><td>Science goal</td><td>Solar wind composition, suprathermal ions, energetic particle origin and acceleration</td></tr>
+        <tr><td>Data products</td><td>Ion spectra, flux, moments, anisotropy</td></tr>
+      </table>
+      <p>ASPEX is the composite in-situ particle suite. It comprises two very different instruments — SWIS for thermal solar wind and STEPS for suprathermal/energetic particles — covering an enormous energy range that spans from the bulk solar wind to galactic cosmic rays.</p>
+    </div>
+    <div class="icard">
+      <h4>Science Objectives</h4>
+      <p style="font-size:.8rem;color:var(--muted)">ASPEX addresses three foundational questions in heliophysics:</p>
+      <br>
+      <table>
+        <tr><td>Origin</td><td>Where do suprathermal particles come from?</td></tr>
+        <tr><td>Acceleration</td><td>How does the solar wind accelerate particles to MeV energies?</td></tr>
+        <tr><td>Transport</td><td>How do energetic particles propagate through the heliosphere?</td></tr>
+        <tr><td>Composition</td><td>How does the alpha-to-proton ratio vary with solar wind type?</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div id="inst-swis" class="ipanel">
+    <div class="icard">
+      <h4>SWIS — Solar Wind Ion Spectrometer</h4>
+      <table>
+        <tr><td>Species</td><td>Protons (H⁺), Alpha particles (He²⁺)</td></tr>
+        <tr><td>Energy range</td><td>100 eV – 20 keV</td></tr>
+        <tr><td>Analyser</td><td>Electrostatic analyser + imaging detector</td></tr>
+        <tr><td>Angular coverage</td><td>~360° in ecliptic plane</td></tr>
+        <tr><td>Data products</td><td>Ion spectra, bulk moments (n, V, T), α/p ratio</td></tr>
+      </table>
+      <p>SWIS uses a toroidal electrostatic analyser that selects ions by energy-per-charge. The full 360° angular coverage allows determination of the complete velocity distribution function, from which all plasma moments are derived.</p>
+    </div>
+    <div class="icard">
+      <h4>What SWIS Measures</h4>
+      <table>
+        <tr><td>Proton density n</td><td>Number of H⁺ per cm³ at L1</td></tr>
+        <tr><td>Bulk speed V</td><td>Mean flow speed of the solar wind</td></tr>
+        <tr><td>Temperature T</td><td>Proton thermal energy in eV (1 eV ≈ 11,600 K)</td></tr>
+        <tr><td>α/p ratio</td><td>He²⁺/H⁺ number density ratio (~3–4% typical)</td></tr>
+        <tr><td>VDF</td><td>Full velocity distribution function f(v)</td></tr>
+      </table>
+      <p>⚠️ Verify actual variable names, cadence, and energy channel definitions from the official SWIS payload user guide before analysis. Do not assume.</p>
+    </div>
+  </div>
+
+  <div id="inst-steps" class="ipanel">
+    <div class="icard">
+      <h4>STEPS — SupraThermal & Energetic Particle Spectrometer</h4>
+      <table>
+        <tr><td>Energy range</td><td>~20 keV – 6 MeV/nucleon</td></tr>
+        <tr><td>Technique</td><td>Solid-state detectors (SSDs)</td></tr>
+        <tr><td>Detectors</td><td>6 directional detectors</td></tr>
+        <tr><td>Species</td><td>Electrons, protons, heavier ions</td></tr>
+        <tr><td>Data products</td><td>Directional flux, energy spectra, anisotropy</td></tr>
+      </table>
+      <p>STEPS bridges the gap between the thermal solar wind (SWIS) and galactic cosmic rays. It is crucial for understanding particle acceleration at interplanetary shocks and solar energetic particle (SEP) events.</p>
+    </div>
+    <div class="icard">
+      <h4>Directional Detectors (approximate)</h4>
+      <table>
+        <tr><td>D1</td><td>Sun-radial direction</td></tr>
+        <tr><td>D2</td><td>Parker spiral (nominal IMF direction)</td></tr>
+        <tr><td>D3</td><td>Earth-pointing</td></tr>
+        <tr><td>D4</td><td>Anti-Sun radial</td></tr>
+        <tr><td>D5</td><td>North ecliptic normal</td></tr>
+        <tr><td>D6</td><td>South ecliptic normal</td></tr>
+      </table>
+      <p>⚠️ Exact look directions must be verified from SPICE kernels or the STEPS user guide. The above are nominal values.</p>
+    </div>
+  </div>
+
+  <div id="inst-papa" class="ipanel">
+    <div class="icard">
+      <h4>PAPA — Plasma Analyser Package for Aditya</h4>
+      <table>
+        <tr><td>Species</td><td>Solar wind ions and electrons</td></tr>
+        <tr><td>Science focus</td><td>Velocity distribution functions (VDFs), plasma moments</td></tr>
+        <tr><td>Key products</td><td>n, V vector, temperature tensor P, electron heat flux Q</td></tr>
+        <tr><td>Unique value</td><td>Electron measurements complement SWIS ion data</td></tr>
+      </table>
+      <p>PAPA is essential for characterising the full plasma state. While SWIS measures ions, PAPA provides the electron side of the distribution — necessary for computing the full pressure tensor and understanding heat flux, wave-particle interactions, and electron-driven instabilities.</p>
+    </div>
+    <div class="icard">
+      <h4>Why Electrons Matter</h4>
+      <table>
+        <tr><td>Electron strahl</td><td>Field-aligned beam tracing magnetic connection to Sun</td></tr>
+        <tr><td>Heat flux Q</td><td>Energy transport from Sun to heliosphere</td></tr>
+        <tr><td>Whistler waves</td><td>Wave-particle resonance scatters strahl electrons</td></tr>
+        <tr><td>Plasma β_e</td><td>Electron contribution to plasma beta</td></tr>
+        <tr><td>Instability</td><td>T_perp/T_par → whistler or firehose instability</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div id="inst-mag" class="ipanel">
+    <div class="icard">
+      <h4>MAG — Magnetometer</h4>
+      <table>
+        <tr><td>Measurement</td><td>3-component vector IMF: Bx, By, Bz</td></tr>
+        <tr><td>Location</td><td>Deployed boom away from spacecraft body</td></tr>
+        <tr><td>Coordinates</td><td>GSE (Geocentric Solar Ecliptic) — verify in file headers</td></tr>
+        <tr><td>Key products</td><td>B vector, |B|, clock angle, cone angle, PSD</td></tr>
+      </table>
+      <p>The magnetometer measures the interplanetary magnetic field (IMF) vector. The Bz component (north-south in GSM) is the single most important parameter for space weather — southward Bz drives dayside reconnection and geomagnetic storms via the Dungey cycle.</p>
+    </div>
+    <div class="icard">
+      <h4>IMF Derived Quantities</h4>
+      <table>
+        <tr><td>|B|</td><td>Total field magnitude [nT]</td></tr>
+        <tr><td>Clock angle θ</td><td>arctan2(By, Bz) in GSM Y-Z plane. θ=180°=southward=geoeffective</td></tr>
+        <tr><td>Cone angle φ</td><td>arccos(|Bx|/|B|). Small φ = field-aligned flow</td></tr>
+        <tr><td>Parker angle</td><td>Expected ~45° at 1 AU for 400 km/s wind</td></tr>
+        <tr><td>B fluctuations δB</td><td>Alfvénic turbulence, waves, discontinuities</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<hr class="section-div">
+
+<!-- ══════════════ TUTORIAL ══════════════ -->
+<section id="tutorial">
+  <div class="section-tag">DATA TUTORIAL</div>
+  <h2>What Does Each Measurement Mean?</h2>
+  <p>Before visualizing data, understand what you're looking at. Each parameter has a physical meaning, a typical range, and diagnostic value. Hover any card to see formula details.</p>
+
+  <div class="tutorial-grid">
+    <div class="tut-card" style="--accent:var(--proton)">
+      <h4><span class="symbol">n</span> Proton Number Density</h4>
+      <p>Number of protons per cubic centimetre at L1. This is the zeroth moment of the velocity distribution function — the integral of f(v) over all velocities.</p>
+      <code class="formula">n = ∫ f(v) d³v ≈ 4π ∫ f(v) v² dv</code>
+      <p class="range">Quiet SW: 3–10 cm⁻³ · CIR compression: 15–30 · CME sheath: >30</p>
+      <p>A sudden density jump (×2–4) combined with velocity and field jumps = interplanetary shock. Low density + smooth field rotation = CME flux rope interior.</p>
+    </div>
+    <div class="tut-card" style="--accent:var(--plasma)">
+      <h4><span class="symbol">V</span> Solar Wind Bulk Speed</h4>
+      <p>First moment of the VDF — the mean flow velocity. Encodes the solar source region: slow wind (300–450 km/s) from streamer belt, fast wind (550–800 km/s) from open coronal holes.</p>
+      <code class="formula">V = (1/n) ∫ v f(v) d³v</code>
+      <p class="range">Slow wind: 300–450 km/s · Fast wind: 500–800 km/s · CME: up to 1000+ km/s</p>
+      <p>Speed profiles reveal stream interaction regions (CIRs) where fast wind overtakes slow wind, forming compressed plasma and shocks.</p>
+    </div>
+    <div class="tut-card" style="--accent:var(--solar)">
+      <h4><span class="symbol">T</span> Proton Temperature</h4>
+      <p>Second moment of the VDF — the thermal energy per particle. Related to the width of the velocity distribution. Hot, fast wind expands nearly adiabatically.</p>
+      <code class="formula">T = m/(3kₙ n) ∫ (v−V)² f(v) d³v</code>
+      <p class="range">Slow cold wind: 3–8 eV · Fast hot wind: 15–30 eV · CME ejecta: very cold, T &lt; expected</p>
+      <p>Anomalously low temperature for a given speed is a key CME ejecta signature (cold + fast + smooth B = flux rope).</p>
+    </div>
+    <div class="tut-card" style="--accent:var(--solar2)">
+      <h4><span class="symbol">|B|</span> IMF Total Magnitude</h4>
+      <p>Magnitude of the interplanetary magnetic field vector. Expected to decrease as ~1/r from the Sun. Enhancements signal compressed regions (sheath, CIR) or reconnecting structures.</p>
+      <code class="formula">|B| = √(Bx² + By² + Bz²)</code>
+      <p class="range">Quiet: 3–8 nT · CIR/sheath: 10–25 nT · Strong CME: 30–60+ nT</p>
+      <p>|B| alone cannot tell you about geoeffectiveness — you need the Bz component and clock angle.</p>
+    </div>
+    <div class="tut-card" style="--accent:var(--red)">
+      <h4><span class="symbol">Bz</span> IMF Northward Component</h4>
+      <p>The north-south component of the IMF in GSM coordinates. The most critical space weather parameter. Southward Bz (negative) enables dayside magnetic reconnection via the Dungey cycle.</p>
+      <code class="formula">Reconnection rate ∝ V_sw · B_T · sin²(θ/2)</code>
+      <p class="range">Northward (+): minimal coupling · Weakly south (−1 to −5 nT): mild · Strongly south (&lt;−10 nT): storm</p>
+      <p>A southward Bz of −10 nT sustained for 3+ hours typically drives a geomagnetic storm (Dst < −50 nT).</p>
+    </div>
+    <div class="tut-card" style="--accent:var(--plasma2)">
+      <h4><span class="symbol">β</span> Plasma Beta</h4>
+      <p>Ratio of thermal pressure to magnetic pressure. Determines whether the plasma is magnetically or thermally dominated, setting the character of waves and instabilities.</p>
+      <code class="formula">β = n k_B T / (B²/2μ₀) = P_thermal / P_magnetic</code>
+      <p class="range">β ≪ 1: flux rope interior · β ~ 1: typical solar wind · β ≫ 1: CIR compressed region</p>
+      <p>β &lt; 1: Alfvén and magnetosonic waves dominate dynamics. β &gt; 1: kinetic effects, instabilities, enhanced particle-wave coupling.</p>
+    </div>
+    <div class="tut-card" style="--accent:var(--proton)">
+      <h4><span class="symbol">V_A</span> Alfvén Speed</h4>
+      <p>Speed at which magnetic tension perturbations propagate along field lines. Sets the characteristic velocity scale for magnetohydrodynamic (MHD) wave propagation.</p>
+      <code class="formula">V_A = B / √(μ₀ ρ) = B / √(μ₀ n m_p)</code>
+      <p class="range">Typical at 1 AU: 40–80 km/s · Solar wind is super-Alfvénic: M_A = V/V_A ~ 6–10</p>
+      <p>The solar wind must transition from sub-Alfvénic near the Sun to super-Alfvénic (M_A &gt;1) — this transition defines the Alfvén critical surface, which Aditya-L1 studies remotely via VELC.</p>
+    </div>
+    <div class="tut-card" style="--accent:var(--plasma)">
+      <h4><span class="symbol">E(f)</span> Power Spectral Density</h4>
+      <p>Distribution of magnetic field fluctuation power across frequencies. Reveals the turbulent energy cascade from MHD scales down to ion kinetic scales. Key diagnostic from Paschmann & Daly Ch. 1.</p>
+      <code class="formula">E(f) ∝ f^α · Kolmogorov: α = −5/3 · IK: α = −3/2</code>
+      <p class="range">Inertial range: −5/3 · Kinetic range (below ion scale): −7/3 to −4</p>
+      <p>A spectral index shallower than −5/3 indicates energy injection (shock, CME). Steeper than −2 indicates sub-ion scale kinetic dissipation.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="section-div">
+
+<!-- ══════════════ ANALYSIS METHODS ══════════════ -->
+<section id="methods">
+  <div class="section-tag">ANALYSIS METHODS · ISSI SR-001</div>
+  <h2>Scientific Analysis Toolkit</h2>
+  <p>Methods follow <em>Analysis Methods for Multi-Spacecraft Data</em> (Paschmann & Daly, ISSI SR-001). Each card links to the interactive tool in the Analysis Lab.</p>
+
+  <div class="method-grid">
+    <div class="method-card" onclick="window.location='lab.html#spectral'">
+      <div class="method-num">CH. 1 · SPECTRAL ANALYSIS</div>
+      <h4>FFT · Welch PSD · Morlet Wavelet</h4>
+      <p>Transform time-series data from the time domain into the frequency domain. Reveal turbulent energy cascades, wave modes, and spectral indices. Welch's averaged periodogram reduces variance. Morlet wavelets handle non-stationary signals.</p>
+      <div class="method-ref">Eriksson 1998 · Paschmann & Daly Ch. 1</div>
+      <span class="go-btn">Open Spectral Lab →</span>
+    </div>
+    <div class="method-card" onclick="window.location='lab.html#moments'">
+      <div class="method-num">CH. 5–6 · PLASMA MOMENTS</div>
+      <h4>Density · Velocity · Temperature · Pressure Tensor</h4>
+      <p>Compute the moments of the velocity distribution function: n (zeroth), V (first), T (second). These reduce the full VDF to a small set of macroscopic fluid quantities that govern bulk plasma behavior.</p>
+      <div class="method-ref">Paschmann & Daly Ch. 5–6</div>
+      <span class="go-btn">Moments Calculator →</span>
+    </div>
+    <div class="method-card" onclick="window.location='lab.html#mva'">
+      <div class="method-num">CH. 8 · MVA</div>
+      <h4>Minimum Variance Analysis of the Magnetic Field</h4>
+      <p>Find the coordinate system where B-field variance is minimised — the normal direction to a boundary crossing, shock front, or magnetic cloud. The ratio λ_int/λ_min &gt; 2 indicates a reliable normal.</p>
+      <div class="method-ref">Sonnerup & Scheible 1998 · Ch. 8</div>
+      <span class="go-btn">Open MVA Tool →</span>
+    </div>
+    <div class="method-card" onclick="window.location='lab.html#shock'">
+      <div class="method-num">CH. 10 · DISCONTINUITIES</div>
+      <h4>Rankine-Hugoniot Shock Relations</h4>
+      <p>Apply conservation of mass, momentum, and energy across a shock to determine shock parameters: compression ratio, Mach number, shock angle θ_Bn. Distinguish between shocks, tangential discontinuities, and rotational discontinuities.</p>
+      <div class="method-ref">Schwartz 1998 · Ch. 10</div>
+      <span class="go-btn">Shock Analyser →</span>
+    </div>
+    <div class="method-card" onclick="window.location='lab.html#timeseries'">
+      <div class="method-num">CH. 2 · TIME SERIES</div>
+      <h4>Resampling · Filtering · Gap Handling</h4>
+      <p>Practical pre-processing: resample multi-instrument data to a common cadence, handle data gaps via interpolation, apply anti-aliasing filters, verify Nyquist sampling requirements before spectral analysis.</p>
+      <div class="method-ref">Harvey 1998 · Ch. 2</div>
+      <span class="go-btn">Time Series Tools →</span>
+    </div>
+    <div class="method-card" onclick="window.location='lab.html#anisotropy'">
+      <div class="method-num">CH. 5 · DISTRIBUTIONS</div>
+      <h4>VDF · Pitch-Angle Distributions · Anisotropy</h4>
+      <p>Analyse the velocity distribution function: compute pitch-angle distributions relative to the local B field (from STEPS), test fire-hose and mirror instability conditions from T_perp/T_par, detect beam-like populations.</p>
+      <div class="method-ref">Fazakerley 1998 · Ch. 5</div>
+      <span class="go-btn">Distribution Lab →</span>
+    </div>
+  </div>
+</section>
+
+<hr class="section-div">
+
+<!-- ══════════════ DATA ACCESS ══════════════ -->
+<section id="archive">
+  <div class="section-tag">DATA ACCESS</div>
+  <h2>How to Get Aditya-L1 Data</h2>
+  <p>All Aditya-L1 science data is available through PRADAN (PRoducts and Archives Data ANalysis) at ISSDC. No long proprietary period — data is released on a rolling basis after processing.</p>
+
+  <div class="archive-steps">
+    <div class="astep"><div class="astep-num">1</div><div><h4>Register</h4><p>Create a free account at <a href="https://pradan.issdc.gov.in" target="_blank">pradan.issdc.gov.in</a>. Required for data download.</p></div></div>
+    <div class="astep"><div class="astep-num">2</div><div><h4>Browse datasets</h4><p>Navigate Aditya-L1 → instrument → Level-1 or Level-2 → year → date → files.</p></div></div>
+    <div class="astep"><div class="astep-num">3</div><div><h4>Download CDF files</h4><p>Data is in CDF (Common Data Format). Use cdflib (Python) or NASA's CDF library to read. Session timeout ~30 min — use bulk download for large datasets.</p></div></div>
+    <div class="astep"><div class="astep-num">4</div><div><h4>Or upload here</h4><p>Drop any CDF file into the <a href="visualizer.html">Data Visualizer</a> for instant plotting — no coding needed.</p></div></div>
+  </div>
+
+  <div class="caution">
+    ⚠️ <strong>Scientific cautions:</strong> Do NOT assume cadence values — check the CDF DEPEND_0 attribute. Do NOT assume variable names — inspect headers first. Calibration parameters may be updated; check payload user guides for each download.
+  </div>
+</section>
+
+<hr class="section-div">
+
+<!-- ══════════════ CTA ══════════════ -->
+<div id="cta-section">
+  <h2>Ready to <span class="grad">Explore the Data?</span></h2>
+  <p>You know the instruments, the physics, and the methods. Now go observe the Sun's plasma in real time — or dig into any historical data window you choose.</p>
+  <div class="cta-btns">
+    <a href="dashboard.html" class="btn-primary">Live Dashboard →</a>
+    <a href="visualizer.html" class="btn-secondary">Pick a Date & Visualize</a>
+    <a href="lab.html" class="btn-secondary">Open Analysis Lab</a>
+    <a href="explorer.html" class="btn-secondary">Full Science Explorer</a>
+  </div>
+</div>
+
+<footer>
+  <p>Mission data © <strong>ISRO / ISSDC</strong> · Data via <a href="https://pradan.issdc.gov.in" target="_blank">PRADAN</a> · Methods from <em>Analysis Methods for Multi-Spacecraft Data</em>, Paschmann & Daly (ISSI SR-001) · <a href="https://github.com/Vivek-Shrivastav/Aditya-L1_Plasma_observatory" target="_blank">GitHub</a></p>
+</footer>
+
+<script>
+function showInst(id) {
+  document.querySelectorAll('.ipanel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.itab').forEach(t => t.classList.remove('active'));
+  document.getElementById('inst-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+document.getElementById('theme-btn').addEventListener('click', () => {
+  const l = document.documentElement.dataset.theme === 'light';
+  document.documentElement.dataset.theme = l ? '' : 'light';
+  document.getElementById('theme-btn').textContent = l ? '☀' : '🌙';
+});
+</script>
+</body>
+</html>

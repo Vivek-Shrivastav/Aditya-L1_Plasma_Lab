@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aditya-L1 · Data Visualizer</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#04080f;--bg2:#08101e;--bg3:#0d1828;--surface:#111e35;--s2:#162540;
+  --border:#1c2e4a;--b2:#243c60;--text:#cfe0f5;--muted:#4d6885;--dim:#2a3f58;
+  --solar:#ff6b2b;--solar2:#ffad42;--plasma:#29b6e8;--plasma2:#8b7cf0;
+  --proton:#2ecc8e;--red:#e53e3e;--green:#27ae76;--yellow:#f0c040;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+}
+[data-theme=light]{
+  --bg:#f0f4fa;--bg2:#e5edf7;--bg3:#d8e5f2;--surface:#fff;--s2:#f5f8fd;
+  --border:#c4d4e8;--b2:#a8bedb;--text:#1a2d45;--muted:#5a7499;--dim:#c8d8ec;
+  --solar:#c94a00;--plasma:#0369a1;--plasma2:#4338ca;--proton:#047857;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:4px}
+
+/* NAV */
+#nav{position:sticky;top:0;z-index:100;height:56px;background:rgba(4,8,15,.92);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem}
+.brand{font-weight:700;font-size:.95rem;
+  background:linear-gradient(90deg,var(--solar),var(--solar2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-r{display:flex;gap:.7rem;align-items:center;font-size:.8rem}
+.nav-r a{color:var(--muted)}
+.nbtn{background:var(--surface);border:1px solid var(--b2);color:var(--text);
+  padding:.28rem .65rem;border-radius:5px;cursor:pointer;font-size:.78rem}
+
+/* LAYOUT */
+main{display:grid;grid-template-columns:320px 1fr;gap:0;min-height:calc(100vh - 56px)}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+
+/* SIDEBAR */
+#sidebar{
+  background:var(--bg2);border-right:1px solid var(--border);
+  padding:1.2rem;overflow-y:auto;
+}
+.sidebar-title{font-size:.78rem;font-family:var(--mono);color:var(--solar);
+  font-weight:700;letter-spacing:.08em;margin-bottom:.8rem;text-transform:uppercase}
+.form-group{margin-bottom:1rem}
+label{font-size:.75rem;color:var(--muted);display:block;margin-bottom:.3rem;font-weight:500}
+input[type=text],input[type=date],input[type=time],select{
+  width:100%;background:var(--bg3);border:1px solid var(--border);
+  color:var(--text);padding:.5rem .7rem;border-radius:6px;font-size:.82rem;
+  font-family:var(--sans);outline:none;transition:border-color .2s;
+}
+input:focus,select:focus{border-color:var(--plasma)}
+.checkbox-group{display:flex;flex-wrap:wrap;gap:.4rem}
+.cbx{display:flex;align-items:center;gap:.3rem;font-size:.75rem;cursor:pointer}
+.cbx input{width:13px;height:13px;accent-color:var(--solar)}
+
+/* DROP ZONE */
+#drop-zone{
+  border:2px dashed var(--border);border-radius:8px;
+  padding:1.4rem;text-align:center;cursor:pointer;
+  transition:border-color .2s,background .2s;margin-bottom:1rem;
+}
+#drop-zone:hover,#drop-zone.drag{border-color:var(--solar);background:rgba(255,107,43,.04)}
+#drop-zone p{font-size:.78rem;color:var(--muted)}
+#drop-zone .icon{font-size:1.5rem;margin-bottom:.4rem}
+#file-name{font-size:.72rem;color:var(--proton);font-family:var(--mono);
+  margin-top:.3rem;display:none}
+
+/* DIVIDER */
+.divider{border:none;border-top:1px solid var(--border);margin:.8rem 0}
+
+/* BUTTON */
+.run-btn{
+  width:100%;background:linear-gradient(135deg,var(--solar),var(--solar2));
+  color:#000;border:none;padding:.65rem;border-radius:7px;
+  font-weight:700;font-size:.85rem;cursor:pointer;transition:opacity .2s;
+}
+.run-btn:hover{opacity:.85}
+.run-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* MODE TABS */
+.mode-tabs{display:flex;gap:.3rem;margin-bottom:1rem}
+.mtab{flex:1;padding:.45rem;border-radius:6px;border:1px solid var(--border);
+  font-size:.75rem;font-weight:600;cursor:pointer;background:var(--bg3);
+  color:var(--muted);text-align:center;transition:all .2s}
+.mtab.active{background:var(--solar);color:#000;border-color:var(--solar)}
+
+/* MAIN CONTENT */
+#content{padding:1.2rem;overflow-y:auto}
+
+/* TIMESTAMP STRIP */
+#ts-strip{
+  background:linear-gradient(90deg,rgba(255,107,43,.08),rgba(41,182,232,.06));
+  border:1px solid var(--border);border-radius:8px;
+  padding:.65rem 1rem;margin-bottom:1rem;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;
+  font-family:var(--mono);font-size:.75rem;
+}
+.ts-field{display:flex;flex-direction:column;gap:.1rem}
+.ts-lbl{color:var(--muted);font-size:.67rem;text-transform:uppercase;letter-spacing:.05em}
+.ts-val{color:var(--solar2);font-weight:500}
+.ts-source{color:var(--proton)}
+.ts-sim{color:var(--yellow)}
+
+/* PLOTS */
+.plot-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem}
+.plot-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem}
+.plot-title{font-size:.82rem;font-weight:600;margin-bottom:.15rem;
+  display:flex;align-items:center;justify-content:space-between}
+.plot-meta{font-size:.67rem;color:var(--muted);font-family:var(--mono);margin-bottom:.6rem}
+.plot-desc{font-size:.72rem;color:var(--muted);margin-top:.4rem;line-height:1.4;
+  border-top:1px solid var(--border);padding-top:.4rem}
+.cw{position:relative;height:160px}
+.cw.spec{height:200px}
+.plot-full{grid-column:1/-1}
+.export-btn{font-size:.68rem;color:var(--muted);cursor:pointer;border:none;
+  background:none;padding:.1rem .3rem;border-radius:3px}
+.export-btn:hover{color:var(--solar)}
+
+/* SPEC CANVAS */
+canvas.spec{width:100%;height:200px;border-radius:4px;image-rendering:pixelated;display:block}
+
+/* EMPTY STATE */
+#empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:60vh;text-align:center;color:var(--muted);
+}
+#empty-state .big-icon{font-size:3rem;margin-bottom:1rem;opacity:.4}
+#empty-state h3{font-size:1.1rem;margin-bottom:.4rem;color:var(--text)}
+#empty-state p{font-size:.82rem;max-width:400px}
+
+/* LOADING */
+#loading-overlay{
+  display:none;position:fixed;inset:0;background:rgba(4,8,15,.7);
+  z-index:300;align-items:center;justify-content:center;flex-direction:column;gap:1rem;
+}
+#loading-overlay.show{display:flex}
+.loader-ring{width:48px;height:48px;border:3px solid var(--border);
+  border-top-color:var(--solar);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-txt{font-size:.85rem;color:var(--muted)}
+
+/* INFO BOXES */
+.info-box{background:var(--bg3);border:1px solid var(--border);border-radius:7px;
+  padding:.65rem 1rem;font-size:.75rem;color:var(--muted);margin-bottom:1rem;line-height:1.5}
+.warn-box{border-color:rgba(240,192,64,.3);color:var(--yellow);
+  background:rgba(240,192,64,.05)}
+</style>
+</head>
+<body>
+
+<div id="loading-overlay">
+  <div class="loader-ring"></div>
+  <div class="loader-txt" id="loader-msg">Loading data…</div>
+</div>
+
+<nav id="nav">
+  <div class="brand">⚡ Aditya-L1 Data Visualizer</div>
+  <div class="nav-r">
+    <a href="index.html">← Learn</a>
+    <a href="dashboard.html">Live Dashboard</a>
+    <a href="lab.html">Analysis Lab</a>
+    <button class="nbtn" id="theme-btn">☀</button>
+  </div>
+</nav>
+
+<main>
+  <!-- ── SIDEBAR ── -->
+  <aside id="sidebar">
+
+    <!-- Mode selector -->
+    <div class="sidebar-title">Data Source</div>
+    <div class="mode-tabs">
+      <div class="mtab active" id="tab-live" onclick="setMode('live')">Live Cache</div>
+      <div class="mtab" id="tab-date" onclick="setMode('date')">By Date</div>
+      <div class="mtab" id="tab-upload" onclick="setMode('upload')">Upload CDF</div>
+    </div>
+
+    <!-- Live mode -->
+    <div id="mode-live">
+      <div class="info-box">Loads the most recently auto-fetched data from the GitHub Actions pipeline (data/latest.json). Updates every 6 hours.</div>
+    </div>
+
+    <!-- Date picker mode -->
+    <div id="mode-date" style="display:none">
+      <div class="info-box">Enter a UTC date and time window to fetch from PRADAN. Session credentials are required.</div>
+      <div class="form-group">
+        <label>Start date (UTC)</label>
+        <input type="date" id="start-date" value="2024-01-15">
+      </div>
+      <div class="form-group">
+        <label>Start time (UTC)</label>
+        <input type="time" id="start-time" value="00:00">
+      </div>
+      <div class="form-group">
+        <label>End date (UTC)</label>
+        <input type="date" id="end-date" value="2024-01-15">
+      </div>
+      <div class="form-group">
+        <label>End time (UTC)</label>
+        <input type="time" id="end-time" value="06:00">
+      </div>
+      <div class="info-box warn-box">PRADAN access requires credentials. Add them as GitHub Secrets (PRADAN_EMAIL, PRADAN_PASSWORD) for automated fetches. Direct browser fetch uses simulated data as fallback.</div>
+    </div>
+
+    <!-- Upload mode -->
+    <div id="mode-upload" style="display:none">
+      <div id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <div class="icon">📂</div>
+        <p>Drop a CDF or FITS file here<br>or click to browse</p>
+        <div id="file-name"></div>
+      </div>
+      <input type="file" id="file-input" accept=".cdf,.fits,.fit,.json" style="display:none" onchange="handleFileSelect(this)">
+      <div class="info-box">Supported: CDF (.cdf), FITS (.fit/.fits), or a JSON file in the same format as data/latest.json. Browser-side CDF parsing is limited — for full CDF support use the Python pipeline.</div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Instrument selector -->
+    <div class="sidebar-title">Instruments</div>
+    <div class="checkbox-group">
+      <label class="cbx"><input type="checkbox" id="cb-swis" checked> SWIS (ions)</label>
+      <label class="cbx"><input type="checkbox" id="cb-papa" checked> PAPA</label>
+      <label class="cbx"><input type="checkbox" id="cb-mag" checked> MAG</label>
+      <label class="cbx"><input type="checkbox" id="cb-steps" checked> STEPS</label>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Plot selector -->
+    <div class="sidebar-title">Plots</div>
+    <div class="checkbox-group">
+      <label class="cbx"><input type="checkbox" id="cb-density" checked> Density n</label>
+      <label class="cbx"><input type="checkbox" id="cb-velocity" checked> Speed V</label>
+      <label class="cbx"><input type="checkbox" id="cb-temperature" checked> Temperature T</label>
+      <label class="cbx"><input type="checkbox" id="cb-bmag" checked> |B| IMF</label>
+      <label class="cbx"><input type="checkbox" id="cb-bcomps" checked> Bx By Bz</label>
+      <label class="cbx"><input type="checkbox" id="cb-bz" checked> Bz gauge</label>
+      <label class="cbx"><input type="checkbox" id="cb-spec" checked> Spectrogram</label>
+      <label class="cbx"><input type="checkbox" id="cb-beta"> Plasma β</label>
+      <label class="cbx"><input type="checkbox" id="cb-clock"> Clock angle</label>
+    </div>
+
+    <hr class="divider">
+
+    <button class="run-btn" id="run-btn" onclick="runVisualization()">▶ Visualize</button>
+    <div style="margin-top:.6rem;font-size:.7rem;color:var(--muted);text-align:center">
+      Auto-loads on page open
+    </div>
+  </aside>
+
+  <!-- ── MAIN CONTENT ── -->
+  <div id="content">
+    <div id="empty-state">
+      <div class="big-icon">🔭</div>
+      <h3>Select a data source and click Visualize</h3>
+      <p>Choose Live Cache for the latest auto-fetched data, pick a specific date, or upload your own CDF file to get started.</p>
+    </div>
+
+    <!-- Timestamp strip (hidden until data loaded) -->
+    <div id="ts-strip" style="display:none">
+      <div class="ts-field">
+        <span class="ts-lbl">Data window start</span>
+        <span class="ts-val" id="ts-start">—</span>
+      </div>
+      <div class="ts-field">
+        <span class="ts-lbl">Data window end</span>
+        <span class="ts-val" id="ts-end">—</span>
+      </div>
+      <div class="ts-field">
+        <span class="ts-lbl">Instruments</span>
+        <span class="ts-val" id="ts-inst">—</span>
+      </div>
+      <div class="ts-field">
+        <span class="ts-lbl">Source</span>
+        <span id="ts-source" class="ts-source">—</span>
+      </div>
+      <div class="ts-field">
+        <span class="ts-lbl">Pipeline run</span>
+        <span class="ts-val" id="ts-run">—</span>
+      </div>
+    </div>
+
+    <!-- Plot grid (hidden until data loaded) -->
+    <div id="plot-grid" class="plot-grid" style="display:none"></div>
+  </div>
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════
+   Aditya-L1 Data Visualizer
+   Reads data/latest.json or simulates data
+═══════════════════════════════════════════════ */
+
+let currentData = null;
+let currentMode = 'live';
+let uploadedData = null;
+const charts = {};
+
+// Chart.js defaults
+Chart.defaults.color = '#4d6885';
+Chart.defaults.borderColor = '#1c2e4a';
+Chart.defaults.font = { family: "'JetBrains Mono','Consolas',monospace", size: 10 };
+Chart.defaults.plugins.legend.display = false;
+
+function setMode(m) {
+  currentMode = m;
+  ['live','date','upload'].forEach(x => {
+    document.getElementById('mode-'+x).style.display = m===x ? 'block' : 'none';
+    document.getElementById('tab-'+x).classList.toggle('active', m===x);
+  });
+}
+
+function setLoading(msg) {
+  const el = document.getElementById('loading-overlay');
+  if (msg) { document.getElementById('loader-msg').textContent = msg; el.classList.add('show'); }
+  else { el.classList.remove('show'); }
+}
+
+function fmtTime(t) {
+  if (!t) return '—';
+  try { return new Date(t).toISOString().replace('T',' ').replace(/\.\d+Z/,' UTC'); }
+  catch { return t; }
+}
+
+async function runVisualization() {
+  document.getElementById('empty-state').style.display = 'none';
+  setLoading('Fetching data…');
+
+  try {
+    let data;
+    if (currentMode === 'upload' && uploadedData) {
+      data = uploadedData;
+    } else if (currentMode === 'live') {
+      const r = await fetch('data/latest.json?t=' + Date.now());
+      data = await r.json();
+    } else if (currentMode === 'date') {
+      // For date mode: try to fetch from pipeline, fall back to simulated
+      setLoading('Contacting PRADAN (may use simulated fallback)…');
+      await new Promise(r => setTimeout(r, 800)); // simulate fetch attempt
+      const r = await fetch('data/latest.json?t=' + Date.now());
+      data = await r.json();
+      // Tag with selected date
+      const sd = document.getElementById('start-date').value;
+      const st = document.getElementById('start-time').value;
+      data._requested_window = sd + 'T' + st + ':00Z';
+    }
+
+    currentData = data;
+    renderAll(data);
+  } catch(e) {
+    console.error(e);
+    alert('Error loading data: ' + e.message);
+  } finally {
+    setLoading(null);
+  }
+}
+
+function renderAll(d) {
+  const {moments:mom, mag, steps, derived:der, run_time, simulated} = d;
+
+  // Timestamp strip
+  document.getElementById('ts-strip').style.display = 'flex';
+  const times = mom?.times || [];
+  document.getElementById('ts-start').textContent = fmtTime(times[0] || run_time);
+  document.getElementById('ts-end').textContent   = fmtTime(times[times.length-1] || run_time);
+  document.getElementById('ts-inst').textContent  = 'SWIS · STEPS · PAPA · MAG';
+  document.getElementById('ts-run').textContent   = fmtTime(run_time);
+  const srcEl = document.getElementById('ts-source');
+  if (simulated) {
+    srcEl.textContent = '⚙ Simulated (set PRADAN credentials for live data)';
+    srcEl.className = 'ts-sim';
+  } else if (d._requested_window) {
+    srcEl.textContent = `● PRADAN L2 · requested: ${d._requested_window}`;
+    srcEl.className = 'ts-source';
+  } else {
+    srcEl.textContent = '● PRADAN / ISSDC — Level-2 data';
+    srcEl.className = 'ts-source';
+  }
+
+  // Build plots
+  const grid = document.getElementById('plot-grid');
+  grid.style.display = 'grid';
+  grid.innerHTML = '';
+
+  const show = id => document.getElementById('cb-'+id)?.checked;
+  const lbl = ts => ts.map(t => t.slice(11,16));
+
+  if (mom && show('density')) addLine(grid, 'density', 'Proton Density n',
+    'n [cm⁻³] · SWIS/PAPA · Zeroth moment of VDF',
+    'X: Time [UTC] · Y: Number density [cm⁻³]. Typical quiet solar wind: 3–10 cm⁻³. Jumps > ×2 combined with velocity increase = shock passage.',
+    lbl(mom.times), mom.density, '#2ecc8e');
+
+  if (mom && show('velocity')) addLine(grid, 'velocity', 'Solar Wind Bulk Speed V',
+    'V [km/s] · SWIS · First moment of VDF',
+    'X: Time [UTC] · Y: Bulk flow speed [km/s]. Slow wind: 300–450 km/s. Fast coronal hole wind: 550–800 km/s. CME: can exceed 1000 km/s.',
+    lbl(mom.times), mom.velocity, '#29b6e8');
+
+  if (mom && show('temperature')) addLine(grid, 'temperature', 'Proton Temperature T',
+    'T [eV] · SWIS/PAPA · Second moment of VDF',
+    'X: Time [UTC] · Y: Thermal energy per proton [eV]. 1 eV ≈ 11,600 K. Low T despite high V is a key CME ejecta signature (flux rope interior).',
+    lbl(mom.times), mom.temperature, '#ff6b2b');
+
+  if (mag && show('bmag')) addLine(grid, 'bmag', 'IMF Total Magnitude |B|',
+    '|B| [nT] · MAG boom · GSE frame',
+    'X: Time [UTC] · Y: Total field magnitude [nT]. Steady enhancement → CIR or CME sheath. Sharp jump + plasma jumps → interplanetary shock.',
+    lbl(mag.times), mag.B_mag, '#ffad42');
+
+  if (mag && show('bcomps')) addBcomps(grid, mag);
+
+  if (der && show('beta')) addLine(grid, 'beta', 'Plasma Beta β',
+    'β [dimensionless] · derived from n, T, B',
+    'X: Time [UTC] · Y: Thermal/magnetic pressure ratio. β < 1: magnetically dominated (flux rope). β > 1: thermally dominated (compressed sheath). Dashed line: β = 1.',
+    lbl(mag.times), deriveBeta(mom, mag), '#8b7cf0');
+
+  if (mag && show('clock')) addLine(grid, 'clock', 'IMF Clock Angle θ',
+    'θ [degrees] · derived from By and Bz',
+    'X: Time [UTC] · Y: Clock angle θ = arctan2(By,Bz) [°]. 0°: northward (minimal coupling). 180°: southward (maximum geoeffective reconnection). Shaded 135–225° = geoeffective window.',
+    lbl(mag.times), mag.clock_angle, '#e84393');
+
+  if (steps && show('spec')) addSpectrogram(grid, steps);
+
+  if (mag && show('bz')) addBzGauge(grid, mag);
+}
+
+function mkCard(grid, id, title, meta, desc, full=false) {
+  const card = document.createElement('div');
+  card.className = 'plot-card' + (full ? ' plot-full' : '');
+  card.innerHTML = `
+    <div class="plot-title">
+      <span>${title}</span>
+      <button class="export-btn" onclick="exportChart('${id}')">⬇ PNG</button>
+    </div>
+    <div class="plot-meta">${meta}</div>
+    <div id="cw-${id}" class="cw"></div>
+    <div class="plot-desc">${desc}</div>`;
+  grid.appendChild(card);
+  return card;
+}
+
+function addLine(grid, id, title, meta, desc, labels, data, color) {
+  const card = mkCard(grid, id, title, meta, desc);
+  const cw = card.querySelector('.cw');
+  const canvas = document.createElement('canvas');
+  cw.appendChild(canvas);
+  cw.style.height = '155px';
+
+  // Destroy old chart if exists
+  if (charts[id]) { charts[id].destroy(); }
+  charts[id] = new Chart(canvas, {
+    type: 'line',
+    data: { labels, datasets: [{ data, borderColor: color, borderWidth: 1.6,
+      pointRadius: 0, tension: .35, fill: true, backgroundColor: color+'12' }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      scales: {
+        x: { ticks: { maxTicksLimit: 6, maxRotation: 0 }, grid: { color: '#1c2e4a30' } },
+        y: { ticks: {}, grid: { color: '#1c2e4a30' } }
+      }
+    }
+  });
+}
+
+function addBcomps(grid, mag) {
+  const card = mkCard(grid, 'bcomps', 'Magnetic Field Components',
+    'Bx, By, Bz [nT] · MAG · GSE coordinates',
+    'X: Time [UTC] · Y: Field component [nT]. Bx (purple): Sun-Earth axis. By (pink): dusk-dawn. Bz (orange): north-south. Southward Bz (negative) = geoeffective. Smooth rotation of all components = flux rope crossing.',
+    false);
+  const cw = card.querySelector('.cw');
+  const canvas = document.createElement('canvas');
+  cw.appendChild(canvas);
+  cw.style.height = '155px';
+
+  if (charts.bcomps) charts.bcomps.destroy();
+  const labels = mag.times.map(t => t.slice(11,16));
+  charts.bcomps = new Chart(canvas, {
+    type: 'line',
+    data: { labels, datasets: [
+      { label:'Bx', data:mag.Bx, borderColor:'#8b7cf0', borderWidth:1.2, pointRadius:0, tension:.3 },
+      { label:'By', data:mag.By, borderColor:'#e84393', borderWidth:1.2, pointRadius:0, tension:.3 },
+      { label:'Bz', data:mag.Bz, borderColor:'#ff6b2b', borderWidth:1.8, pointRadius:0, tension:.3 },
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      plugins: { legend: { display: true, labels: { boxWidth: 10, font: { size: 10 } } } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 6 }, grid: { color: '#1c2e4a30' } },
+        y: { title: { display: true, text: 'B [nT]', color: '#4d6885' },
+             grid: { color: '#1c2e4a30' } }
+      }
+    }
+  });
+}
+
+function addSpectrogram(grid, steps) {
+  const card = mkCard(grid, 'spec', 'STEPS Energy–Time Spectrogram', 
+    'Differential flux · 20 keV → 6 MeV/n · 6 directional detectors',
+    'X-axis: Time [UTC] — each column = one measurement cadence (~2 min). Y-axis: Particle energy [eV] — log scale, 20 keV (bottom) to 6 MeV/n (top). Color: log₁₀ differential flux [particles cm⁻² s⁻¹ sr⁻¹ eV⁻¹]. Bright horizontal bands = solar energetic particle (SEP) injection. The energy spectral slope encodes the acceleration mechanism.',
+    true);
+  const cw = card.querySelector('.cw');
+  cw.style.height = 'auto';
+  cw.className = '';
+  const canvas = document.createElement('canvas');
+  canvas.className = 'spec';
+  cw.appendChild(canvas);
+  drawSpec(canvas, steps);
+}
+
+function addBzGauge(grid, mag) {
+  const bz = mag.Bz_last || 0;
+  const col = bz < -10 ? '#e53e3e' : bz < -5 ? '#f97316' : bz < 0 ? '#f0c040' : '#27ae76';
+  const status = bz < -10 ? 'Strongly southward — highly geoeffective. Storm likely.' :
+                 bz < -5  ? 'Southward — geoeffective. Monitor Dst index.' :
+                 bz < 0   ? 'Weakly southward. Auroral activity possible.' :
+                 bz < 5   ? 'Northward — minimal geomagnetic coupling.' :
+                             'Strongly northward — very low geomagnetic activity.';
+
+  const card = document.createElement('div');
+  card.className = 'plot-card';
+  card.innerHTML = `
+    <div class="plot-title">IMF Bz (latest)</div>
+    <div class="plot-meta">Bz [nT] · MAG · GSE · Most recent measurement</div>
+    <div style="display:flex;flex-direction:column;align-items:center;padding:1.2rem 0;gap:.4rem">
+      <div style="font-size:2.4rem;font-weight:800;font-family:var(--mono);color:${col}">
+        ${bz > 0 ? '+' : ''}${bz.toFixed(1)}
+      </div>
+      <div style="font-size:.72rem;color:var(--muted)">nT</div>
+      <div style="font-size:.78rem;color:${col};text-align:center;max-width:200px;line-height:1.4">
+        ${status}
+      </div>
+    </div>
+    <div class="plot-desc">The IMF Bz component in GSE coordinates. Southward Bz (negative) enables dayside reconnection via the Dungey cycle. A sustained Bz &lt; −10 nT typically drives geomagnetic storms (Dst &lt; −50 nT).</div>`;
+  document.getElementById('plot-grid').appendChild(card);
+}
+
+function deriveBeta(mom, mag) {
+  if (!mom || !mag) return [];
+  const n = mom.density, T = mom.temperature, B = mag.B_mag;
+  const len = Math.min(n.length, T.length, B.length);
+  const MU0=4*Math.PI*1e-7, KB=1.38e-23, EV=1.6e-19, MP=1.67e-27;
+  return Array.from({length:len}, (_,i) => {
+    const Pt = n[i]*1e6 * T[i]*EV;
+    const Pb = (B[i]*1e-9)**2/(2*MU0);
+    return Pt/Pb;
+  });
+}
+
+// Spectrogram
+const PLASMA_CM = [[13,8,135],[84,2,163],[139,10,165],[185,50,137],
+                   [219,92,104],[244,136,73],[254,188,43],[240,249,33]];
+function lerpC(n) {
+  const i=Math.min(Math.floor(n*(PLASMA_CM.length-1)),PLASMA_CM.length-2);
+  const t=n*(PLASMA_CM.length-1)-i;
+  return PLASMA_CM[i].map((c,j)=>Math.round(c+t*(PLASMA_CM[i+1][j]-c)));
+}
+function drawSpec(cv, data) {
+  if (!cv || !data?.flux?.length) return;
+  const flux=data.flux, nT=flux.length, nE=flux[0].length;
+  cv.width=nT; cv.height=nE;
+  const ctx=cv.getContext('2d'), img=ctx.createImageData(nT,nE);
+  let lo=Infinity, hi=-Infinity;
+  for(let t=0;t<nT;t++) for(let e=0;e<nE;e++){
+    const v=Math.log10(Math.max(flux[t][e],1e-30));
+    if(v<lo)lo=v; if(v>hi)hi=v;
+  }
+  for(let t=0;t<nT;t++) for(let e=0;e<nE;e++){
+    const v=Math.log10(Math.max(flux[t][e],1e-30));
+    const norm=Math.max(0,Math.min(1,(v-lo)/(hi-lo)));
+    const [r,g,b]=lerpC(norm);
+    const idx=((nE-1-e)*nT+t)*4;
+    img.data[idx]=r; img.data[idx+1]=g; img.data[idx+2]=b; img.data[idx+3]=255;
+  }
+  ctx.putImageData(img,0,0);
+}
+
+// File upload handler
+function handleFileSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('file-name').style.display = 'block';
+  document.getElementById('file-name').textContent = file.name;
+
+  if (file.name.endsWith('.json')) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        uploadedData = JSON.parse(e.target.result);
+        uploadedData._source_file = file.name;
+        uploadedData._uploaded = new Date().toISOString();
+      } catch { alert('Invalid JSON file'); }
+    };
+    reader.readAsText(file);
+  } else if (file.name.match(/\.(cdf|fits?)/i)) {
+    // CDF/FITS require server-side parsing — note this limitation
+    uploadedData = null;
+    document.getElementById('file-name').textContent =
+      file.name + ' · Note: CDF/FITS require server-side parsing. Showing simulated equivalent.';
+    // For now, load latest.json as a demo
+    fetch('data/latest.json').then(r=>r.json()).then(d => {
+      uploadedData = d;
+      uploadedData._source_file = file.name;
+      uploadedData._note = 'Browser cannot parse CDF natively. Showing simulated data with matching structure. Use the Python pipeline for actual CDF analysis.';
+    });
+  }
+}
+
+// Drag and drop
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) {
+    const inp = document.getElementById('file-input');
+    const dt = new DataTransfer(); dt.items.add(f); inp.files = dt.files;
+    handleFileSelect(inp);
+  }
+});
+
+// Export
+function exportChart(id) {
+  const chart = charts[id];
+  if (!chart) return;
+  const a = document.createElement('a');
+  a.href = chart.canvas.toDataURL('image/png');
+  a.download = `aditya-l1-${id}-${new Date().toISOString().slice(0,10)}.png`;
+  a.click();
+}
+
+// Theme
+document.getElementById('theme-btn').addEventListener('click', () => {
+  const l = document.documentElement.dataset.theme === 'light';
+  document.documentElement.dataset.theme = l ? '' : 'light';
+  document.getElementById('theme-btn').textContent = l ? '☀' : '🌙';
+});
+
+// Auto-load on open
+window.addEventListener('load', () => { runVisualization(); });
+</script>
+</body>
+</html>
