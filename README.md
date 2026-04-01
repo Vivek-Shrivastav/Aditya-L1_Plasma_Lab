@@ -2,7 +2,7 @@
 
 > One-stop repository for ISRO's Aditya-L1 in-situ plasma science — from mission context and instrument tutorials to live data, interactive visualization, and analysis tools grounded in the ISSI SR-001 methodology.
 
-🔗 **Live site**: https://vivek-shrivastav.github.io/Aditya-L1_Plasma_observatory/
+🔗 **Live site**: https://vivek-shrivastav.github.io/Aditya-L1_Plasma_Lab/
 
 ---
 
