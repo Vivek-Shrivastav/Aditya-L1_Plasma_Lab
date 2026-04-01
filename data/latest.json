@@ -1,0 +1,41 @@
+{
+  "run_time": "2024-01-01T00:00:00+00:00",
+  "data_date": "2024-01-01",
+  "simulated": true,
+  "event_count": 0,
+  "events": [],
+  "scalars": {
+    "density_cm3": 5.0,
+    "velocity_kms": 420.0,
+    "temperature_eV": 10.0,
+    "B_mag_nT": 5.0,
+    "Bz_nT": 2.0,
+    "plasma_beta": 0.8,
+    "alfven_speed_kms": 55.0,
+    "alfvenic_mach": 7.6,
+    "clock_angle_deg": 30.0
+  },
+  "moments": {
+    "simulated": true,
+    "times": [],
+    "density": [],
+    "velocity": [],
+    "temperature": []
+  },
+  "mag": {
+    "simulated": true,
+    "times": [],
+    "Bx": [], "By": [], "Bz": [],
+    "B_mag": [],
+    "clock_angle": [],
+    "Bz_last": 2.0,
+    "B_mag_last": 5.0,
+    "clock_last": 30.0
+  },
+  "steps": {
+    "simulated": true,
+    "times": [],
+    "energies_eV": [],
+    "flux": []
+  }
+}
