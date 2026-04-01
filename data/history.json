@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "time": "2026-04-01T15:38:51.173926+00:00",
+    "simulated": true,
+    "density": 5.38,
+    "velocity": 412.9,
+    "temperature": 7.33,
+    "B_mag": 5.35,
+    "Bz": 4.5,
+    "beta": 0.555,
+    "va_kms": 50.3,
+    "mach_a": 8.21,
+    "Pt_nPa": 0.006,
+    "Pb_nPa": 0.011,
+    "event_types": [],
+    "sw_regime": "Slow wind \u2014 coronal streamer belt"
+  }
+]
