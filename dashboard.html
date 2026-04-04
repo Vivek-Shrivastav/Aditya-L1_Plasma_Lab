@@ -4,715 +4,1145 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aditya-L1 · Live Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-:root{
-  --bg:#04080f;--bg2:#08101e;--bg3:#0d1828;--surface:#111e35;
-  --border:#1c2e4a;--b2:#243c60;--text:#cfe0f5;--muted:#4d6885;--dim:#2a3f58;
-  --solar:#ff6b2b;--solar2:#ffad42;--plasma:#29b6e8;--plasma2:#8b7cf0;
-  --proton:#2ecc8e;--red:#e53e3e;--green:#27ae76;--yellow:#f0c040;
-  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+/* ─── Design tokens (matches index.html) ─────────────────────────────── */
+:root {
+  --space-950:#020408;--space-900:#04080f;--space-850:#060c16;
+  --space-800:#091220;--space-750:#0d192c;--space-700:#112035;
+  --space-600:#162840;--space-500:#1e3558;--space-400:#2a4a72;
+  --space-300:#3d6494;--space-200:#5a82b8;--space-100:#8aaed8;
+  --solar-600:#7c2d00;--solar-500:#c24400;--solar-400:#f05a00;
+  --solar-300:#ff7a2b;--solar-200:#ffad6b;--solar-100:#ffd4a8;
+  --plasma-500:#007a9e;--plasma-400:#00a8c8;--plasma-300:#29cbe8;
+  --plasma-200:#7ae0f2;--plasma-100:#c0f2fb;
+  --proton-300:#1cba7f;--proton-200:#6edcaa;
+  --electron-300:#e0398a;--electron-200:#f592c0;
+  --red:#ef4444;--green:#22c55e;--yellow:#f0c040;
+  --text-primary:#e8f2fc;--text-secondary:#8aaed8;
+  --text-tertiary:#4a6a8a;--text-dim:#2a4055;
+  --font-mono:'IBM Plex Mono','Fira Code',monospace;
+  --font-sans:'Inter',system-ui,sans-serif;
+  --page-gutter:clamp(1rem,3vw,2rem);
 }
-[data-theme=light]{
-  --bg:#f0f4fa;--bg2:#e5edf7;--bg3:#d8e5f2;--surface:#fff;
-  --border:#c4d4e8;--b2:#a8bedb;--text:#1a2d45;--muted:#5a7499;--dim:#c8d8ec;
-  --solar:#c94a00;--plasma:#0369a1;--plasma2:#4338ca;--proton:#047857;
-}
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:15px;scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;overflow-x:hidden}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:var(--b2);border-radius:4px}
+body{
+  background:var(--space-950);color:var(--text-primary);
+  font-family:var(--font-sans);line-height:1.6;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--plasma-300);text-decoration:none}
+a:hover{color:var(--plasma-200)}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:var(--space-950)}
+::-webkit-scrollbar-thumb{background:var(--space-500);border-radius:2px}
 
-/* NAV */
-#nav{position:sticky;top:0;z-index:100;height:58px;
-  background:rgba(4,8,15,.92);backdrop-filter:blur(12px);
-  border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;gap:1rem}
-.brand{font-weight:700;font-size:1rem;
-  background:linear-gradient(90deg,var(--solar),var(--solar2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap}
-.nav-mid{display:flex;gap:1.2rem;font-size:.8rem}
-.nav-mid a{color:var(--muted);font-weight:500;transition:color .2s}
-.nav-mid a:hover{color:var(--solar)}
-.nav-mid a.active{color:var(--solar)}
-.nav-r{display:flex;align-items:center;gap:.6rem}
-#live-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0}
-#live-dot.on{background:var(--green);box-shadow:0 0 8px var(--green)}
-#live-dot.sim{background:var(--yellow)}
-#live-dot.err{background:var(--red);animation:pulse 1.5s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-#status-lbl{font-size:.73rem;color:var(--muted);font-family:var(--mono)}
-.nbtn{background:var(--surface);border:1px solid var(--b2);color:var(--text);
-  padding:.28rem .65rem;border-radius:5px;cursor:pointer;font-size:.78rem}
-.nbtn:hover{border-color:var(--solar);color:var(--solar)}
-.spin{display:inline-block;width:11px;height:11px;border:2px solid var(--b2);
-  border-top-color:var(--solar);border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle}
-@keyframes sp{to{transform:rotate(360deg)}}
+/* ─── Background streaks (same as index) ──────────────────────────────── */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    repeating-linear-gradient(100deg,transparent 0,transparent 120px,
+      rgba(255,122,43,.018) 120px,rgba(255,122,43,.018) 121px),
+    repeating-linear-gradient(100deg,transparent 0,transparent 80px,
+      rgba(41,203,232,.012) 80px,rgba(41,203,232,.012) 81px);
+}
+#particle-canvas{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.3}
 
-/* TABS */
-#tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);
-  padding:0 1.5rem;overflow-x:auto;gap:.2rem}
-.tab{padding:.58rem 1rem;cursor:pointer;font-size:.8rem;color:var(--muted);font-weight:500;
-  border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:all .2s}
-.tab.active,.tab:hover{color:var(--solar);border-bottom-color:var(--solar)}
+/* ─── NAV ──────────────────────────────────────────────────────────────── */
+#nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;height:56px;
+  background:rgba(2,4,8,.88);backdrop-filter:blur(16px) saturate(1.5);
+  border-bottom:1px solid rgba(255,255,255,.04);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 var(--page-gutter);
+}
+.nav-logo{
+  font-family:var(--font-mono);font-weight:700;font-size:.85rem;
+  letter-spacing:.06em;display:flex;align-items:center;gap:.6rem;
+}
+.nav-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 10px var(--green);transition:all .4s;
+}
+.nav-dot.sim{background:var(--yellow);box-shadow:0 0 10px var(--yellow)}
+.nav-dot.err{background:var(--red);box-shadow:0 0 10px var(--red);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+#status-text{font-family:var(--font-mono);font-size:.72rem;color:var(--text-tertiary)}
+.nav-links{display:flex;align-items:center;gap:.2rem}
+.nav-link{
+  font-size:.78rem;font-weight:500;color:var(--text-tertiary);
+  padding:.3rem .65rem;border-radius:4px;transition:color .2s,background .2s;
+  white-space:nowrap;
+}
+.nav-link:hover{color:var(--text-primary);background:rgba(255,255,255,.05)}
+.nav-link.active{color:var(--solar-300)}
+.nav-cta{
+  font-family:var(--font-mono);font-size:.76rem;font-weight:600;
+  color:#000;background:var(--solar-300);padding:.32rem .8rem;
+  border-radius:4px;transition:opacity .2s;
+}
+.nav-cta:hover{opacity:.85;color:#000}
+.nav-r{display:flex;align-items:center;gap:.5rem}
 
-/* PAGES */
-.page{display:none;padding:1.2rem;max-width:1400px;margin:0 auto}
+/* ─── TABS ────────────────────────────────────────────────────────────── */
+#tab-bar{
+  position:sticky;top:56px;z-index:90;
+  background:rgba(2,4,8,.9);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(255,255,255,.04);
+  display:flex;padding:0 var(--page-gutter);overflow-x:auto;gap:.15rem;
+}
+#tab-bar::-webkit-scrollbar{display:none}
+.tab{
+  font-family:var(--font-mono);font-size:.72rem;font-weight:500;
+  color:var(--text-tertiary);padding:.55rem .95rem;
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+  cursor:pointer;white-space:nowrap;transition:color .2s,border-color .2s;
+  background:none;border-top:none;border-left:none;border-right:none;
+}
+.tab:hover{color:var(--text-secondary)}
+.tab.active{color:var(--solar-300);border-bottom-color:var(--solar-300)}
+
+/* ─── PAGES ───────────────────────────────────────────────────────────── */
+main{position:relative;z-index:1;padding-top:calc(56px + 38px)}
+.page{display:none;padding:1.2rem var(--page-gutter);max-width:1400px;margin:0 auto}
 .page.active{display:block}
 
-/* DATA TIMESTAMP STRIP — shown on every page */
-.data-ts{
-  background:linear-gradient(90deg,rgba(255,107,43,.07),rgba(41,182,232,.05));
-  border:1px solid var(--border);border-radius:8px;
-  padding:.55rem 1rem;margin-bottom:1rem;
+/* ─── DATA TIMESTAMP STRIP ────────────────────────────────────────────── */
+.ts-strip{
+  background:rgba(255,122,43,.05);
+  border:1px solid rgba(255,122,43,.12);
+  border-radius:8px;padding:.55rem 1rem;margin-bottom:1rem;
   display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap;
-  font-family:var(--mono);font-size:.72rem;
+  font-family:var(--font-mono);font-size:.7rem;
 }
-.dts-field{display:flex;flex-direction:column}
-.dts-lbl{color:var(--muted);font-size:.62rem;text-transform:uppercase;letter-spacing:.05em}
-.dts-val{color:var(--solar2);font-weight:500}
-.dts-source{color:var(--proton)}
-.dts-sim{color:var(--yellow)}
-.dts-sep{color:var(--border);font-size:1rem}
+.ts-field{display:flex;flex-direction:column;gap:.08rem}
+.ts-lbl{color:var(--text-dim);font-size:.6rem;text-transform:uppercase;letter-spacing:.06em}
+.ts-val{color:var(--solar-200);font-weight:500}
+.ts-sep{color:var(--space-500);font-size:1rem;line-height:1}
+.ts-source-live{color:var(--proton-200)}
+.ts-source-sim{color:var(--yellow)}
 
-/* HERO BANNER */
-.hero-row{
-  background:linear-gradient(135deg,var(--bg3),var(--surface));
-  border:1px solid var(--border);border-radius:10px;
-  padding:1rem 1.4rem;margin-bottom:1rem;
-  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.8rem;
+/* ─── BANNER ──────────────────────────────────────────────────────────── */
+.banner{
+  background:linear-gradient(135deg,var(--space-850),var(--space-800));
+  border:1px solid var(--space-700);border-radius:10px;
+  padding:.9rem 1.2rem;margin-bottom:1rem;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:.7rem;
 }
-.hero-l{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
-.badge{font-size:.7rem;padding:.18em .65em;border-radius:20px;font-family:var(--mono);
-  font-weight:600;border:1px solid;display:inline-block}
-.badge.sim{color:var(--yellow);border-color:var(--yellow);background:rgba(240,192,64,.07)}
-.badge.live{color:var(--green);border-color:var(--green);background:rgba(39,174,118,.07)}
-.refresh-btn{background:linear-gradient(135deg,var(--solar),var(--solar2));
-  color:#000;border:none;padding:.45rem 1rem;border-radius:7px;
-  cursor:pointer;font-weight:700;font-size:.8rem;transition:opacity .2s}
+.banner-l{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+.banner-title{font-weight:600;font-size:.92rem}
+.data-badge{
+  font-family:var(--font-mono);font-size:.66rem;font-weight:700;
+  padding:.2em .65em;border-radius:3px;border:1px solid;
+}
+.data-badge.sim{color:var(--yellow);border-color:rgba(240,192,64,.3);background:rgba(240,192,64,.06)}
+.data-badge.live{color:var(--proton-200);border-color:rgba(110,220,170,.3);background:rgba(110,220,170,.06)}
+.regime-tag{
+  font-family:var(--font-mono);font-size:.67rem;color:var(--text-tertiary);
+  background:var(--space-800);border:1px solid var(--space-600);
+  padding:.18em .6em;border-radius:3px;
+}
+.last-upd{font-family:var(--font-mono);font-size:.68rem;color:var(--text-tertiary)}
+.refresh-btn{
+  font-family:var(--font-mono);font-size:.76rem;font-weight:600;
+  color:#000;background:var(--solar-300);border:none;
+  padding:.38rem .85rem;border-radius:5px;cursor:pointer;transition:opacity .2s;
+}
 .refresh-btn:hover{opacity:.85}
-.regime-pill{font-size:.75rem;color:var(--solar2);font-family:var(--mono);
-  background:rgba(255,173,66,.08);border:1px solid rgba(255,173,66,.2);
-  padding:.2em .7em;border-radius:20px}
-.last-upd{font-size:.72rem;color:var(--muted);font-family:var(--mono)}
 
-/* METRIC CARDS */
-.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));
-  gap:.7rem;margin-bottom:1rem}
-.mc{background:var(--surface);border:1px solid var(--border);border-radius:9px;
-  padding:.8rem .9rem;position:relative;overflow:hidden;transition:border-color .3s;cursor:default}
-.mc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:var(--accent,var(--plasma));opacity:.7}
-.mc:hover{border-color:var(--b2)}
-.mc-val{font-size:1.45rem;font-weight:700;font-family:var(--mono);color:var(--plasma);
-  line-height:1.2;transition:color .4s}
-.mc-lbl{font-size:.68rem;color:var(--muted);margin-top:.18rem;font-weight:500}
-.mc-unit{font-size:.62rem;color:var(--dim);font-family:var(--mono)}
-.mc-tooltip{
-  display:none;position:absolute;bottom:calc(100% + 4px);left:0;right:0;
-  background:var(--bg3);border:1px solid var(--b2);border-radius:6px;
-  padding:.5rem .7rem;font-size:.68rem;color:var(--muted);z-index:50;
-  line-height:1.4;pointer-events:none;
+/* ─── METRIC CARDS ────────────────────────────────────────────────────── */
+.metrics{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+  gap:.6rem;margin-bottom:1rem;
 }
-.mc:hover .mc-tooltip{display:block}
+.mc{
+  background:var(--space-900);border:1px solid var(--space-700);
+  border-radius:9px;padding:.85rem .9rem;position:relative;
+  overflow:hidden;transition:border-color .25s;cursor:default;
+}
+.mc::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--mc-accent,var(--plasma-300));opacity:.7;
+}
+.mc:hover{border-color:var(--space-400)}
+.mc-val{
+  font-family:var(--font-mono);font-size:1.45rem;font-weight:700;
+  color:var(--plasma-300);line-height:1.15;transition:color .4s;
+}
+.mc-lbl{font-size:.68rem;color:var(--text-tertiary);margin-top:.18rem;font-weight:500}
+.mc-unit{font-family:var(--font-mono);font-size:.6rem;color:var(--text-dim)}
+/* Tooltip on hover */
+.mc-tip{
+  display:none;position:absolute;bottom:calc(100% + 6px);left:0;
+  background:var(--space-800);border:1px solid var(--space-500);
+  border-radius:6px;padding:.5rem .75rem;font-size:.68rem;
+  color:var(--text-secondary);z-index:50;white-space:normal;
+  width:220px;line-height:1.45;pointer-events:none;
+  box-shadow:0 8px 24px rgba(0,0,0,.5);
+}
+.mc:hover .mc-tip{display:block}
 
-/* CHART PANELS */
-.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-bottom:1rem}
-.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-bottom:1rem}
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem}
-.panel-title{font-size:.8rem;font-weight:600;margin-bottom:.15rem}
-.panel-meta{font-size:.67rem;color:var(--muted);margin-bottom:.6rem;line-height:1.4;font-family:var(--mono)}
-.panel-desc{font-size:.7rem;color:var(--muted);margin-top:.4rem;line-height:1.4;
-  border-top:1px solid var(--border);padding-top:.4rem}
-.full{margin-bottom:1rem}
+/* ─── CHART PANELS ────────────────────────────────────────────────────── */
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:.85rem;margin-bottom:.85rem}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:.85rem;margin-bottom:.85rem}
+.panel{
+  background:var(--space-900);border:1px solid var(--space-700);
+  border-radius:10px;padding:1rem 1.1rem;
+}
+.panel-title{font-size:.8rem;font-weight:600;margin-bottom:.1rem}
+.panel-meta{
+  font-family:var(--font-mono);font-size:.63rem;color:var(--text-tertiary);
+  margin-bottom:.6rem;line-height:1.45;
+}
+.panel-note{
+  font-size:.69rem;color:var(--text-tertiary);
+  border-top:1px solid var(--space-800);padding-top:.4rem;
+  margin-top:.4rem;line-height:1.45;
+}
+.full-panel{margin-bottom:.85rem}
 .cw{position:relative}
-.cw.h150{height:150px}.cw.h180{height:180px}.cw.h220{height:220px}.cw.h260{height:260px}
+.cw-150{height:150px}.cw-180{height:180px}.cw-220{height:220px}.cw-260{height:260px}
 
-/* SPEC */
+/* ─── SPECTROGRAM ─────────────────────────────────────────────────────── */
 canvas.spec{width:100%;display:block;border-radius:4px;image-rendering:pixelated}
-.spec-legend{display:flex;justify-content:space-between;font-size:.67rem;color:var(--muted);
-  margin-top:.25rem;flex-wrap:wrap;gap:.3rem}
-.spec-cbar{display:flex;align-items:center;gap:.3rem}
-.spec-cbar-bar{width:70px;height:7px;border-radius:3px;
-  background:linear-gradient(90deg,#0d0827,#5c0099,#c0006b,#f06040,#ffd000);border:1px solid var(--border)}
+.spec-legend{
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--font-mono);font-size:.63rem;color:var(--text-tertiary);
+  margin-top:.3rem;flex-wrap:wrap;gap:.3rem;
+}
+.colorbar{
+  display:flex;align-items:center;gap:.4rem;font-size:.62rem;
+}
+.colorbar-bar{
+  width:64px;height:6px;border-radius:3px;
+  background:linear-gradient(90deg,#0d0827,#5c0099,#c0006b,#f06040,#ffd000);
+  border:1px solid var(--space-600);
+}
 
-/* BZ GAUGE */
-.bz-card{display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:.5rem;padding:1.2rem;text-align:center;height:100%}
-.bz-num{font-size:2.2rem;font-weight:700;font-family:var(--mono);transition:color .4s}
-.bz-lbl{font-size:.7rem;color:var(--muted);font-weight:500}
-.bz-badge{font-size:.72rem;padding:.25em .75em;border-radius:20px;font-weight:600;border:1px solid;margin-top:.1rem}
-.bz-exp{font-size:.7rem;color:var(--muted);max-width:190px;line-height:1.4;margin-top:.2rem}
+/* ─── BZ GAUGE ────────────────────────────────────────────────────────── */
+.bz-card{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:.5rem;padding:1.4rem;text-align:center;
+  min-height:200px;
+}
+.bz-num{
+  font-family:var(--font-mono);font-size:2.4rem;font-weight:700;
+  line-height:1;transition:color .5s;
+}
+.bz-label{font-size:.7rem;color:var(--text-tertiary)}
+.bz-status-badge{
+  font-family:var(--font-mono);font-size:.72rem;font-weight:600;
+  padding:.25em .75em;border-radius:4px;border:1px solid;margin-top:.1rem;
+}
+.bz-explanation{
+  font-size:.72rem;color:var(--text-secondary);max-width:190px;
+  line-height:1.45;margin-top:.2rem;
+}
 
-/* CLOCK SVG */
-#clock-svg{width:130px;height:130px;display:block}
+/* ─── CLOCK SVG ───────────────────────────────────────────────────────── */
+.clock-wrap{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:.4rem;padding:1rem;min-height:200px;
+}
+#clock-svg{width:140px;height:140px;display:block}
 
-/* HIST */
-.hist-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+/* ─── MVA TABLE ───────────────────────────────────────────────────────── */
+.mva-tbl{width:100%;border-collapse:collapse;font-size:.72rem;font-family:var(--font-mono)}
+.mva-tbl th,.mva-tbl td{padding:.35rem .55rem;border-bottom:1px solid var(--space-800);text-align:left}
+.mva-tbl th{color:var(--text-dim);font-size:.63rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.mva-tbl td:first-child{color:var(--text-tertiary)}
+
+/* ─── DERIVED GRID ────────────────────────────────────────────────────── */
+.der-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.6rem;margin-bottom:.85rem}
+.der-item{
+  background:var(--space-850);border:1px solid var(--space-700);
+  border-radius:7px;padding:.7rem .9rem;
+}
+.der-name{font-size:.68rem;color:var(--text-tertiary);font-weight:500}
+.der-val{
+  font-family:var(--font-mono);font-size:1rem;font-weight:700;
+  color:var(--plasma-200);margin:.1rem 0;
+}
+.der-exp{font-size:.67rem;color:var(--text-tertiary);line-height:1.4}
+
+/* ─── HISTORY ─────────────────────────────────────────────────────────── */
+.hist-grid{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;margin-bottom:.85rem}
 @media(max-width:680px){.hist-grid{grid-template-columns:1fr}}
+.hist-info{
+  font-family:var(--font-mono);font-size:.72rem;color:var(--text-tertiary);
+  background:var(--space-850);border:1px solid var(--space-700);
+  border-radius:6px;padding:.55rem .9rem;margin-bottom:.85rem;
+}
 
-/* MVA TABLE */
-.mva-tbl{width:100%;border-collapse:collapse;font-size:.73rem;font-family:var(--mono);margin-top:.4rem}
-.mva-tbl td,.mva-tbl th{padding:.3rem .5rem;border:1px solid var(--border);text-align:left}
-.mva-tbl th{background:var(--bg3);color:var(--muted);font-size:.68rem;font-weight:600}
-.mva-tbl td:first-child{color:var(--muted)}
-
-/* EVENTS */
-.ev-item{display:flex;gap:.75rem;padding:.8rem;border-radius:8px;
-  border:1px solid var(--border);background:var(--bg3);margin-bottom:.6rem}
-.ev-ico{font-size:1.2rem;flex-shrink:0;margin-top:.1rem}
-.ev-type{font-size:.76rem;font-family:var(--mono);color:var(--solar);font-weight:700;letter-spacing:.04em}
-.ev-time{font-size:.68rem;color:var(--muted);font-family:var(--mono);margin-top:.04rem}
-.ev-desc{font-size:.77rem;color:var(--text);margin-top:.28rem;line-height:1.5}
+/* ─── EVENTS ──────────────────────────────────────────────────────────── */
+.ev-item{
+  display:flex;gap:.8rem;padding:.85rem;border-radius:8px;
+  border:1px solid var(--space-700);background:var(--space-850);
+  margin-bottom:.6rem;transition:border-color .2s;
+}
+.ev-item:hover{border-color:var(--space-500)}
+.ev-ico{font-size:1.15rem;flex-shrink:0;margin-top:.1rem}
+.ev-type{font-family:var(--font-mono);font-size:.75rem;font-weight:700;color:var(--solar-300);letter-spacing:.04em}
+.ev-time{font-family:var(--font-mono);font-size:.67rem;color:var(--text-tertiary);margin-top:.04rem}
+.ev-desc{font-size:.78rem;color:var(--text-secondary);margin-top:.3rem;line-height:1.5}
 .ev-vals{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.35rem}
-.ev-val{font-size:.66rem;background:var(--surface);border:1px solid var(--border);
-  padding:.12em .45em;border-radius:3px;font-family:var(--mono);color:var(--muted)}
-.conf-track{height:3px;background:var(--bg);border-radius:2px;margin-top:.4rem}
-.conf-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--solar),var(--solar2));transition:width .7s}
-.conf-lbl{font-size:.65rem;color:var(--muted);margin-top:.15rem}
-.no-ev{color:var(--muted);font-size:.82rem;text-align:center;padding:1.5rem;
-  background:var(--bg3);border-radius:8px;border:1px solid var(--border)}
+.ev-val{
+  font-family:var(--font-mono);font-size:.64rem;
+  background:var(--space-800);border:1px solid var(--space-600);
+  padding:.12em .45em;border-radius:3px;color:var(--text-tertiary);
+}
+.conf-bar{height:2px;background:var(--space-700);border-radius:2px;margin-top:.4rem}
+.conf-fill{
+  height:100%;border-radius:2px;
+  background:linear-gradient(90deg,var(--solar-400),var(--solar-200));
+  transition:width .7s ease;
+}
+.conf-lbl{font-family:var(--font-mono);font-size:.63rem;color:var(--text-dim);margin-top:.15rem}
+.no-events{
+  font-family:var(--font-mono);font-size:.8rem;color:var(--text-tertiary);
+  text-align:center;padding:2rem;
+  background:var(--space-850);border:1px solid var(--space-700);border-radius:8px;
+}
 
-/* DERIVED */
-.der-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:.6rem;margin-bottom:1rem}
-.der-item{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:.65rem .85rem}
-.der-name{font-size:.7rem;color:var(--muted);font-weight:500}
-.der-val{font-size:1rem;font-weight:700;font-family:var(--mono);color:var(--plasma);margin:.08rem 0}
-.der-exp{font-size:.66rem;color:var(--muted);line-height:1.35}
+/* ─── SECTION LABEL ───────────────────────────────────────────────────── */
+.section-label{
+  font-family:var(--font-mono);font-size:.67rem;font-weight:700;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--solar-300);
+  margin-bottom:.8rem;display:block;
+}
+.info-box{
+  background:var(--space-850);border:1px solid var(--space-700);
+  border-radius:7px;padding:.6rem .9rem;font-size:.76rem;
+  color:var(--text-tertiary);margin-bottom:.85rem;line-height:1.5;
+}
 
-.stitle{font-size:.92rem;font-weight:700;color:var(--plasma);
-  border-left:3px solid var(--solar);padding-left:.6rem;margin-bottom:.9rem}
-.info-box{background:var(--bg3);border:1px solid var(--border);border-radius:7px;
-  padding:.6rem .9rem;font-size:.75rem;color:var(--muted);margin-bottom:.9rem;line-height:1.5}
+/* ─── SPINNER ─────────────────────────────────────────────────────────── */
+.spin{
+  display:inline-block;width:11px;height:11px;
+  border:2px solid var(--space-500);border-top-color:var(--solar-300);
+  border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle;
+}
+@keyframes sp{to{transform:rotate(360deg)}}
 
-@media(max-width:600px){.nav-mid{display:none}.metrics{grid-template-columns:repeat(2,1fr)}.grid2,.grid3{grid-template-columns:1fr}}
+/* ─── RESPONSIVE ──────────────────────────────────────────────────────── */
+@media(max-width:600px){
+  .nav-links .hide-sm{display:none}
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
 
+<canvas id="particle-canvas"></canvas>
+
+<!-- ── NAV ────────────────────────────────────────────────────────────── -->
 <nav id="nav">
-  <div class="brand">🌞 Aditya-L1 Live</div>
-  <div class="nav-mid">
-    <a href="index.html">← Learn</a>
-    <a href="dashboard.html" class="active">Dashboard</a>
-    <a href="visualizer.html">Visualizer</a>
-    <a href="lab.html">Analysis Lab</a>
-    <a href="explorer.html" target="_blank">Explorer ↗</a>
+  <div class="nav-logo">
+    <div class="nav-dot sim" id="nav-dot"></div>
+    <span>ADITYA-L1 / LIVE</span>
+  </div>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link hide-sm">← Learn</a>
+    <a href="dashboard.html" class="nav-link active">Dashboard</a>
+    <a href="visualizer.html" class="nav-link hide-sm">Visualizer</a>
+    <a href="explorer.html" class="nav-link hide-sm">Explorer</a>
   </div>
   <div class="nav-r">
-    <div id="live-dot"></div>
-    <span id="status-lbl"><span class="spin"></span></span>
-    <button class="nbtn" id="theme-btn">☀</button>
+    <span id="status-text"><span class="spin"></span></span>
   </div>
 </nav>
 
-<div id="tabs">
-  <div class="tab active" data-tab="dashboard">🌐 Overview</div>
-  <div class="tab" data-tab="magnetic">🧲 Magnetic</div>
-  <div class="tab" data-tab="particles">⚡ Particles</div>
-  <div class="tab" data-tab="plasma">🔬 Plasma Physics</div>
-  <div class="tab" data-tab="history">📈 History</div>
-  <div class="tab" data-tab="events">🚨 Events</div>
+<!-- ── TAB BAR ────────────────────────────────────────────────────────── -->
+<div id="tab-bar">
+  <button class="tab active" data-tab="overview">Overview</button>
+  <button class="tab" data-tab="magnetic">Magnetic Field</button>
+  <button class="tab" data-tab="particles">Particles</button>
+  <button class="tab" data-tab="physics">Plasma Physics</button>
+  <button class="tab" data-tab="history">6-Month History</button>
+  <button class="tab" data-tab="events">Events</button>
 </div>
 
-<!-- ══ DASHBOARD ══ -->
-<div class="page active" id="pg-dashboard">
-  <div class="hero-row">
-    <div class="hero-l">
-      <strong>ISRO Aditya-L1 · Sun–Earth L1 Point</strong>
-      <span class="badge sim" id="mode-badge">⚙ Simulated</span>
-      <span class="regime-pill" id="regime-pill">—</span>
+<main>
+
+<!-- ═══════════════════════════════ OVERVIEW ══════════════════════════════ -->
+<div class="page active" id="pg-overview">
+
+  <!-- Banner -->
+  <div class="banner">
+    <div class="banner-l">
+      <span class="banner-title">ISRO Aditya-L1 · Sun–Earth L1 Point</span>
+      <span class="data-badge sim" id="mode-badge">⚙ Simulated</span>
+      <span class="regime-tag" id="regime-tag">—</span>
       <span class="last-upd" id="last-upd">—</span>
     </div>
     <button class="refresh-btn" id="refresh-btn">↻ Refresh</button>
   </div>
 
-  <!-- PER-PAGE DATA TIMESTAMP -->
-  <div class="data-ts">
-    <div class="dts-field"><span class="dts-lbl">Window start</span><span class="dts-val" id="ts-start">—</span></div>
-    <span class="dts-sep">|</span>
-    <div class="dts-field"><span class="dts-lbl">Window end</span><span class="dts-val" id="ts-end">—</span></div>
-    <span class="dts-sep">|</span>
-    <div class="dts-field"><span class="dts-lbl">Instruments</span><span class="dts-val">SWIS · PAPA · STEPS · MAG</span></div>
-    <span class="dts-sep">|</span>
-    <div class="dts-field"><span class="dts-lbl">Source</span><span id="ts-src" class="dts-sim">—</span></div>
-    <span class="dts-sep">|</span>
-    <div class="dts-field"><span class="dts-lbl">Pipeline run</span><span class="dts-val" id="ts-run">—</span></div>
+  <!-- Timestamp strip -->
+  <div class="ts-strip" id="ts-strip">
+    <div class="ts-field"><span class="ts-lbl">Window start</span><span class="ts-val" id="ts-start">—</span></div>
+    <span class="ts-sep">·</span>
+    <div class="ts-field"><span class="ts-lbl">Window end</span><span class="ts-val" id="ts-end">—</span></div>
+    <span class="ts-sep">·</span>
+    <div class="ts-field"><span class="ts-lbl">Instruments</span><span class="ts-val">SWIS · PAPA · STEPS · MAG</span></div>
+    <span class="ts-sep">·</span>
+    <div class="ts-field"><span class="ts-lbl">Source</span><span class="ts-val ts-source-sim" id="ts-source">—</span></div>
+    <span class="ts-sep">·</span>
+    <div class="ts-field"><span class="ts-lbl">Pipeline run</span><span class="ts-val" id="ts-run">—</span></div>
   </div>
 
+  <!-- Metric cards -->
   <div class="metrics">
-    <div class="mc" style="--accent:var(--proton)">
-      <div class="mc-tooltip">Zeroth moment of the proton VDF. Typical quiet solar wind: 3–10 cm⁻³. Sudden increase = CIR compression or CME sheath.</div>
-      <div class="mc-val" id="m-n">—</div><div class="mc-lbl">Proton density n</div><div class="mc-unit">cm⁻³ · SWIS/PAPA</div>
+    <div class="mc" style="--mc-accent:var(--proton-300)">
+      <div class="mc-tip">Zeroth moment of the proton VDF. Typical quiet solar wind: 3–10 cm⁻³. A sudden jump ×2–4 alongside velocity and field increases = interplanetary shock.</div>
+      <div class="mc-val" id="m-n">—</div>
+      <div class="mc-lbl">Proton density n</div>
+      <div class="mc-unit">cm⁻³ · SWIS/PAPA</div>
     </div>
-    <div class="mc" style="--accent:var(--plasma)">
-      <div class="mc-tooltip">First moment — bulk flow speed. &lt;450 km/s = slow wind (streamer belt). &gt;550 = fast wind (coronal hole).</div>
-      <div class="mc-val" id="m-v">—</div><div class="mc-lbl">Bulk speed V</div><div class="mc-unit">km/s · SWIS</div>
+    <div class="mc" style="--mc-accent:var(--plasma-300)">
+      <div class="mc-tip">First moment of VDF — bulk flow speed. &lt;450 km/s: slow wind (streamer belt). &gt;550 km/s: fast wind (coronal hole).</div>
+      <div class="mc-val" id="m-v">—</div>
+      <div class="mc-lbl">Bulk speed V</div>
+      <div class="mc-unit">km/s · SWIS</div>
     </div>
-    <div class="mc" style="--accent:var(--solar)">
-      <div class="mc-tooltip">Second moment — proton thermal energy. 1 eV ≈ 11,600 K. Cold + fast = CME ejecta signature.</div>
-      <div class="mc-val" id="m-t">—</div><div class="mc-lbl">Temperature T</div><div class="mc-unit">eV · SWIS/PAPA</div>
+    <div class="mc" style="--mc-accent:var(--solar-300)">
+      <div class="mc-tip">Second moment — proton thermal energy. 1 eV ≈ 11,600 K. Anomalously cold + fast = CME flux rope interior (key ejecta signature).</div>
+      <div class="mc-val" id="m-t">—</div>
+      <div class="mc-lbl">Temperature T</div>
+      <div class="mc-unit">eV · SWIS/PAPA</div>
     </div>
-    <div class="mc" style="--accent:var(--solar2)">
-      <div class="mc-tooltip">Total IMF magnitude. Enhancement signals compressed region (CIR, CME sheath) or structured flux rope.</div>
-      <div class="mc-val" id="m-b">—</div><div class="mc-lbl">|B| IMF</div><div class="mc-unit">nT · MAG</div>
+    <div class="mc" style="--mc-accent:var(--solar-200)">
+      <div class="mc-tip">Total IMF magnitude. Quiet: 3–8 nT. Enhancement signals compressed region (CIR, CME sheath) or structured flux rope.</div>
+      <div class="mc-val" id="m-b">—</div>
+      <div class="mc-lbl">|B| IMF</div>
+      <div class="mc-unit">nT · MAG</div>
     </div>
-    <div class="mc" style="--accent:var(--red)">
-      <div class="mc-tooltip">North-south IMF component in GSE. Southward (negative) drives reconnection. &lt;−10 nT → likely geomagnetic storm.</div>
-      <div class="mc-val" id="m-bz">—</div><div class="mc-lbl">IMF Bz</div><div class="mc-unit">nT · MAG GSE</div>
+    <div class="mc" style="--mc-accent:var(--red)">
+      <div class="mc-tip">North-south IMF component. Southward (−) enables Dungey cycle reconnection. Bz &lt; −10 nT sustained ≥3 hours → geomagnetic storm (Dst &lt; −50 nT).</div>
+      <div class="mc-val" id="m-bz">—</div>
+      <div class="mc-lbl">IMF Bz</div>
+      <div class="mc-unit">nT · MAG GSE</div>
     </div>
-    <div class="mc" style="--accent:var(--plasma2)">
-      <div class="mc-tooltip">Thermal/magnetic pressure ratio. β&lt;1: magnetically dominated (Alfvén waves). β&gt;1: thermally dominated (kinetic effects).</div>
-      <div class="mc-val" id="m-beta">—</div><div class="mc-lbl">Plasma β</div><div class="mc-unit">— (dimensionless)</div>
+    <div class="mc" style="--mc-accent:var(--plasma-200)">
+      <div class="mc-tip">β = P_thermal / P_magnetic. β&lt;1: magnetically dominated — Alfvén waves govern dynamics. β&gt;1: thermally dominated — kinetic effects important.</div>
+      <div class="mc-val" id="m-beta">—</div>
+      <div class="mc-lbl">Plasma β</div>
+      <div class="mc-unit">dimensionless</div>
     </div>
-    <div class="mc" style="--accent:var(--proton)">
-      <div class="mc-tooltip">B/√(μ₀ρ). Speed of Alfvén waves along the field. Solar wind is super-Alfvénic (M_A~6–10).</div>
-      <div class="mc-val" id="m-va">—</div><div class="mc-lbl">Alfvén speed V_A</div><div class="mc-unit">km/s · derived</div>
+    <div class="mc" style="--mc-accent:var(--proton-200)">
+      <div class="mc-tip">V_A = B/√(μ₀ρ). Speed of Alfvén waves along field lines. Solar wind is super-Alfvénic at 1 AU (M_A ≈ 6–10) — this is why Earth has a bow shock.</div>
+      <div class="mc-val" id="m-va">—</div>
+      <div class="mc-lbl">Alfvén speed V_A</div>
+      <div class="mc-unit">km/s · derived</div>
     </div>
-    <div class="mc" style="--accent:var(--red)">
-      <div class="mc-tooltip">Number of auto-detected events: shocks, southward IMF, fast streams, density enhancements, low-beta intervals.</div>
-      <div class="mc-val" id="m-ev">—</div><div class="mc-lbl">Events detected</div><div class="mc-unit">this window</div>
+    <div class="mc" style="--mc-accent:var(--red)">
+      <div class="mc-tip">Number of auto-detected events: interplanetary shocks, southward IMF, high-speed streams, density enhancements, low-beta flux rope intervals.</div>
+      <div class="mc-val" id="m-ev">—</div>
+      <div class="mc-lbl">Events detected</div>
+      <div class="mc-unit">this data window</div>
     </div>
   </div>
 
-  <div class="grid2">
+  <!-- 4 time-series panels -->
+  <div class="grid-2">
     <div class="panel">
-      <div class="panel-title">Proton Density</div>
-      <div class="panel-meta">n [cm⁻³] · SWIS/PAPA · X: Time [UTC] · Y: number density per cm³</div>
-      <div class="cw h150"><canvas id="c-n"></canvas></div>
+      <div class="panel-title">Proton Density n</div>
+      <div class="panel-meta">X: Time [UTC] · Y: n [cm⁻³] · Instrument: SWIS/PAPA · Source: Level-2</div>
+      <div class="cw cw-150"><canvas id="c-n"></canvas></div>
+      <div class="panel-note">Jumps ×2+ with simultaneous velocity and field increases = shock. Low density + smooth B rotation = CME flux rope interior.</div>
     </div>
     <div class="panel">
-      <div class="panel-title">Solar Wind Bulk Speed</div>
-      <div class="panel-meta">V [km/s] · SWIS · X: Time [UTC] · Y: flow speed</div>
-      <div class="cw h150"><canvas id="c-v"></canvas></div>
+      <div class="panel-title">Solar Wind Bulk Speed V</div>
+      <div class="panel-meta">X: Time [UTC] · Y: V [km/s] · Instrument: SWIS · Source: Level-2</div>
+      <div class="cw cw-150"><canvas id="c-v"></canvas></div>
+      <div class="panel-note">Below 450 km/s: slow wind (streamer belt). Above 550 km/s: fast wind (coronal hole). CIRs form where fast wind overtakes slow.</div>
     </div>
     <div class="panel">
-      <div class="panel-title">Proton Temperature</div>
-      <div class="panel-meta">T [eV] · SWIS/PAPA · X: Time [UTC] · Y: thermal energy (1 eV = 11,600 K)</div>
-      <div class="cw h150"><canvas id="c-t"></canvas></div>
+      <div class="panel-title">Proton Temperature T</div>
+      <div class="panel-meta">X: Time [UTC] · Y: T [eV] · Instrument: SWIS/PAPA · 1 eV ≈ 11,600 K</div>
+      <div class="cw cw-150"><canvas id="c-t"></canvas></div>
+      <div class="panel-note">Hot fast wind (15–30 eV) vs cold slow wind (3–8 eV). Anomalously cold T for a given speed = CME ejecta signature.</div>
     </div>
     <div class="panel">
       <div class="panel-title">IMF Magnitude |B|</div>
-      <div class="panel-meta">|B| [nT] · MAG · X: Time [UTC] · Y: total field strength</div>
-      <div class="cw h150"><canvas id="c-b"></canvas></div>
+      <div class="panel-meta">X: Time [UTC] · Y: |B| [nT] · Instrument: MAG boom · GSE frame</div>
+      <div class="cw cw-150"><canvas id="c-b"></canvas></div>
+      <div class="panel-note">Quiet: 3–8 nT. Sustained enhancement (>15 nT) = CIR compression or CME sheath. Sharp spike = shock front passage.</div>
     </div>
   </div>
 
-  <div class="panel full">
+  <!-- Spectrogram -->
+  <div class="panel full-panel">
     <div class="panel-title">STEPS Energy–Time Spectrogram</div>
-    <div class="panel-meta">X: Time [UTC] · Y: Particle energy [eV] log-scale, 20 keV → 6 MeV/n · Color: log₁₀ differential flux [p cm⁻² s⁻¹ sr⁻¹ eV⁻¹]</div>
-    <canvas class="spec" id="spec" height="200"></canvas>
-    <div class="spec-legend">
-      <span>▲ 6 MeV/n (STEPS high)</span>
-      <span id="spec-lbl" style="font-family:var(--mono)">—</span>
-      <span>▼ 20 keV (STEPS low)</span>
-      <div class="spec-cbar"><span>Low</span><div class="spec-cbar-bar"></div><span>High flux</span></div>
+    <div class="panel-meta">
+      X: Time [UTC] — each column ≈ 2-min cadence ·
+      Y: Particle energy [eV], log scale — 20 keV (bottom) → 6 MeV/n (top) ·
+      Color: log₁₀ differential flux [particles cm⁻² s⁻¹ sr⁻¹ eV⁻¹] ·
+      Instrument: STEPS (6 directional solid-state detectors) · Source: Level-2
     </div>
-    <div class="panel-desc">Bright horizontal bands = solar energetic particle (SEP) events. Spectral slope encodes acceleration mechanism. Vertical brightening = CME-driven shock particle injection.</div>
+    <canvas class="spec" id="spec-main" height="200"></canvas>
+    <div class="spec-legend">
+      <span>▲ 6 MeV/n</span>
+      <span id="spec-time-lbl" style="font-size:.62rem">—</span>
+      <span>▼ 20 keV</span>
+      <div class="colorbar"><span>low</span><div class="colorbar-bar"></div><span>high flux</span></div>
+    </div>
+    <div class="panel-note" style="margin-top:.4rem">Bright horizontal band = SEP injection. Spectral slope encodes acceleration: diffusive shock → E⁻². Vertical brightening = CME-driven shock passage.</div>
   </div>
-</div>
 
-<!-- ══ MAGNETIC ══ -->
+</div><!-- /overview -->
+
+
+<!-- ═══════════════════════════ MAGNETIC FIELD ══════════════════════════ -->
 <div class="page" id="pg-magnetic">
-  <div class="stitle">Interplanetary Magnetic Field — MAG Instrument</div>
-  <div class="info-box">Vector magnetic field measured on a boom. GSE coordinates: Bx along Sun-Earth line, By dusk-dawn, Bz north-south. IMF Bz is the primary geomagnetic coupling parameter — southward Bz enables dayside reconnection (Dungey cycle).</div>
 
-  <!-- Data timestamp on this page too -->
-  <div class="data-ts" id="mag-ts">
-    <div class="dts-field"><span class="dts-lbl">Data window</span><span class="dts-val" id="mag-ts-val">—</span></div>
-    <span class="dts-sep">|</span>
-    <div class="dts-field"><span class="dts-lbl">Instrument</span><span class="dts-val">MAG boom · GSE frame</span></div>
-    <span class="dts-sep">|</span>
-    <div class="dts-field"><span class="dts-lbl">Coord. system</span><span class="dts-val">GSE (verify in file header)</span></div>
+  <span class="section-label">Interplanetary Magnetic Field — MAG Instrument</span>
+  <div class="info-box">Vector B measured on a deployed boom (minimises spacecraft contamination). GSE frame: Bx along Sun–Earth line, By dusk–dawn, Bz north–south. <strong>IMF Bz</strong> is the primary space weather parameter — southward Bz enables dayside reconnection (Dungey cycle).</div>
+
+  <!-- Data timestamp for this tab -->
+  <div class="ts-strip" style="margin-bottom:1rem">
+    <div class="ts-field"><span class="ts-lbl">Instrument</span><span class="ts-val">MAG boom</span></div>
+    <span class="ts-sep">·</span>
+    <div class="ts-field"><span class="ts-lbl">Frame</span><span class="ts-val">GSE (verify in file header)</span></div>
+    <span class="ts-sep">·</span>
+    <div class="ts-field"><span class="ts-lbl">Window</span><span class="ts-val" id="mag-ts">—</span></div>
   </div>
 
-  <div class="grid2" style="margin-bottom:1rem">
+  <div class="grid-2" style="margin-bottom:.85rem">
+    <!-- Bz gauge -->
     <div class="panel">
       <div class="bz-card">
         <div class="bz-num" id="bz-big">—</div>
-        <div class="bz-lbl">IMF Bz [nT] — GSE frame</div>
-        <div class="bz-badge" id="bz-badge">—</div>
-        <div class="bz-exp" id="bz-exp">—</div>
+        <div class="bz-label">IMF Bz [nT] — GSE · latest value</div>
+        <div class="bz-status-badge" id="bz-badge">—</div>
+        <div class="bz-explanation" id="bz-exp">—</div>
       </div>
     </div>
-    <div class="panel" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;padding:1.1rem">
-      <div style="font-size:.76rem;color:var(--muted);font-weight:500">IMF Clock Angle θ = arctan2(By,Bz)</div>
-      <svg id="clock-svg" viewBox="0 0 130 130">
-        <circle cx="65" cy="65" r="57" fill="none" stroke="#1c2e4a" stroke-width="1.2"/>
-        <circle cx="65" cy="65" r="43" fill="none" stroke="#1c2e4a" stroke-width=".5" stroke-dasharray="3 3"/>
-        <!-- S sector shading -->
-        <path d="M65,65 L82,118 A57,57,0,0,1,48,118Z" fill="rgba(255,107,43,0.06)"/>
-        <text style="fill:#4d6885;font-size:9px;font-family:JetBrains Mono" x="65" y="13" text-anchor="middle">0° N</text>
-        <text style="fill:#ff6b2b;font-size:9px;font-family:JetBrains Mono" x="65" y="124" text-anchor="middle">180° S ★</text>
-        <text style="fill:#4d6885;font-size:9px;font-family:JetBrains Mono" x="7"  y="69">W</text>
-        <text style="fill:#4d6885;font-size:9px;font-family:JetBrains Mono" x="111" y="69">E</text>
-        <line x1="65" y1="65" x2="65" y2="10" stroke="#1c2e4a" stroke-width=".6" stroke-dasharray="2"/>
-        <line x1="65" y1="65" x2="65" y2="120" stroke="#1c2e4a" stroke-width=".6" stroke-dasharray="2"/>
-        <line id="needle" x1="65" y1="65" x2="65" y2="12" stroke="var(--solar)" stroke-width="2.5" stroke-linecap="round"/>
-        <circle cx="65" cy="65" r="4" fill="var(--solar)"/>
-        <text id="clk-lbl" x="65" y="82" text-anchor="middle" style="fill:var(--text);font-size:10px;font-family:JetBrains Mono">—</text>
-      </svg>
-      <div id="clock-status" style="font-size:.7rem;color:var(--muted);text-align:center;max-width:160px">★ = geoeffective zone (135°–225°)</div>
+    <!-- Clock dial -->
+    <div class="panel">
+      <div class="clock-wrap">
+        <div style="font-family:var(--font-mono);font-size:.68rem;color:var(--text-tertiary);margin-bottom:.3rem">IMF Clock Angle  θ = arctan2(By, Bz)</div>
+        <svg id="clock-svg" viewBox="0 0 130 130">
+          <!-- outer ring -->
+          <circle cx="65" cy="65" r="57" fill="none" stroke="#1e3558" stroke-width="1.2"/>
+          <circle cx="65" cy="65" r="43" fill="none" stroke="#1e3558" stroke-width=".5" stroke-dasharray="3 3"/>
+          <!-- S-sector geoeffective shading -->
+          <path d="M65,65 L83,118 A57,57,0,0,1,47,118Z" fill="rgba(240,90,0,0.07)"/>
+          <!-- Cardinal labels -->
+          <text x="65" y="13" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="#4a6a8a">0° N</text>
+          <text x="65" y="125" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="#ff7a2b">180° S ★</text>
+          <text x="7"  y="69" font-family="IBM Plex Mono" font-size="8.5" fill="#4a6a8a">W</text>
+          <text x="111" y="69" font-family="IBM Plex Mono" font-size="8.5" fill="#4a6a8a">E</text>
+          <!-- Cross hairs -->
+          <line x1="65" y1="65" x2="65" y2="10" stroke="#1e3558" stroke-width=".6" stroke-dasharray="2"/>
+          <line x1="65" y1="65" x2="65" y2="120" stroke="#1e3558" stroke-width=".6" stroke-dasharray="2"/>
+          <!-- Needle -->
+          <line id="clock-needle" x1="65" y1="65" x2="65" y2="12" stroke="#ff7a2b" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="65" cy="65" r="4" fill="#ff7a2b"/>
+          <!-- Angle text -->
+          <text id="clock-angle-txt" x="65" y="82" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#e8f2fc">—</text>
+        </svg>
+        <div id="clock-status-txt" style="font-family:var(--font-mono);font-size:.68rem;color:var(--text-tertiary);text-align:center;max-width:160px">★ geoeffective zone: 135°–225°</div>
+      </div>
     </div>
   </div>
 
-  <div class="panel full">
-    <div class="panel-title">B Components — Bx, By, Bz</div>
-    <div class="panel-meta">B [nT] · MAG GSE · X: Time [UTC] · Y: field component · Purple: Bx (Sun-Earth) · Pink: By (dusk-dawn) · Orange: Bz (N-S, critical)</div>
-    <div class="cw h220"><canvas id="c-bcomps"></canvas></div>
-    <div class="panel-desc">Smooth rotation of all three components over hours = flux rope/magnetic cloud crossing. Rapid field direction change = tangential or rotational discontinuity. Large |Bz| sustained southward = geomagnetic storm driver.</div>
+  <!-- B components -->
+  <div class="panel full-panel">
+    <div class="panel-title">B Components — Bx, By, Bz (GSE)</div>
+    <div class="panel-meta">X: Time [UTC] · Y: Field [nT] · Purple: Bx (Sun–Earth axis) · Pink: By (dusk–dawn) · Orange: Bz (north–south, critical) · MAG Level-2</div>
+    <div class="cw cw-220"><canvas id="c-bcomps"></canvas></div>
+    <div class="panel-note">Smooth rotation of all three components over hours = flux rope/magnetic cloud. Rapid direction change = tangential or rotational discontinuity. Large sustained southward Bz = storm driver.</div>
   </div>
 
-  <div class="grid2">
+  <!-- Hodograms -->
+  <div class="grid-2">
     <div class="panel">
       <div class="panel-title">Hodogram — By vs Bz</div>
-      <div class="panel-meta">By [nT] vs Bz [nT] · Color: time (purple→yellow) · circular path = field rotation</div>
-      <div class="cw h180"><canvas id="c-hyz"></canvas></div>
-      <div class="panel-desc">Elliptical/circular trajectory = smooth field rotation (flux rope). Random scatter = turbulent field. Elongated shape = dominant oscillation direction.</div>
+      <div class="panel-meta">By [nT] vs Bz [nT] · Color: time (purple → yellow = early → late)</div>
+      <div class="cw cw-180"><canvas id="c-hyz"></canvas></div>
+      <div class="panel-note">Elliptical/circular trajectory = smooth field rotation (flux rope). Random scatter = turbulent field. Elongated = dominant oscillation direction.</div>
     </div>
     <div class="panel">
       <div class="panel-title">Hodogram — Bx vs Bz</div>
-      <div class="panel-meta">Bx [nT] vs Bz [nT] · Color: time · MVA normal direction = minimum spread axis</div>
-      <div class="cw h180"><canvas id="c-hxz"></canvas></div>
-      <div class="panel-desc">The axis of minimum spread in both hodograms is the MVA normal direction. See MVA results below for the eigenvalue decomposition.</div>
+      <div class="panel-meta">Bx [nT] vs Bz [nT] · The axis of minimum spread = MVA normal direction</div>
+      <div class="cw cw-180"><canvas id="c-hxz"></canvas></div>
+      <div class="panel-note">The minimum-variance axis in both hodograms is the boundary normal found by MVA (see table below).</div>
     </div>
   </div>
 
-  <div class="panel full">
-    <div class="panel-title">Minimum Variance Analysis (MVA) Results</div>
+  <!-- MVA results -->
+  <div class="panel full-panel">
+    <div class="panel-title">Minimum Variance Analysis (MVA)</div>
     <div class="panel-meta">Paschmann & Daly SR-001 Ch. 8 · Sonnerup & Scheible 1998</div>
-    <div id="mva-content" style="margin-top:.4rem">—</div>
+    <div id="mva-content" style="margin-top:.5rem">—</div>
   </div>
-</div>
 
-<!-- ══ PARTICLES ══ -->
+</div><!-- /magnetic -->
+
+
+<!-- ═══════════════════════════════ PARTICLES ══════════════════════════ -->
 <div class="page" id="pg-particles">
-  <div class="stitle">Particle Measurements — SWIS / STEPS / PAPA</div>
-  <div class="data-ts">
-    <div class="dts-field"><span class="dts-lbl">SWIS energy range</span><span class="dts-val">100 eV – 20 keV</span></div>
-    <span class="dts-sep">|</span>
-    <div class="dts-field"><span class="dts-lbl">STEPS energy range</span><span class="dts-val">20 keV – 6 MeV/n</span></div>
-    <span class="dts-sep">|</span>
-    <div class="dts-field"><span class="dts-lbl">Window</span><span class="dts-val" id="part-ts">—</span></div>
-  </div>
-  <div class="grid3">
-    <div class="panel"><div class="panel-title">Proton Density n</div>
-      <div class="panel-meta">n [cm⁻³] · SWIS/PAPA · X: UTC · Y: density per cm³</div>
-      <div class="cw h180"><canvas id="c-n2"></canvas></div></div>
-    <div class="panel"><div class="panel-title">Bulk Speed V</div>
-      <div class="panel-meta">V [km/s] · SWIS · X: UTC · Y: flow speed</div>
-      <div class="cw h180"><canvas id="c-v2"></canvas></div></div>
-    <div class="panel"><div class="panel-title">Temperature T</div>
-      <div class="panel-meta">T [eV] · SWIS/PAPA · X: UTC · Y: thermal energy</div>
-      <div class="cw h180"><canvas id="c-t2"></canvas></div></div>
-  </div>
-  <div class="panel full">
-    <div class="panel-title">STEPS Energy–Time Spectrogram (full resolution)</div>
-    <div class="panel-meta">X: Time [UTC] · Y: Energy [eV] log scale, 20 keV (bottom) → 6 MeV/n (top) · Color: log₁₀ diff. flux [p cm⁻² s⁻¹ sr⁻¹ eV⁻¹] · 6 directional detectors</div>
-    <canvas class="spec" id="spec2" height="240"></canvas>
-    <div class="spec-legend"><span>▲ 6 MeV/n</span><span id="spec2-lbl">—</span><span>▼ 20 keV</span>
-      <div class="spec-cbar"><span>Low</span><div class="spec-cbar-bar"></div><span>High flux</span></div></div>
-    <div class="panel-desc">Each horizontal stripe = one energy channel. Each vertical strip = one measurement interval. Bright streak = energetic particle injection (SEP event). Spectral slope α encodes acceleration: diffusive shock acceleration gives E^(-2), stochastic gives softer spectrum. Sudden onset + high-energy feature first = shock-accelerated prompt component.</div>
-  </div>
-</div>
 
-<!-- ══ PLASMA PHYSICS ══ -->
-<div class="page" id="pg-plasma">
-  <div class="stitle">Derived Plasma Physics Parameters</div>
-  <div class="info-box">All quantities derived in real-time from SWIS + MAG measurements. Physical constants used: μ₀ = 4π×10⁻⁷ H/m, k_B = 1.38×10⁻²³ J/K, m_p = 1.67×10⁻²⁷ kg.</div>
+  <span class="section-label">Particle Measurements — SWIS / STEPS / PAPA</span>
+  <div class="ts-strip" style="margin-bottom:1rem">
+    <div class="ts-field"><span class="ts-lbl">SWIS energy</span><span class="ts-val">100 eV – 20 keV</span></div>
+    <span class="ts-sep">·</span>
+    <div class="ts-field"><span class="ts-lbl">STEPS energy</span><span class="ts-val">20 keV – 6 MeV/n</span></div>
+    <span class="ts-sep">·</span>
+    <div class="ts-field"><span class="ts-lbl">Window</span><span class="ts-val" id="part-ts">—</span></div>
+  </div>
+
+  <div class="grid-3">
+    <div class="panel">
+      <div class="panel-title">Proton Density n</div>
+      <div class="panel-meta">X: UTC · Y: n [cm⁻³] · SWIS/PAPA Level-2</div>
+      <div class="cw cw-180"><canvas id="c-n2"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Bulk Speed V</div>
+      <div class="panel-meta">X: UTC · Y: V [km/s] · SWIS Level-2</div>
+      <div class="cw cw-180"><canvas id="c-v2"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Temperature T</div>
+      <div class="panel-meta">X: UTC · Y: T [eV] · SWIS/PAPA Level-2</div>
+      <div class="cw cw-180"><canvas id="c-t2"></canvas></div>
+    </div>
+  </div>
+
+  <div class="panel full-panel">
+    <div class="panel-title">STEPS Energy–Time Spectrogram — Full View</div>
+    <div class="panel-meta">
+      X: Time [UTC] — each column ≈ 2-min cadence ·
+      Y: Particle energy [eV] log scale — 20 keV (bottom) → 6 MeV/n (top) ·
+      Color: log₁₀ differential flux [p cm⁻² s⁻¹ sr⁻¹ eV⁻¹] · 6 directional detectors
+    </div>
+    <canvas class="spec" id="spec-particles" height="260"></canvas>
+    <div class="spec-legend" style="margin-top:.3rem">
+      <span>▲ 6 MeV/n (STEPS high)</span>
+      <span id="spec-p-lbl">—</span>
+      <span>▼ 20 keV (STEPS low)</span>
+      <div class="colorbar"><span>low</span><div class="colorbar-bar"></div><span>high</span></div>
+    </div>
+    <div class="panel-note">Each horizontal stripe = one energy channel. Each column = one measurement interval. Bright streak = SEP injection. Spectral slope encodes acceleration mechanism: diffusive shock acceleration → E⁻². Sudden high-energy onset first = shock-accelerated prompt component.</div>
+  </div>
+
+</div><!-- /particles -->
+
+
+<!-- ═══════════════════════════ PLASMA PHYSICS ════════════════════════ -->
+<div class="page" id="pg-physics">
+
+  <span class="section-label">Derived Plasma Physics Parameters</span>
+  <div class="info-box">All quantities derived in real-time from SWIS + MAG measurements. Constants: μ₀ = 4π×10⁻⁷ H/m · k_B = 1.38×10⁻²³ J/K · m_p = 1.67×10⁻²⁷ kg. Hover metric cards on the Overview tab for quick explanations.</div>
+
   <div class="der-grid" id="der-grid"></div>
-  <div class="panel full">
-    <div class="panel-title">Magnetic PSD — Power Spectral Density</div>
-    <div class="panel-meta">X: Frequency f [Hz] log scale · Y: PSD [(nT)² Hz⁻¹] log scale · Orange dashed: Kolmogorov −5/3 · Purple dashed: IK −3/2 · Method: Welch averaged periodogram (Paschmann & Daly Ch. 1)</div>
-    <div class="cw h220"><canvas id="c-psd"></canvas></div>
-    <div class="panel-desc" id="psd-desc">The PSD reveals the turbulent energy cascade in the solar wind. The Kolmogorov −5/3 law applies to the MHD inertial range. Below the ion cyclotron frequency (f_ci), the spectrum steepens to −7/3 or −4 as kinetic Alfvén waves dominate. Energy injection from a CME or shock shallows the spectrum. A spectral break marks the transition from MHD to kinetic scales.</div>
-  </div>
-</div>
 
-<!-- ══ HISTORY ══ -->
+  <div class="panel full-panel">
+    <div class="panel-title">Magnetic Field PSD — Power Spectral Density</div>
+    <div class="panel-meta">
+      X: Frequency f [Hz] — log scale — spacecraft-frame fluctuation frequency ·
+      Y: PSD [(nT)² Hz⁻¹] — log scale — power per unit frequency ·
+      Orange dashed: Kolmogorov −5/3 (MHD inertial range) · Purple dashed: IK −3/2 ·
+      Method: Welch averaged periodogram (Paschmann & Daly SR-001 Ch. 1)
+    </div>
+    <div class="cw cw-220"><canvas id="c-psd"></canvas></div>
+    <div class="panel-note" id="psd-note">Kolmogorov −5/3 applies in the MHD inertial range. Below the ion cyclotron frequency the spectrum steepens to −7/3 or −4 (kinetic Alfvén waves). Shallower than −5/3 = energy injection (shock, CME). A spectral break marks the MHD→kinetic transition.</div>
+  </div>
+
+</div><!-- /physics -->
+
+
+<!-- ═══════════════════════════ 6-MONTH HISTORY ═══════════════════════ -->
 <div class="page" id="pg-history">
-  <div class="stitle">6-Month Rolling Record · One point per 6-hour GitHub Actions run</div>
-  <div class="info-box" id="hist-info">Loading history…</div>
-  <div class="hist-grid">
-    <div class="panel"><div class="panel-title">Proton Density</div><div class="panel-meta">n [cm⁻³] vs Date/Time UTC</div><div class="cw h220"><canvas id="h-n"></canvas></div></div>
-    <div class="panel"><div class="panel-title">Solar Wind Speed</div><div class="panel-meta">V [km/s] vs Date/Time UTC · Pink line: 450 km/s fast-wind threshold</div><div class="cw h220"><canvas id="h-v"></canvas></div></div>
-  </div>
-  <div class="hist-grid">
-    <div class="panel"><div class="panel-title">IMF |B|</div><div class="panel-meta">|B| [nT] vs Date/Time UTC</div><div class="cw h220"><canvas id="h-b"></canvas></div></div>
-    <div class="panel"><div class="panel-title">IMF Bz</div><div class="panel-meta">Bz [nT] vs Date/Time UTC · Orange line: Bz=0 (below=geoeffective)</div><div class="cw h220"><canvas id="h-bz"></canvas></div></div>
-  </div>
-  <div class="hist-grid">
-    <div class="panel"><div class="panel-title">Plasma β</div><div class="panel-meta">β vs Date/Time UTC · Dashed: β=1 boundary</div><div class="cw h220"><canvas id="h-beta"></canvas></div></div>
-    <div class="panel"><div class="panel-title">Alfvén Speed V_A</div><div class="panel-meta">V_A [km/s] vs Date/Time UTC · Derived from B and n</div><div class="cw h220"><canvas id="h-va"></canvas></div></div>
-  </div>
-</div>
 
-<!-- ══ EVENTS ══ -->
+  <span class="section-label">6-Month Rolling Record · One point per 6-hour pipeline run</span>
+  <div class="hist-info" id="hist-info">Loading history…</div>
+
+  <div class="hist-grid">
+    <div class="panel"><div class="panel-title">Proton Density</div><div class="panel-meta">n [cm⁻³] vs Date/Time UTC</div><div class="cw cw-220"><canvas id="h-n"></canvas></div></div>
+    <div class="panel"><div class="panel-title">Solar Wind Speed</div><div class="panel-meta">V [km/s] vs Date/Time UTC · dashed: 450 km/s fast-wind threshold</div><div class="cw cw-220"><canvas id="h-v"></canvas></div></div>
+  </div>
+  <div class="hist-grid">
+    <div class="panel"><div class="panel-title">IMF |B|</div><div class="panel-meta">|B| [nT] vs Date/Time UTC</div><div class="cw cw-220"><canvas id="h-b"></canvas></div></div>
+    <div class="panel"><div class="panel-title">IMF Bz</div><div class="panel-meta">Bz [nT] vs Date/Time UTC · southward = geoeffective</div><div class="cw cw-220"><canvas id="h-bz"></canvas></div></div>
+  </div>
+  <div class="hist-grid">
+    <div class="panel"><div class="panel-title">Plasma β</div><div class="panel-meta">β vs Date/Time UTC · dashed: β = 1 boundary</div><div class="cw cw-220"><canvas id="h-beta"></canvas></div></div>
+    <div class="panel"><div class="panel-title">Alfvén Speed V_A</div><div class="panel-meta">V_A [km/s] vs Date/Time UTC</div><div class="cw cw-220"><canvas id="h-va"></canvas></div></div>
+  </div>
+
+</div><!-- /history -->
+
+
+<!-- ═══════════════════════════════ EVENTS ════════════════════════════ -->
 <div class="page" id="pg-events">
-  <div class="stitle">Auto-Detected Plasma Events</div>
-  <div class="info-box">Detected by the GitHub Actions pipeline using physics-based thresholds grounded in Rankine-Hugoniot theory (shocks), Dungey cycle coupling (southward IMF), and empirical solar wind classification. Confidence scores reflect the strength of the signal relative to background. All events show measured values and physical interpretation.</div>
-  <div id="ev-list"><div class="no-ev"><span class="spin"></span> Loading…</div></div>
-</div>
+
+  <span class="section-label">Auto-Detected Plasma Events · Physics-Based Thresholds</span>
+  <div class="info-box">Events detected by the GitHub Actions pipeline on each 6-hour run. Methods: Rankine-Hugoniot (shocks) · Dungey cycle coupling (southward IMF) · solar wind regime classification (fast streams) · density jump analysis (CME/CIR). Confidence scores reflect signal strength relative to background.</div>
+  <div id="ev-list"><div class="no-events"><span class="spin"></span> Loading…</div></div>
+
+</div><!-- /events -->
+
+</main>
 
 <script>
-const LATEST='data/latest.json', HISTORY='data/history.json';
-Chart.defaults.color='#4d6885'; Chart.defaults.borderColor='#1c2e4a';
-Chart.defaults.font={family:"'JetBrains Mono','Consolas',monospace",size:10};
-Chart.defaults.plugins.legend.display=false;
-const COLORS={n:'#2ecc8e',v:'#29b6e8',t:'#ff6b2b',b:'#ffad42',bx:'#8b7cf0',by:'#e84393',bz:'#ff6b2b'};
+/* ═══════════════════════════════════════════════════════════════════════
+   Aditya-L1 Live Dashboard
+   Reads data/latest.json (written by GitHub Actions every 6 hours)
+   and data/history.json (rolling 6-month record)
+═══════════════════════════════════════════════════════════════════════ */
 
-function mkLine(id,color,fill=true){
-  return new Chart(document.getElementById(id),{
-    type:'line',
-    data:{labels:[],datasets:[{data:[],borderColor:color,borderWidth:1.6,pointRadius:0,tension:.35,fill,backgroundColor:fill?color+'12':false}]},
-    options:{responsive:true,maintainAspectRatio:false,animation:{duration:300},
-      scales:{x:{ticks:{maxTicksLimit:6,maxRotation:0},grid:{color:'#1c2e4a30'}},y:{ticks:{},grid:{color:'#1c2e4a30'}}}}
-  });
-}
-function mkScatter(id){
-  return new Chart(document.getElementById(id),{
-    type:'scatter',
-    data:{datasets:[{data:[],pointRadius:1.8,
-      pointBackgroundColor:ctx=>{const i=ctx.dataIndex,n=ctx.dataset.data.length,t=i/n;return `hsl(${260+t*80},75%,${48+t*22}%)`;}
-    }]},
-    options:{responsive:true,maintainAspectRatio:false,animation:false,
-      scales:{x:{ticks:{},grid:{color:'#1c2e4a30'},title:{display:true,text:'nT',color:'#4d6885'}},
-              y:{ticks:{},grid:{color:'#1c2e4a30'},title:{display:true,text:'nT',color:'#4d6885'}}}}
-  });
-}
-const C={
-  n:mkLine('c-n',COLORS.n),v:mkLine('c-v',COLORS.v),t:mkLine('c-t',COLORS.t),b:mkLine('c-b',COLORS.b),
-  n2:mkLine('c-n2',COLORS.n),v2:mkLine('c-v2',COLORS.v),t2:mkLine('c-t2',COLORS.t),
-  hyz:mkScatter('c-hyz'),hxz:mkScatter('c-hxz'),
-  bcomps:new Chart(document.getElementById('c-bcomps'),{
-    type:'line',
-    data:{labels:[],datasets:[
-      {label:'Bx (Sun-Earth)',data:[],borderColor:'#8b7cf0',borderWidth:1.2,pointRadius:0,tension:.3},
-      {label:'By (dusk-dawn)',data:[],borderColor:'#e84393',borderWidth:1.2,pointRadius:0,tension:.3},
-      {label:'Bz (N-S critical)',data:[],borderColor:'#ff6b2b',borderWidth:1.8,pointRadius:0,tension:.3},
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,animation:{duration:300},
-      plugins:{legend:{display:true,labels:{boxWidth:10,font:{size:10}}}},
-      scales:{x:{ticks:{maxTicksLimit:7},grid:{color:'#1c2e4a30'}},
-              y:{ticks:{},grid:{color:'#1c2e4a30'},title:{display:true,text:'B [nT]',color:'#4d6885'}}}}
-  }),
-  psd:new Chart(document.getElementById('c-psd'),{
-    type:'scatter',
-    data:{datasets:[
-      {label:'Measured PSD',data:[],borderColor:'#29b6e8',showLine:true,borderWidth:1.5,pointRadius:0,tension:.3},
-      {label:'Kolmogorov −5/3',data:[],borderColor:'#ffad42',showLine:true,borderWidth:1,pointRadius:0,borderDash:[5,3]},
-      {label:'IK −3/2',data:[],borderColor:'#8b7cf0',showLine:true,borderWidth:1,pointRadius:0,borderDash:[3,3]},
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,animation:false,
-      plugins:{legend:{display:true,labels:{boxWidth:10,font:{size:10}}}},
-      scales:{
-        x:{type:'logarithmic',ticks:{},grid:{color:'#1c2e4a30'},title:{display:true,text:'f [Hz]',color:'#4d6885'}},
-        y:{type:'logarithmic',ticks:{},grid:{color:'#1c2e4a30'},title:{display:true,text:'PSD [(nT)² Hz⁻¹]',color:'#4d6885'}}
-      }}
-  }),
-  hn:mkLine('h-n',COLORS.n,false),hv:mkLine('h-v',COLORS.v,false),
-  hb:mkLine('h-b',COLORS.b,false),hbz:mkLine('h-bz',COLORS.bz,false),
-  hbeta:mkLine('h-beta','#8b7cf0',false),hva:mkLine('h-va','#e84393',false),
+const LATEST_URL  = 'data/latest.json';
+const HISTORY_URL = 'data/history.json';
+
+// ── Chart defaults ──────────────────────────────────────────────────────
+Chart.defaults.color       = '#4a6a8a';
+Chart.defaults.borderColor = '#112035';
+Chart.defaults.plugins.legend.display = false;
+const FONT = { family: "'IBM Plex Mono','Fira Code',monospace", size: 10 };
+
+// ── Color palette (matches CSS vars) ───────────────────────────────────
+const C = {
+  n:  '#1cba7f', v: '#29cbe8', t: '#ff7a2b', b: '#ffad6b',
+  bx: '#8b7cf0', by: '#e84393', bz: '#ff7a2b', bmag: '#ffad6b',
 };
 
-// Spectrogram
-const PC=[[13,8,135],[84,2,163],[139,10,165],[185,50,137],[219,92,104],[244,136,73],[254,188,43],[240,249,33]];
-function lerpC(n){const i=Math.min(Math.floor(n*(PC.length-1)),PC.length-2),t=n*(PC.length-1)-i;return PC[i].map((c,j)=>Math.round(c+t*(PC[i+1][j]-c)));}
-function drawSpec(cv,data){
-  if(!cv||!data?.flux?.length) return;
-  const flux=data.flux,nT=flux.length,nE=flux[0].length;
-  cv.width=nT; cv.height=nE;
-  const ctx=cv.getContext('2d'),img=ctx.createImageData(nT,nE);
-  let lo=Infinity,hi=-Infinity;
-  for(let t=0;t<nT;t++) for(let e=0;e<nE;e++){const v=Math.log10(Math.max(flux[t][e],1e-30));if(v<lo)lo=v;if(v>hi)hi=v;}
-  for(let t=0;t<nT;t++) for(let e=0;e<nE;e++){
-    const v=Math.log10(Math.max(flux[t][e],1e-30)),norm=Math.max(0,Math.min(1,(v-lo)/(hi-lo)));
-    const[r,g,b]=lerpC(norm),idx=((nE-1-e)*nT+t)*4;
-    img.data[idx]=r;img.data[idx+1]=g;img.data[idx+2]=b;img.data[idx+3]=255;
-  }
-  ctx.putImageData(img,0,0);
+// ── Chart factory ───────────────────────────────────────────────────────
+function mkLine(id, color, fill=true) {
+  return new Chart(document.getElementById(id), {
+    type: 'line',
+    data: { labels: [], datasets: [{ data: [], borderColor: color,
+      borderWidth: 1.6, pointRadius: 0, tension: .35, fill,
+      backgroundColor: fill ? color + '14' : false }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 350 },
+      scales: {
+        x: { ticks: { font: FONT, maxTicksLimit: 6, maxRotation: 0 },
+             grid: { color: '#11203530' } },
+        y: { ticks: { font: FONT }, grid: { color: '#11203530' } },
+      },
+    },
+  });
 }
 
-function upd(chart,times,vals){chart.data.labels=times.map(t=>t.slice(11,16));chart.data.datasets[0].data=vals;chart.update('none');}
-function txt(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
-function fmtT(t){try{return new Date(t).toISOString().replace('T',' ').replace(/\.\d+Z/,' UTC');}catch{return t;}}
+function mkScatter(id) {
+  return new Chart(document.getElementById(id), {
+    type: 'scatter',
+    data: { datasets: [{ data: [], pointRadius: 1.8,
+      pointBackgroundColor: ctx => {
+        const i = ctx.dataIndex, n = ctx.dataset.data.length, t = i / n;
+        return `hsl(${260 + t * 80}, 70%, ${48 + t * 22}%)`;
+      }}] },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      scales: {
+        x: { ticks: { font: FONT }, grid: { color: '#11203530' },
+             title: { display: true, text: 'nT', color: '#4a6a8a', font: FONT } },
+        y: { ticks: { font: FONT }, grid: { color: '#11203530' },
+             title: { display: true, text: 'nT', color: '#4a6a8a', font: FONT } },
+      },
+    },
+  });
+}
 
-function render(d){
-  const{moments:mom,mag,steps,psd,derived:der,events,scalars:sc,simulated:sim,run_time,sw_regime,bz_status,mva}=d;
+// ── Instantiate all charts ──────────────────────────────────────────────
+const charts = {
+  n:  mkLine('c-n',  C.n),
+  v:  mkLine('c-v',  C.v),
+  t:  mkLine('c-t',  C.t),
+  b:  mkLine('c-b',  C.b),
+  n2: mkLine('c-n2', C.n),
+  v2: mkLine('c-v2', C.v),
+  t2: mkLine('c-t2', C.t),
+  hyz: mkScatter('c-hyz'),
+  hxz: mkScatter('c-hxz'),
+  bcomps: new Chart(document.getElementById('c-bcomps'), {
+    type: 'line',
+    data: { labels: [], datasets: [
+      { label: 'Bx', data: [], borderColor: C.bx, borderWidth: 1.2, pointRadius: 0, tension: .3 },
+      { label: 'By', data: [], borderColor: C.by, borderWidth: 1.2, pointRadius: 0, tension: .3 },
+      { label: 'Bz (critical)', data: [], borderColor: C.bz, borderWidth: 1.8, pointRadius: 0, tension: .3 },
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: { duration: 350 },
+      plugins: { legend: { display: true, labels: { font: FONT, boxWidth: 10, color: '#8aaed8' } } },
+      scales: {
+        x: { ticks: { font: FONT, maxTicksLimit: 7 }, grid: { color: '#11203530' } },
+        y: { ticks: { font: FONT }, grid: { color: '#11203530' },
+             title: { display: true, text: 'B [nT]', color: '#4a6a8a', font: FONT } },
+      },
+    },
+  }),
+  psd: new Chart(document.getElementById('c-psd'), {
+    type: 'scatter',
+    data: { datasets: [
+      { label: 'Measured PSD', data: [], borderColor: C.v, showLine: true, borderWidth: 1.5, pointRadius: 0, tension: .3 },
+      { label: 'Kolmogorov −5/3', data: [], borderColor: '#ffad6b', showLine: true, borderWidth: 1, pointRadius: 0, borderDash: [5, 3] },
+      { label: 'IK −3/2',         data: [], borderColor: '#8b7cf0', showLine: true, borderWidth: 1, pointRadius: 0, borderDash: [3, 3] },
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      plugins: { legend: { display: true, labels: { font: FONT, boxWidth: 10, color: '#8aaed8' } } },
+      scales: {
+        x: { type: 'logarithmic', ticks: { font: FONT }, grid: { color: '#11203530' },
+             title: { display: true, text: 'f [Hz]', color: '#4a6a8a', font: FONT } },
+        y: { type: 'logarithmic', ticks: { font: FONT }, grid: { color: '#11203530' },
+             title: { display: true, text: 'PSD [(nT)² Hz⁻¹]', color: '#4a6a8a', font: FONT } },
+      },
+    },
+  }),
+  // History
+  hn:    mkLine('h-n',    C.n,    false),
+  hv:    mkLine('h-v',    C.v,    false),
+  hb:    mkLine('h-b',    C.b,    false),
+  hbz:   mkLine('h-bz',   C.bz,   false),
+  hbeta: mkLine('h-beta', '#8b7cf0', false),
+  hva:   mkLine('h-va',   '#e84393', false),
+};
 
-  // Timestamp strip
-  const times=mom?.times||[];
-  txt('ts-start',fmtT(times[0]||run_time));
-  txt('ts-end',fmtT(times[times.length-1]||run_time));
-  txt('ts-run',fmtT(run_time));
-  txt('mag-ts-val',times[0]?fmtT(times[0])+' → '+fmtT(times[times.length-1]):'—');
-  txt('part-ts',times[0]?fmtT(times[0]):fmtT(run_time));
-  const srcEl=document.getElementById('ts-src');
-  srcEl.textContent=sim?'⚙ Simulated — add PRADAN_EMAIL/PASSWORD as GitHub Secrets for live data':'● PRADAN / ISSDC — Level-2 data';
-  srcEl.className=sim?'dts-sim':'dts-source';
+// ── Spectrogram (plasma colormap) ───────────────────────────────────────
+const PLASMA_CM = [
+  [13,8,135],[84,2,163],[139,10,165],[185,50,137],
+  [219,92,104],[244,136,73],[254,188,43],[240,249,33]
+];
+function lerpColor(norm) {
+  const i = Math.min(Math.floor(norm * (PLASMA_CM.length - 1)), PLASMA_CM.length - 2);
+  const t = norm * (PLASMA_CM.length - 1) - i;
+  return PLASMA_CM[i].map((c, j) => Math.round(c + t * (PLASMA_CM[i+1][j] - c)));
+}
+function drawSpec(canvasId, data) {
+  const cv = document.getElementById(canvasId);
+  if (!cv || !data?.flux?.length) return;
+  const flux = data.flux, nT = flux.length, nE = flux[0].length;
+  cv.width = nT; cv.height = nE;
+  const ctx = cv.getContext('2d'), img = ctx.createImageData(nT, nE);
+  let lo = Infinity, hi = -Infinity;
+  for (let t = 0; t < nT; t++)
+    for (let e = 0; e < nE; e++) {
+      const v = Math.log10(Math.max(flux[t][e], 1e-30));
+      if (v < lo) lo = v; if (v > hi) hi = v;
+    }
+  for (let t = 0; t < nT; t++)
+    for (let e = 0; e < nE; e++) {
+      const v = Math.log10(Math.max(flux[t][e], 1e-30));
+      const norm = Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+      const [r, g, b] = lerpColor(norm);
+      const idx = ((nE - 1 - e) * nT + t) * 4;
+      img.data[idx] = r; img.data[idx+1] = g; img.data[idx+2] = b; img.data[idx+3] = 255;
+    }
+  ctx.putImageData(img, 0, 0);
+}
 
-  // Badge, regime, status
-  const badge=document.getElementById('mode-badge');
-  badge.textContent=sim?'⚙ Simulated':'● Live PRADAN';
-  badge.className='badge '+(sim?'sim':'live');
-  document.getElementById('live-dot').className=sim?'sim':'on';
-  txt('status-lbl',sim?'Simulated':'Live data');
-  txt('last-upd','⏱ '+new Date(run_time).toLocaleString());
-  txt('regime-pill',sw_regime||'—');
+// ── Helpers ──────────────────────────────────────────────────────────────
+function setLine(chart, times, vals) {
+  chart.data.labels = times.map(t => t.slice(11, 16)); // HH:MM
+  chart.data.datasets[0].data = vals;
+  chart.update('none');
+}
+function txt(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
+function fmtT(t) {
+  try { return new Date(t).toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC'); }
+  catch { return t || '—'; }
+}
 
-  // Metrics
-  txt('m-n',sc.density_cm3); txt('m-v',sc.velocity_kms); txt('m-t',sc.temperature_eV);
-  txt('m-b',sc.B_mag_nT);   txt('m-bz',sc.Bz_nT);       txt('m-beta',sc.plasma_beta);
-  txt('m-va',sc.alfven_speed_kms); txt('m-ev',d.event_count);
-  const bzCard=document.querySelector('#pg-dashboard .mc:nth-child(5) .mc-val');
-  if(bzCard) bzCard.style.color=sc.Bz_nT<-5?'#e53e3e':sc.Bz_nT<0?'#f0c040':'#27ae76';
+// ── Main render ───────────────────────────────────────────────────────────
+function render(d) {
+  const { moments: mom, mag, steps, psd, derived: der,
+          events, scalars: sc, simulated: sim,
+          run_time, run_id, sw_regime, bz_status, mva } = d;
 
-  // Charts
-  if(mom){
-    upd(C.n,mom.times,mom.density); upd(C.v,mom.times,mom.velocity); upd(C.t,mom.times,mom.temperature);
-    upd(C.n2,mom.times,mom.density); upd(C.v2,mom.times,mom.velocity); upd(C.t2,mom.times,mom.temperature);
+  // ── Nav status ─────────────────────────────────────────────────────────
+  const dot = document.getElementById('nav-dot');
+  dot.className = 'nav-dot ' + (sim ? 'sim' : '');
+  txt('status-text', sim ? '⚙ Simulated' : '● Live data');
+
+  // ── Banner ──────────────────────────────────────────────────────────────
+  const badge = document.getElementById('mode-badge');
+  badge.textContent = sim ? '⚙ Simulated' : '● Live PRADAN';
+  badge.className = 'data-badge ' + (sim ? 'sim' : 'live');
+  txt('regime-tag', sw_regime || '—');
+  txt('last-upd', '⏱ ' + new Date(run_time).toLocaleString());
+
+  // ── Timestamp strip ─────────────────────────────────────────────────────
+  const times = mom?.times || [];
+  txt('ts-start', fmtT(times[0]));
+  txt('ts-end',   fmtT(times[times.length - 1]));
+  txt('ts-run',   fmtT(run_time) + (run_id ? '  [' + run_id + ']' : ''));
+  const srcEl = document.getElementById('ts-source');
+  srcEl.textContent = sim
+    ? '⚙ Simulated — add PRADAN_EMAIL + PRADAN_PASSWORD as GitHub Secrets for live data'
+    : '● PRADAN / ISSDC — Level-2 data';
+  srcEl.className = sim ? 'ts-val ts-source-sim' : 'ts-val ts-source-live';
+
+  txt('mag-ts',   times[0] ? fmtT(times[0]) + ' → ' + fmtT(times[times.length-1]) : '—');
+  txt('part-ts',  times[0] ? fmtT(times[0]) : fmtT(run_time));
+
+  // ── Metric cards ────────────────────────────────────────────────────────
+  txt('m-n',    sc.density_cm3);
+  txt('m-v',    sc.velocity_kms);
+  txt('m-t',    sc.temperature_eV);
+  txt('m-b',    sc.B_mag_nT);
+  txt('m-bz',   sc.Bz_nT);
+  txt('m-beta', sc.plasma_beta);
+  txt('m-va',   sc.alfven_speed_kms);
+  txt('m-ev',   d.event_count);
+
+  // Color Bz card
+  const bzCard = document.querySelector('#pg-overview .mc:nth-child(5) .mc-val');
+  if (bzCard) {
+    bzCard.style.color = sc.Bz_nT < -10 ? '#ef4444'
+                       : sc.Bz_nT <  -5 ? '#f97316'
+                       : sc.Bz_nT <   0 ? '#f0c040'
+                       : '#22c55e';
   }
-  if(mag){
-    upd(C.b,mag.times,mag.B_mag);
-    const lbl=mag.times.map(t=>t.slice(11,16));
-    C.bcomps.data.labels=lbl;
-    C.bcomps.data.datasets[0].data=mag.Bx;
-    C.bcomps.data.datasets[1].data=mag.By;
-    C.bcomps.data.datasets[2].data=mag.Bz;
-    C.bcomps.update('none');
-    C.hyz.data.datasets[0].data=mag.By.map((v,i)=>({x:v,y:mag.Bz[i]}));C.hyz.update('none');
-    C.hxz.data.datasets[0].data=mag.Bx.map((v,i)=>({x:v,y:mag.Bz[i]}));C.hxz.update('none');
+
+  // ── Time-series charts ─────────────────────────────────────────────────
+  if (mom) {
+    setLine(charts.n,  mom.times, mom.density);
+    setLine(charts.v,  mom.times, mom.velocity);
+    setLine(charts.t,  mom.times, mom.temperature);
+    setLine(charts.n2, mom.times, mom.density);
+    setLine(charts.v2, mom.times, mom.velocity);
+    setLine(charts.t2, mom.times, mom.temperature);
+  }
+
+  // ── MAG charts ──────────────────────────────────────────────────────────
+  if (mag) {
+    setLine(charts.b, mag.times, mag.B_mag);
+
+    const lbl = mag.times.map(t => t.slice(11, 16));
+    charts.bcomps.data.labels = lbl;
+    charts.bcomps.data.datasets[0].data = mag.Bx;
+    charts.bcomps.data.datasets[1].data = mag.By;
+    charts.bcomps.data.datasets[2].data = mag.Bz;
+    charts.bcomps.update('none');
+
+    // Hodograms
+    charts.hyz.data.datasets[0].data = mag.By.map((v, i) => ({ x: v, y: mag.Bz[i] }));
+    charts.hyz.update('none');
+    charts.hxz.data.datasets[0].data = mag.Bx.map((v, i) => ({ x: v, y: mag.Bz[i] }));
+    charts.hxz.update('none');
 
     // Bz gauge
-    const bz=sc.Bz_nT,col=bz_status?.color||'#4d6885';
-    const bzEl=document.getElementById('bz-big');bzEl.textContent=(bz>0?'+':'')+bz;bzEl.style.color=col;
-    const bb=document.getElementById('bz-badge');if(bb){bb.textContent=bz_status?.label||'—';bb.style.color=col;bb.style.borderColor=col;}
-    txt('bz-exp',bz_status?.explanation||'—');
+    const bz = sc.Bz_nT;
+    const col = bz_status?.color || '#4a6a8a';
+    const bzEl = document.getElementById('bz-big');
+    bzEl.textContent = (bz > 0 ? '+' : '') + bz;
+    bzEl.style.color = col;
+    const bb = document.getElementById('bz-badge');
+    if (bb) { bb.textContent = bz_status?.label || '—'; bb.style.color = col; bb.style.borderColor = col; }
+    txt('bz-exp', bz_status?.explanation || '—');
 
     // Clock needle
-    const angle=sc.clock_angle_deg,rad=(angle-90)*Math.PI/180,r=48,cx=65,cy=65;
-    const x2=cx+r*Math.cos(rad),y2=cy+r*Math.sin(rad);
-    const needle=document.getElementById('needle');
-    if(needle){needle.setAttribute('x2',x2.toFixed(1));needle.setAttribute('y2',y2.toFixed(1));
-      needle.setAttribute('stroke',angle>90&&angle<270?'#e53e3e':'#27ae76');}
-    txt('clk-lbl',angle.toFixed(0)+'°');
+    const angle = sc.clock_angle_deg;
+    const rad   = (angle - 90) * Math.PI / 180;
+    const r = 50, cx = 65, cy = 65;
+    const x2 = cx + r * Math.cos(rad), y2 = cy + r * Math.sin(rad);
+    const needle = document.getElementById('clock-needle');
+    needle.setAttribute('x2', x2.toFixed(1));
+    needle.setAttribute('y2', y2.toFixed(1));
+    needle.setAttribute('stroke', (angle > 90 && angle < 270) ? '#ef4444' : '#22c55e');
+    txt('clock-angle-txt', angle.toFixed(0) + '°');
+    txt('clock-status-txt',
+      angle > 90 && angle < 270
+        ? '🔴 Southward sector — geoeffective'
+        : '🟢 Northward sector — minimal coupling'
+    );
 
-    // MVA
-    if(mva){
-      document.getElementById('mva-content').innerHTML=`
-        <div style="font-size:.77rem;color:${mva.valid?'#27ae76':'#f0c040'};margin-bottom:.4rem">${mva.quality||'—'}</div>
-        <div style="font-size:.73rem;color:var(--muted);margin-bottom:.6rem">${mva.explanation||''}</div>
+    // MVA table
+    if (mva) {
+      document.getElementById('mva-content').innerHTML = `
+        <div style="font-size:.76rem;margin-bottom:.4rem;color:${mva.valid ? '#22c55e' : '#f0c040'}">
+          ${mva.quality}</div>
+        <div style="font-size:.72rem;color:var(--text-tertiary);margin-bottom:.65rem">${mva.explanation}</div>
         <table class="mva-tbl">
-          <tr><th>Eigenvalue</th><th>Value [nT²]</th><th>Role</th><th>Interpretation</th></tr>
-          <tr><td>λ_min (minimum variance)</td><td>${mva.lambda_min}</td><td>Normal direction ν̂</td><td>Structure boundary normal</td></tr>
-          <tr><td>λ_int (intermediate)</td><td>${mva.lambda_int}</td><td>Tangent direction M̂</td><td>Along boundary surface</td></tr>
-          <tr><td>λ_max (maximum variance)</td><td>${mva.lambda_max}</td><td>Maximum direction L̂</td><td>Field rotation direction</td></tr>
-          <tr><td><b>λ_int / λ_min</b></td><td><b>${mva.lambda_ratio}</b></td><td><b>Quality ratio</b></td><td><b>${mva.lambda_ratio>2?'✅ Reliable (>2)':'⚠ Degenerate (<2) — normal unreliable'}</b></td></tr>
+          <tr><th>Eigenvalue</th><th>Value [nT²]</th><th>Role</th><th>Note</th></tr>
+          <tr><td>λ_min</td><td>${mva.lambda_min}</td><td>Minimum variance → normal ν̂</td><td>Structure boundary normal</td></tr>
+          <tr><td>λ_int</td><td>${mva.lambda_int}</td><td>Intermediate → tangent M̂</td><td>Along boundary surface</td></tr>
+          <tr><td>λ_max</td><td>${mva.lambda_max}</td><td>Maximum variance → L̂</td><td>Field rotation direction</td></tr>
+          <tr><td><strong>λ_int/λ_min</strong></td>
+              <td><strong>${mva.lambda_ratio}</strong></td>
+              <td><strong>Quality ratio</strong></td>
+              <td>${mva.lambda_ratio > 2 ? '✅ Reliable (>2)' : '⚠ Degenerate (<2)'}</td></tr>
         </table>
-        <div style="font-size:.7rem;color:var(--muted);margin-top:.5rem">Normal direction: [${(mva.normal_dir||[]).map(v=>v.toFixed(3)).join(', ')}] in input coordinates (GSE)</div>`;
+        <div style="font-family:var(--font-mono);font-size:.65rem;color:var(--text-dim);margin-top:.4rem">
+          Normal direction: [${(mva.normal_dir || []).map(v => v.toFixed(3)).join(', ')}] (input coordinates)
+        </div>`;
     }
   }
-  if(steps){
-    drawSpec(document.getElementById('spec'),steps);
-    drawSpec(document.getElementById('spec2'),steps);
-    const tl=steps.times?steps.times[0]?.slice(0,10)+' → '+steps.times.at(-1)?.slice(0,10):'—';
-    txt('spec-lbl',tl); txt('spec2-lbl',tl);
+
+  // ── Spectrograms ────────────────────────────────────────────────────────
+  if (steps) {
+    drawSpec('spec-main', steps);
+    drawSpec('spec-particles', steps);
+    const tl = steps.times
+      ? steps.times[0]?.slice(0, 10) + ' → ' + steps.times.at(-1)?.slice(0, 10)
+      : '—';
+    txt('spec-time-lbl', tl);
+    txt('spec-p-lbl', tl);
   }
 
-  // PSD
-  if(psd?.valid){
-    const f=psd.freqs,p=psd.psd,f0=f[0],p0=p[0];
-    C.psd.data.datasets[0].data=f.map((v,i)=>({x:v,y:p[i]}));
-    C.psd.data.datasets[1].data=f.map(v=>({x:v,y:p0*Math.pow(v/f0,-5/3)}));
-    C.psd.data.datasets[2].data=f.map(v=>({x:v,y:p0*Math.pow(v/f0,-3/2)}));
-    C.psd.update('none');
-    if(psd.interpretation) txt('psd-desc',psd.interpretation+' (Paschmann & Daly SR-001 Ch. 1)');
+  // ── PSD chart ───────────────────────────────────────────────────────────
+  if (psd?.valid) {
+    const f = psd.freqs, p = psd.psd;
+    const f0 = f[0], p0 = p[0];
+    charts.psd.data.datasets[0].data = f.map((v, i) => ({ x: v, y: p[i] }));
+    charts.psd.data.datasets[1].data = f.map(v => ({ x: v, y: p0 * Math.pow(v / f0, -5/3) }));
+    charts.psd.data.datasets[2].data = f.map(v => ({ x: v, y: p0 * Math.pow(v / f0, -3/2) }));
+    charts.psd.update('none');
+    if (psd.interpretation) txt('psd-note', psd.interpretation + ' (Paschmann & Daly SR-001 Ch. 1)');
   }
 
-  // Derived grid
-  if(der){
-    const expl=der.explanations||{};
-    const items=[
-      {n:'Plasma β',v:der.plasma_beta,e:expl.beta||'P_thermal/P_magnetic'},
-      {n:'Alfvén speed V_A',v:der.alfven_speed_kms+' km/s',e:expl.alfven},
-      {n:'Sound speed V_s',v:der.sound_speed_kms+' km/s',e:'Isothermal: √(k_BT/m_p)'},
-      {n:'Magnetosonic V_ms',v:der.magnetosonic_kms+' km/s',e:'√(V_A²+V_s²) — compressional speed'},
-      {n:'Alfvénic Mach M_A',v:der.alfvenic_mach,e:expl.mach_a},
-      {n:'Sonic Mach M_s',v:der.sonic_mach,e:expl.mach_s},
-      {n:'Thermal pressure',v:der.P_thermal_nPa+' nPa',e:'P_th = nk_BT'},
-      {n:'Magnetic pressure',v:der.P_magnetic_nPa+' nPa',e:'P_B = B²/(2μ₀)'},
-      {n:'Proton gyroperiod',v:der.gyroperiod_s+' s',e:'T_g = 2πm_p/(eB)'},
-      {n:'Ion inertial length',v:der.ion_inertial_km+' km',e:'c/ω_pi — kinetic scale'},
+  // ── Derived physics grid ────────────────────────────────────────────────
+  if (der) {
+    const ex = der.explanations || {};
+    const items = [
+      { n: 'Plasma β',             v: der.plasma_beta,       e: ex.beta },
+      { n: 'Alfvén speed V_A',     v: der.alfven_speed_kms  + ' km/s', e: ex.alfven },
+      { n: 'Sound speed V_s',      v: der.sound_speed_kms   + ' km/s', e: 'Isothermal: √(k_BT/m_p)' },
+      { n: 'Magnetosonic V_ms',    v: der.magnetosonic_kms  + ' km/s', e: '√(V_A²+V_s²) — compressional speed' },
+      { n: 'Alfvénic Mach M_A',    v: der.alfvenic_mach,    e: ex.mach_a },
+      { n: 'Sonic Mach M_s',       v: der.sonic_mach,       e: ex.mach_s },
+      { n: 'Thermal pressure',     v: der.P_thermal_nPa   + ' nPa', e: 'P_th = nk_BT' },
+      { n: 'Magnetic pressure',    v: der.P_magnetic_nPa  + ' nPa', e: 'P_B = B²/(2μ₀)' },
+      { n: 'Proton gyroperiod',    v: der.gyroperiod_s    + ' s',   e: 'T_g = 2πm_p/(eB)' },
+      { n: 'Ion inertial length',  v: der.ion_inertial_km + ' km',  e: 'c/ω_pi — kinetic scale below which ions decouple from B' },
     ];
-    document.getElementById('der-grid').innerHTML=items.map(it=>`
+    document.getElementById('der-grid').innerHTML = items.map(it => `
       <div class="der-item">
         <div class="der-name">${it.n}</div>
         <div class="der-val">${it.v}</div>
-        <div class="der-exp">${it.e||''}</div>
+        <div class="der-exp">${it.e || ''}</div>
       </div>`).join('');
   }
 
-  // Events
-  renderEvents(events||[]);
+  // ── Events ──────────────────────────────────────────────────────────────
+  renderEvents(events || []);
 }
 
-function renderEvents(evs){
-  const el=document.getElementById('ev-list');
-  if(!evs.length){el.innerHTML='<div class="no-ev">✅ No significant plasma events in the current data window. Detection runs on every 6-hour pipeline run.</div>';return;}
-  el.innerHTML=evs.map(ev=>`
+// ── Event renderer ────────────────────────────────────────────────────────
+function renderEvents(evs) {
+  const el = document.getElementById('ev-list');
+  if (!evs.length) {
+    el.innerHTML = '<div class="no-events">✅ No significant plasma events in the current data window.<br><span style="font-size:.7rem;margin-top:.3rem;display:block">Detection runs on every 6-hour pipeline run.</span></div>';
+    return;
+  }
+  el.innerHTML = evs.map(ev => `
     <div class="ev-item">
-      <div class="ev-ico">${ev.icon||'❓'}</div>
+      <div class="ev-ico">${ev.icon || '❓'}</div>
       <div style="flex:1">
         <div class="ev-type">${ev.type}</div>
-        <div class="ev-time">${ev.time||''}</div>
-        <div class="ev-desc">${ev.explanation||''}</div>
-        <div class="ev-vals">${Object.entries(ev.values||{}).map(([k,v])=>`<span class="ev-val">${k}: ${v}</span>`).join('')}</div>
-        <div class="conf-track"><div class="conf-fill" style="width:${(ev.confidence||0)*100}%"></div></div>
-        <div class="conf-lbl">Confidence: ${((ev.confidence||0)*100).toFixed(0)}%${ev.experimental?' · experimental':''}</div>
+        <div class="ev-time">${ev.time || ''}</div>
+        <div class="ev-desc">${ev.explanation || ''}</div>
+        <div class="ev-vals">
+          ${Object.entries(ev.values || {}).map(([k, v]) =>
+            `<span class="ev-val">${k}: ${v}</span>`).join('')}
+        </div>
+        <div class="conf-bar"><div class="conf-fill" style="width:${(ev.confidence || 0) * 100}%"></div></div>
+        <div class="conf-lbl">Confidence: ${((ev.confidence || 0) * 100).toFixed(0)}%${ev.experimental ? ' · experimental' : ''}</div>
       </div>
     </div>`).join('');
 }
 
-function renderHistory(hist){
-  const info=document.getElementById('hist-info');
-  if(!hist.length){info.textContent='No history yet — workflow adds one record every 6 hours.';return;}
-  info.textContent=`${hist.length} records · ${hist[0].time.slice(0,10)} → ${hist.at(-1).time.slice(0,10)} · updates every 6h automatically`;
-  const times=hist.map(r=>r.time.slice(5,16));
-  function u(c,k){c.data.labels=times;c.data.datasets[0].data=hist.map(r=>r[k]);c.update('none');}
-  u(C.hn,'density');u(C.hv,'velocity');u(C.hb,'B_mag');u(C.hbz,'Bz');u(C.hbeta,'beta');u(C.hva,'va_kms');
+// ── History renderer ──────────────────────────────────────────────────────
+function renderHistory(hist) {
+  const info = document.getElementById('hist-info');
+  if (!hist.length) {
+    info.textContent = 'No history yet — the workflow adds one record every 6 hours after each run.';
+    return;
+  }
+  info.textContent = `${hist.length} records · ${hist[0].time.slice(0, 10)} → ${hist.at(-1).time.slice(0, 10)} · auto-updates every 6h`;
+  const times = hist.map(r => r.time.slice(5, 16));
+  const u = (c, k) => { c.data.labels = times; c.data.datasets[0].data = hist.map(r => r[k]); c.update('none'); };
+  u(charts.hn, 'density'); u(charts.hv, 'velocity');
+  u(charts.hb, 'B_mag');   u(charts.hbz, 'Bz');
+  u(charts.hbeta, 'beta'); u(charts.hva, 'va_kms');
 }
 
-async function load(){
-  txt('status-lbl',''); document.getElementById('live-dot').className='';
-  try{const r=await fetch(LATEST+'?t='+Date.now());if(!r.ok)throw new Error('HTTP '+r.status);render(await r.json());}
-  catch(e){txt('status-lbl','Error');document.getElementById('live-dot').className='err';console.error(e);}
+// ── Fetch ─────────────────────────────────────────────────────────────────
+async function loadLatest() {
+  const dot = document.getElementById('nav-dot');
+  dot.className = 'nav-dot sim'; // yellow while loading
+  txt('status-text', '\u00a0');
+  try {
+    const r = await fetch(LATEST_URL + '?t=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    render(await r.json());
+  } catch (e) {
+    dot.className = 'nav-dot err';
+    txt('status-text', 'Error: ' + e.message);
+    console.error(e);
+  }
 }
 
-let histLoaded=false;
-async function loadHist(){
-  try{renderHistory(await(await fetch(HISTORY+'?t='+Date.now())).json());}
-  catch(e){document.getElementById('hist-info').textContent='History unavailable: '+e.message;}
+let histLoaded = false;
+async function loadHistory() {
+  try {
+    renderHistory(await (await fetch(HISTORY_URL + '?t=' + Date.now())).json());
+  } catch (e) {
+    txt('hist-info', 'History unavailable: ' + e.message);
+  }
 }
 
-// Tabs
-function sw(name){
-  document.querySelectorAll('[data-tab]').forEach(el=>el.classList.toggle('active',el.dataset.tab===name));
-  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='pg-'+name));
-  if(name==='history'&&!histLoaded){loadHist();histLoaded=true;}
+// ── Tabs ──────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'pg-' + name));
+  if (name === 'history' && !histLoaded) { loadHistory(); histLoaded = true; }
 }
-document.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();sw(el.dataset.tab);}));
+document.querySelectorAll('.tab').forEach(t =>
+  t.addEventListener('click', () => switchTab(t.dataset.tab))
+);
 
-document.getElementById('theme-btn').addEventListener('click',()=>{
-  const l=document.documentElement.dataset.theme==='light';
-  document.documentElement.dataset.theme=l?'':'light';
-  document.getElementById('theme-btn').textContent=l?'☀':'🌙';
-});
-document.getElementById('refresh-btn').addEventListener('click',load);
+document.getElementById('refresh-btn').addEventListener('click', loadLatest);
 
-load();
-setInterval(load,10*60*1000);
+// ── Particle canvas (same as index.html) ──────────────────────────────────
+(function() {
+  const cv = document.getElementById('particle-canvas');
+  const ctx = cv.getContext('2d');
+  let W, H, particles;
+  function resize() { W = cv.width = window.innerWidth; H = cv.height = window.innerHeight; }
+  function init() {
+    particles = Array.from({ length: 45 }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      r: Math.random() * 1.3 + .3,
+      vx: (Math.random() - .5) * .15, vy: Math.random() * .1 + .03,
+      alpha: Math.random() * .45 + .12,
+      hue: Math.random() > .6 ? 'solar' : 'plasma',
+    }));
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach(p => {
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.hue === 'solar'
+        ? `rgba(255,122,43,${p.alpha})` : `rgba(41,203,232,${p.alpha * .65})`;
+      ctx.fill();
+      p.x += p.vx; p.y += p.vy;
+      if (p.y > H + 5) { p.y = -5; p.x = Math.random() * W; }
+      if (p.x < -5) p.x = W + 5;
+      if (p.x > W + 5) p.x = -5;
+    });
+    requestAnimationFrame(draw);
+  }
+  resize(); init(); draw();
+  window.addEventListener('resize', () => { resize(); init(); });
+})();
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+loadLatest();
+setInterval(loadLatest, 10 * 60 * 1000); // auto-refresh every 10 min
 </script>
 </body>
 </html>
