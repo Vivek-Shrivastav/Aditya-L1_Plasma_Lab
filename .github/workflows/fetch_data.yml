@@ -2,22 +2,18 @@ name: Fetch & Analyse Aditya-L1 Data
 
 on:
   schedule:
-    - cron: "0 */6 * * *"
-  workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "scripts/fetch_and_process.py"
+    - cron: "0 */6 * * *"   # every 6 hours: 00:00, 06:00, 12:00, 18:00 UTC
+  workflow_dispatch:          # manual trigger from Actions tab
 
 permissions:
-  contents: write
+  contents: write             # needed to push data files back to repo
 
 jobs:
   fetch:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python 3.11
@@ -30,16 +26,37 @@ jobs:
           python -m pip install --upgrade pip
           pip install numpy scipy requests cdflib python-dotenv tenacity
 
-      - name: Fetch & process data
+      - name: Run data pipeline
         env:
           PRADAN_EMAIL:    ${{ secrets.PRADAN_EMAIL }}
           PRADAN_PASSWORD: ${{ secrets.PRADAN_PASSWORD }}
-        run: python scripts/fetch_and_process.py
+        run: |
+          python scripts/fetch_and_process.py
+          echo "Pipeline exit code: $?"
+          echo "latest.json size: $(wc -c < data/latest.json) bytes"
+          echo "history.json records: $(python -c 'import json; print(len(json.load(open("data/history.json"))))')"
 
-      - name: Commit updated data files
+      - name: Verify output files exist and are non-trivial
+        run: |
+          if [ ! -f data/latest.json ]; then
+            echo "ERROR: data/latest.json was not created"
+            exit 1
+          fi
+          SIZE=$(wc -c < data/latest.json)
+          if [ "$SIZE" -lt 1000 ]; then
+            echo "ERROR: data/latest.json is too small ($SIZE bytes)"
+            exit 1
+          fi
+          echo "OK: data/latest.json is $SIZE bytes"
+          python -c "import json; d=json.load(open('data/latest.json')); print('run_id:', d.get('run_id')); print('simulated:', d.get('simulated')); print('scalars:', list(d.get('scalars',{}).keys()))"
+
+      - name: Commit and push updated data
         run: |
           git config user.name  "Aditya-L1 Bot"
           git config user.email "actions@github.com"
           git add data/latest.json data/history.json
-          git diff --cached --quiet || git commit -m "data: auto-update $(date -u +'%Y-%m-%d %H:%M UTC')"
+          # --allow-empty ensures commit happens even if git thinks nothing changed
+          # (shouldn't happen with run_id, but belt-and-suspenders)
+          git commit --allow-empty -m "data: update $(date -u +'%Y-%m-%dT%H:%M UTC') [run ${{ github.run_number }}]"
           git push
+          echo "Pushed data commit successfully"
