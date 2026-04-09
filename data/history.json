@@ -393,5 +393,22 @@
       "SOUTHWARD IMF"
     ],
     "sw_regime": "Intermediate / transitional wind"
+  },
+  {
+    "time": "2026-04-09T02:02:59.383161+00:00",
+    "run_id": "2c5c3d25",
+    "simulated": true,
+    "density": 5.11,
+    "velocity": 391.4,
+    "temperature": 9.65,
+    "B_mag": 2.64,
+    "Bz": 0.7,
+    "beta": 2.849,
+    "va_kms": 25.5,
+    "mach_a": 15.36,
+    "Pt_nPa": 0.008,
+    "Pb_nPa": 0.003,
+    "event_types": [],
+    "sw_regime": "Slow wind \u2014 coronal streamer belt"
   }
 ]
