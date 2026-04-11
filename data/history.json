@@ -582,5 +582,24 @@
     "Pb_nPa": 0.005,
     "event_types": [],
     "sw_regime": "Intermediate / transitional wind"
+  },
+  {
+    "time": "2026-04-11T18:40:51.842915+00:00",
+    "run_id": "34f10584",
+    "simulated": true,
+    "density": 4.34,
+    "velocity": 428.2,
+    "temperature": 14.9,
+    "B_mag": 8.82,
+    "Bz": -7.18,
+    "beta": 0.335,
+    "va_kms": 92.3,
+    "mach_a": 4.64,
+    "Pt_nPa": 0.01,
+    "Pb_nPa": 0.031,
+    "event_types": [
+      "SOUTHWARD IMF"
+    ],
+    "sw_regime": "Intermediate / transitional wind"
   }
 ]
