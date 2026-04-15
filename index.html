@@ -1,1937 +1,480 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aditya-L1 Plasma Lab</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%23ff7a2b'/><circle cx='16' cy='16' r='8' fill='%23ffd04a'/><circle cx='16' cy='16' r='3' fill='%23fff'/></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<style>
-/* ─── Design Tokens ───────────────────────────────────────────────────── */
-:root {
-  /* Space palette */
-  --space-950: #020408;
-  --space-900: #04080f;
-  --space-850: #060c16;
-  --space-800: #091220;
-  --space-750: #0d192c;
-  --space-700: #112035;
-  --space-600: #162840;
-  --space-500: #1e3558;
-  --space-400: #2a4a72;
-  --space-300: #3d6494;
-  --space-200: #5a82b8;
-  --space-100: #8aaed8;
-  --space-50:  #c5d8ef;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aditya-L1 • Plasma Lab & Mission Science</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-deep: #05070a;
+            --bg-card: rgba(13, 17, 23, 0.7);
+            --bg-nav: rgba(5, 7, 10, 0.85);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.15);
+            --primary: #00d4ff;
+            --primary-glow: rgba(0, 212, 255, 0.3);
+            --secondary: #ff7a00;
+            --secondary-glow: rgba(255, 122, 0, 0.3);
+            --text-main: #e6edf3;
+            --text-muted: #8b949e;
+            --text-dim: #484f58;
+            --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains+Mono', monospace;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --blur: 12px;
+        }
 
-  /* Solar accent — energy / particles */
-  --solar-600: #7c2d00;
-  --solar-500: #c24400;
-  --solar-400: #f05a00;
-  --solar-300: #ff7a2b;
-  --solar-200: #ffad6b;
-  --solar-100: #ffd4a8;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  /* Plasma accent — fields / magnetic */
-  --plasma-600: #004d6b;
-  --plasma-500: #007a9e;
-  --plasma-400: #00a8c8;
-  --plasma-300: #29cbe8;
-  --plasma-200: #7ae0f2;
-  --plasma-100: #c0f2fb;
+        body {
+            background-color: var(--bg-deep);
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(0, 212, 255, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 90% 90%, rgba(255, 122, 0, 0.04) 0%, transparent 50%);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
 
-  /* Proton green */
-  --proton-400: #00875a;
-  --proton-300: #1cba7f;
-  --proton-200: #6edcaa;
+        /* --- Custom Scrollbar --- */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-deep); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
-  /* Electron pink */
-  --electron-400: #a0155a;
-  --electron-300: #e0398a;
-  --electron-200: #f592c0;
+        /* --- Navigation --- */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 64px;
+            background: var(--bg-nav);
+            backdrop-filter: blur(var(--blur));
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            z-index: 1000;
+        }
 
-  /* Text */
-  --text-primary:   #e8f2fc;
-  --text-secondary: #8aaed8;
-  --text-tertiary:  #4a6a8a;
-  --text-dim:       #2a4055;
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            text-decoration: none;
+        }
 
-  /* Fonts */
-  --font-mono: 'IBM Plex Mono', 'Fira Code', monospace;
-  --font-sans: 'Inter', system-ui, sans-serif;
+        .nav-brand i { color: var(--secondary); font-size: 1.4rem; }
 
-  /* Spacing */
-  --page-gutter: clamp(1rem, 4vw, 3rem);
-  --section-gap: clamp(3rem, 6vw, 6rem);
-}
+        .nav-links { display: flex; gap: 1rem; }
 
-/* ─── Reset ───────────────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; font-size: 15px; }
-body {
-  background: var(--space-950);
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-  line-height: 1.65;
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-}
-a { color: var(--plasma-300); text-decoration: none; }
-a:hover { color: var(--plasma-200); text-decoration: underline; }
-img { max-width: 100%; }
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-track { background: var(--space-950); }
-::-webkit-scrollbar-thumb { background: var(--space-500); border-radius: 2px; }
+        .nav-link {
+            transition: var(--transition);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            text-decoration: none;
+        }
 
-/* ─── Typography ──────────────────────────────────────────────────────── */
-.mono { font-family: var(--font-mono); }
-.display-xl {
-  font-family: var(--font-mono);
-  font-size: clamp(2.4rem, 6vw, 4.5rem);
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-}
-.display-lg {
-  font-family: var(--font-mono);
-  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-}
-.display-md {
-  font-family: var(--font-mono);
-  font-size: clamp(1.1rem, 2vw, 1.4rem);
-  font-weight: 600;
-}
-.section-label {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--solar-300);
-}
+        .nav-link:hover, .nav-link.active {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .nav-link.active { color: var(--primary); }
 
-/* ─── Background: solar wind streaks ─────────────────────────────────── */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background:
-    repeating-linear-gradient(
-      100deg,
-      transparent 0px,
-      transparent 120px,
-      rgba(255, 122, 43, 0.018) 120px,
-      rgba(255, 122, 43, 0.018) 121px
-    ),
-    repeating-linear-gradient(
-      100deg,
-      transparent 0px,
-      transparent 80px,
-      rgba(41, 203, 232, 0.012) 80px,
-      rgba(41, 203, 232, 0.012) 81px
-    );
-  pointer-events: none;
-  z-index: 0;
-}
+        /* --- Hero Section --- */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 4rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
 
-/* ─── Particle canvas ─────────────────────────────────────────────────── */
-#particle-canvas {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.35;
-}
+        .hero::after {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle at center, transparent 30%, var(--bg-deep) 70%);
+            z-index: 1;
+        }
 
-/* ─── NAV ─────────────────────────────────────────────────────────────── */
-#nav {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 100;
-  height: 56px;
-  background: rgba(2, 4, 8, 0.85);
-  backdrop-filter: blur(16px) saturate(1.5);
-  border-bottom: 1px solid rgba(255,255,255,0.04);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 var(--page-gutter);
-}
-.nav-logo {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 0.85rem;
-  letter-spacing: 0.06em;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-.nav-logo .dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--solar-300);
-  box-shadow: 0 0 12px var(--solar-400);
-  animation: breathe 3s ease-in-out infinite;
-}
-@keyframes breathe {
-  0%, 100% { opacity: 1; box-shadow: 0 0 12px var(--solar-400); }
-  50%       { opacity: 0.5; box-shadow: 0 0 4px var(--solar-400); }
-}
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-.nav-link {
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: var(--text-tertiary);
-  padding: 0.3rem 0.7rem;
-  border-radius: 4px;
-  transition: color 0.2s, background 0.2s;
-  white-space: nowrap;
-}
-.nav-link:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); text-decoration: none; }
-.nav-link.active { color: var(--solar-300); }
-.nav-cta {
-  font-size: 0.78rem;
-  font-weight: 600;
-  font-family: var(--font-mono);
-  color: #000;
-  background: var(--solar-300);
-  padding: 0.35rem 0.85rem;
-  border-radius: 4px;
-  transition: opacity 0.2s;
-  white-space: nowrap;
-}
-.nav-cta:hover { opacity: 0.88; text-decoration: none; color: #000; }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+        }
 
-/* ─── Page wrapper ────────────────────────────────────────────────────── */
-main {
-  position: relative;
-  z-index: 1;
-  padding-top: 56px;
-}
+        .hero-badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            border-radius: 20px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+        }
 
-/* ─── HERO ────────────────────────────────────────────────────────────── */
-#hero {
-  min-height: 92vh;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  align-items: center;
-  padding: 6rem var(--page-gutter) 4rem;
-  position: relative;
-  overflow: hidden;
-}
-@media (max-width: 860px) { #hero { grid-template-columns: 1fr; min-height: auto; padding: 4rem var(--page-gutter) 3rem; } }
+        .hero h1 {
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, #fff, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-.hero-left { max-width: 620px; }
-.hero-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.8rem;
-}
-.hero-eyebrow .pill {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0.3em 0.85em;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 122, 43, 0.35);
-  background: rgba(255, 122, 43, 0.07);
-  color: var(--solar-200);
-}
-.hero-eyebrow .sep { color: var(--text-dim); font-size: 0.8rem; }
-.hero-eyebrow .inst-text {
-  font-size: 0.72rem;
-  color: var(--text-tertiary);
-  font-family: var(--font-mono);
-}
+        .hero p {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--text-muted);
+            max-width: 700px;
+            margin: 0 auto 2.5rem;
+        }
 
-.hero-title {
-  margin-bottom: 1.2rem;
-}
-.hero-title .line-1 { display: block; color: var(--text-primary); }
-.hero-title .line-2 {
-  display: block;
-  background: linear-gradient(135deg, var(--solar-300) 0%, var(--solar-200) 40%, var(--plasma-300) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
+        .cta-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
 
-.hero-desc {
-  font-size: 1rem;
-  color: var(--text-secondary);
-  line-height: 1.75;
-  margin-bottom: 2.2rem;
-  max-width: 520px;
-}
+        .btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.8rem 1.8rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            text-decoration: none;
+            backdrop-filter: blur(var(--blur));
+        }
 
-.hero-btns {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-bottom: 3rem;
-}
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: var(--solar-300);
-  color: #000;
-  font-weight: 700;
-  font-size: 0.85rem;
-  padding: 0.65rem 1.4rem;
-  border-radius: 5px;
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.2s, transform 0.15s;
-  text-decoration: none;
-  font-family: var(--font-mono);
-}
-.btn-primary:hover { opacity: 0.87; transform: translateY(-1px); text-decoration: none; color: #000; }
-.btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: transparent;
-  color: var(--text-secondary);
-  font-weight: 500;
-  font-size: 0.85rem;
-  padding: 0.65rem 1.2rem;
-  border-radius: 5px;
-  border: 1px solid var(--space-500);
-  cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
-  text-decoration: none;
-}
-.btn-ghost:hover { border-color: var(--space-300); color: var(--text-primary); text-decoration: none; }
+        .btn:hover {
+            border-color: var(--primary);
+            background: rgba(0, 212, 255, 0.1);
+            transform: translateY(-2px);
+        }
 
-.hero-stats {
-  display: flex;
-  gap: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--space-700);
-  flex-wrap: wrap;
-}
-.stat-item {}
-.stat-val {
-  font-family: var(--font-mono);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--solar-200);
-  line-height: 1;
-}
-.stat-lbl { font-size: 0.7rem; color: var(--text-tertiary); margin-top: 0.25rem; letter-spacing: 0.04em; }
+        .btn-primary {
+            background: var(--primary);
+            color: #000;
+            border: none;
+        }
 
-/* Hero right — mission diagram */
-.hero-right {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.mission-diagram {
-  position: relative;
-  width: 380px;
-  height: 380px;
-}
-@media (max-width: 860px) { .mission-diagram { width: 280px; height: 280px; } .hero-right { display: none; } }
+        .btn-primary:hover {
+            background: #4de5ff;
+            box-shadow: 0 8px 32px var(--primary-glow);
+        }
 
-/* ─── SECTION WRAPPER ─────────────────────────────────────────────────── */
-.section {
-  padding: var(--section-gap) var(--page-gutter);
-  max-width: 1180px;
-  margin: 0 auto;
-}
-.section-header { margin-bottom: 2.5rem; }
-.section-header .section-label { margin-bottom: 0.6rem; display: block; }
-.section-header h2 { margin-bottom: 0.6rem; }
-.section-header p { color: var(--text-secondary); max-width: 580px; font-size: 0.95rem; }
+        /* --- Sections --- */
+        section {
+            padding: 8rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-.streak-divider {
-  position: relative;
-  height: 1px;
-  background: linear-gradient(90deg, transparent 0%, var(--space-600) 20%, var(--space-500) 50%, var(--space-600) 80%, transparent 100%);
-  margin: 0 var(--page-gutter);
-}
-.streak-divider::after {
-  content: '';
-  position: absolute;
-  top: -1px; left: 50%;
-  transform: translateX(-50%);
-  width: 40px; height: 3px;
-  background: linear-gradient(90deg, var(--solar-400), var(--plasma-400));
-  border-radius: 2px;
-}
+        .section-header {
+            margin-bottom: 4rem;
+            text-align: center;
+        }
 
-/* ─── L1 DIAGRAM SECTION ─────────────────────────────────────────────── */
-.l1-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1px;
-  background: var(--space-700);
-  border: 1px solid var(--space-700);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.l1-card {
-  background: var(--space-900);
-  padding: 1.6rem;
-  transition: background 0.2s;
-  position: relative;
-}
-.l1-card:hover { background: var(--space-850); }
-.l1-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: transparent;
-  transition: background 0.3s;
-}
-.l1-card:hover::before { background: linear-gradient(90deg, var(--solar-400), transparent); }
-.l1-icon {
-  width: 36px; height: 36px;
-  border-radius: 8px;
-  background: var(--space-800);
-  border: 1px solid var(--space-600);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  margin-bottom: 1rem;
-}
-.l1-card h4 {
-  font-size: 0.9rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: var(--text-primary);
-}
-.l1-card p { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.6; }
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+        }
 
-/* ─── L1 SVG DIAGRAM ──────────────────────────────────────────────────── */
-.diagram-card {
-  background: var(--space-900);
-  border: 1px solid var(--space-700);
-  border-radius: 10px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  overflow-x: auto;
-}
-.diagram-card svg { min-width: 500px; }
+        .section-header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
 
-/* ─── INSTRUMENTS ─────────────────────────────────────────────────────── */
-.inst-layout {
-  display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: 0;
-  background: var(--space-700);
-  border: 1px solid var(--space-700);
-  border-radius: 10px;
-  overflow: hidden;
-}
-@media (max-width: 700px) { .inst-layout { grid-template-columns: 1fr; } }
-.inst-sidebar {
-  background: var(--space-850);
-  padding: 0.5rem;
-  border-right: 1px solid var(--space-700);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.inst-tab {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.7rem 0.9rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--text-tertiary);
-  border: none;
-  background: transparent;
-  text-align: left;
-  width: 100%;
-  font-family: var(--font-sans);
-}
-.inst-tab:hover { background: var(--space-800); color: var(--text-secondary); }
-.inst-tab.active {
-  background: var(--space-700);
-  color: var(--text-primary);
-  font-weight: 600;
-}
-.inst-tab .itag {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 0.15em 0.45em;
-  border-radius: 3px;
-  background: var(--space-600);
-  color: var(--text-tertiary);
-  transition: background 0.15s, color 0.15s;
-}
-.inst-tab.active .itag { background: var(--solar-400); color: #000; }
+        /* --- Features Grid --- */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
 
-.inst-content { background: var(--space-900); padding: 2rem; display: none; }
-.inst-content.active { display: block; }
-.inst-header { margin-bottom: 1.5rem; }
-.inst-header h3 { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.35rem; }
-.inst-header p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
-.inst-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-bottom: 1.2rem; }
-.inst-table td { padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--space-800); vertical-align: top; }
-.inst-table td:first-child { color: var(--text-tertiary); width: 38%; font-weight: 500; }
-.inst-table td:last-child { font-family: var(--font-mono); color: var(--plasma-200); font-size: 0.76rem; }
-.inst-note {
-  background: rgba(255, 173, 66, 0.06);
-  border: 1px solid rgba(255, 173, 66, 0.2);
-  border-radius: 6px;
-  padding: 0.65rem 0.9rem;
-  font-size: 0.76rem;
-  color: rgba(255, 173, 66, 0.85);
-  line-height: 1.5;
-}
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            transition: var(--transition);
+            text-align: left;
+        }
 
-/* ─── TUTORIAL: parameter cards ──────────────────────────────────────── */
-.param-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1px;
-  background: var(--space-700);
-  border: 1px solid var(--space-700);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.param-card {
-  background: var(--space-900);
-  padding: 1.6rem;
-  position: relative;
-  transition: background 0.2s;
-}
-.param-card:hover { background: var(--space-850); }
-.param-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 0.9rem;
-}
-.param-symbol {
-  font-family: var(--font-mono);
-  font-size: 1.8rem;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--solar-200);
-}
-.param-instrument {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  background: var(--space-800);
-  border: 1px solid var(--space-600);
-  padding: 0.2em 0.55em;
-  border-radius: 3px;
-}
-.param-name {
-  font-size: 0.9rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: var(--text-primary);
-}
-.param-desc {
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin-bottom: 0.75rem;
-}
-.param-formula {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--plasma-200);
-  background: var(--space-800);
-  border: 1px solid var(--space-600);
-  padding: 0.4rem 0.7rem;
-  border-radius: 4px;
-  margin-bottom: 0.65rem;
-  display: block;
-  overflow-x: auto;
-  white-space: nowrap;
-}
-.param-ranges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-.range-tag {
-  font-size: 0.67rem;
-  font-family: var(--font-mono);
-  padding: 0.2em 0.55em;
-  border-radius: 3px;
-  border: 1px solid;
-}
-.range-quiet { color: var(--proton-200); border-color: rgba(110, 220, 170, 0.3); background: rgba(110, 220, 170, 0.05); }
-.range-active { color: var(--solar-200); border-color: rgba(255, 173, 107, 0.3); background: rgba(255, 173, 107, 0.05); }
-.range-extreme { color: var(--electron-200); border-color: rgba(245, 146, 192, 0.3); background: rgba(245, 146, 192, 0.05); }
+        .feature-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+        }
 
-/* ─── METHODS ─────────────────────────────────────────────────────────── */
-.method-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-}
-.method-card {
-  background: var(--space-900);
-  border: 1px solid var(--space-700);
-  border-radius: 10px;
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  transition: border-color 0.2s, transform 0.15s;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-.method-card::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--solar-400), var(--plasma-400));
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-.method-card:hover { border-color: var(--space-400); transform: translateY(-2px); }
-.method-card:hover::after { opacity: 1; }
-.method-chapter {
-  font-family: var(--font-mono);
-  font-size: 0.63rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--solar-300);
-}
-.method-card h4 { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); }
-.method-card p { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.55; flex: 1; }
-.method-ref {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  color: var(--text-dim);
-}
-.method-link {
-  font-size: 0.75rem;
-  font-weight: 600;
-  font-family: var(--font-mono);
-  color: var(--solar-300);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-.method-link::after { content: '→'; transition: transform 0.2s; }
-.method-card:hover .method-link::after { transform: translateX(3px); }
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--primary);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
 
-/* ─── ARCHIVE ─────────────────────────────────────────────────────────── */
-.archive-steps {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1px;
-  background: var(--space-700);
-  border: 1px solid var(--space-700);
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 1.2rem;
-}
-.archive-step {
-  background: var(--space-900);
-  padding: 1.4rem;
-  display: flex;
-  gap: 1rem;
-}
-.step-num {
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  background: var(--solar-400);
-  color: #000;
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 0.8rem;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-.archive-step h4 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem; }
-.archive-step p { font-size: 0.76rem; color: var(--text-secondary); line-height: 1.5; }
-.warn-box {
-  background: rgba(240, 192, 64, 0.05);
-  border: 1px solid rgba(240, 192, 64, 0.2);
-  border-radius: 7px;
-  padding: 0.75rem 1rem;
-  font-size: 0.78rem;
-  color: rgba(240, 220, 100, 0.85);
-  line-height: 1.55;
-}
+        .feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
 
-/* ─── LIVE CONDITIONS ─────────────────────────────────────────────────── */
-.live-banner {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-}
-.live-dot {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  background: #22c55e;
-  box-shadow: 0 0 10px rgba(34,197,94,0.6);
-  animation: live-pulse 2s ease-in-out infinite;
-}
-.live-dot.sim { background: #f0c040; box-shadow: 0 0 10px rgba(240,192,64,0.6); }
-@keyframes live-pulse {
-  0%,100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-.live-label {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #22c55e;
-}
-.live-label.sim { color: #f0c040; }
-.live-time {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--text-tertiary);
-}
-.conditions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1px;
-  background: var(--space-700);
-  border: 1px solid var(--space-700);
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 1.5rem;
-}
-.cond-card {
-  background: var(--space-900);
-  padding: 1.3rem 1.4rem;
-  transition: background 0.2s;
-}
-.cond-card:hover { background: var(--space-850); }
-.cond-label {
-  font-size: 0.68rem;
-  font-weight: 500;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 0.4rem;
-}
-.cond-value {
-  font-family: var(--font-mono);
-  font-size: 1.6rem;
-  font-weight: 700;
-  line-height: 1.1;
-  color: var(--text-primary);
-}
-.cond-unit {
-  font-size: 0.7rem;
-  font-weight: 400;
-  color: var(--text-tertiary);
-  margin-left: 0.2rem;
-}
-.cond-status {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  font-weight: 600;
-  margin-top: 0.35rem;
-  padding: 0.15em 0.5em;
-  border-radius: 3px;
-  display: inline-block;
-}
-.cond-status.ok { color: var(--proton-200); background: rgba(110,220,170,0.08); border: 1px solid rgba(110,220,170,0.2); }
-.cond-status.warn { color: var(--solar-200); background: rgba(255,173,107,0.08); border: 1px solid rgba(255,173,107,0.2); }
-.cond-status.alert { color: var(--electron-200); background: rgba(245,146,192,0.08); border: 1px solid rgba(245,146,192,0.2); }
-.cond-card.bz-south .cond-value { color: var(--electron-200); }
-.cond-card.bz-north .cond-value { color: var(--proton-200); }
-.regime-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  flex-wrap: wrap;
-}
-.regime-tag {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 0.3em 0.75em;
-  border-radius: 4px;
-  border: 1px solid;
-}
-.regime-tag.slow { color: var(--proton-200); border-color: rgba(110,220,170,0.3); background: rgba(110,220,170,0.06); }
-.regime-tag.fast { color: var(--solar-200); border-color: rgba(255,173,107,0.3); background: rgba(255,173,107,0.06); }
-.regime-tag.cme { color: var(--electron-200); border-color: rgba(245,146,192,0.3); background: rgba(245,146,192,0.06); }
-.bz-tag.south { color: var(--electron-200); border-color: rgba(245,146,192,0.3); background: rgba(245,146,192,0.06); }
-.bz-tag.north { color: var(--proton-200); border-color: rgba(110,220,170,0.3); background: rgba(110,220,170,0.06); }
-.bz-tag.neutral { color: var(--text-tertiary); border-color: var(--space-500); background: rgba(255,255,255,0.02); }
-.cond-loading {
-  text-align: center;
-  padding: 3rem;
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  color: var(--text-tertiary);
-}
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
 
-/* ─── PIPELINE SECTION ───────────────────────────────────────────────── */
-.pipeline-flow {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0;
-  position: relative;
-  margin-bottom: 1rem;
-}
-.pipe-step {
-  background: var(--space-900);
-  border: 1px solid var(--space-700);
-  border-radius: 10px;
-  padding: 1.4rem;
-  text-align: center;
-  position: relative;
-}
-.pipe-step:not(:last-child)::after {
-  content: '→';
-  position: absolute;
-  right: -14px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 1.2rem;
-  color: var(--solar-300);
-  z-index: 2;
-}
-@media (max-width: 700px) {
-  .pipe-step:not(:last-child)::after { content: '↓'; right: 50%; top: auto; bottom: -16px; transform: translateX(50%); }
-  .pipeline-flow { gap: 1.2rem; }
-}
-.pipe-icon {
-  font-size: 1.5rem;
-  margin-bottom: 0.7rem;
-}
-.pipe-step h4 {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.3rem;
-}
-.pipe-step p {
-  font-size: 0.74rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-.pipe-tech {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  color: var(--plasma-200);
-  margin-top: 0.5rem;
-  display: inline-block;
-  padding: 0.15em 0.5em;
-  background: var(--space-800);
-  border: 1px solid var(--space-600);
-  border-radius: 3px;
-}
+        /* --- Stats Strip --- */
+        .stats-strip {
+            background: rgba(13, 17, 23, 0.5);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 4rem 2rem;
+            margin: 4rem 0;
+        }
 
-.regime-tag.sim-notice { color: var(--text-tertiary); border-color: var(--space-500); background: rgba(255,255,255,0.02); font-style: italic; }
+        .stats-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 3rem;
+        }
 
-/* ─── EVENTS SUMMARY ─────────────────────────────────────────────────── */
-.events-summary {
-  margin-top: 1.5rem;
-}
-.ev-summary-card {
-  background: var(--space-900);
-  border: 1px solid var(--space-700);
-  border-radius: 10px;
-  padding: 1.2rem 1.4rem;
-  margin-bottom: 0.6rem;
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-  transition: border-color 0.2s;
-}
-.ev-summary-card:hover { border-color: var(--space-400); }
-.ev-summary-icon { font-size: 1.3rem; flex-shrink: 0; }
-.ev-summary-type {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--solar-300);
-  letter-spacing: 0.04em;
-}
-.ev-summary-desc {
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-  line-height: 1.55;
-  margin-top: 0.2rem;
-}
-.ev-summary-vals {
-  display: flex;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-  margin-top: 0.3rem;
-}
-.ev-summary-val {
-  font-family: var(--font-mono);
-  font-size: 0.64rem;
-  background: var(--space-800);
-  border: 1px solid var(--space-600);
-  padding: 0.12em 0.45em;
-  border-radius: 3px;
-  color: var(--text-tertiary);
-}
-.ev-conf {
-  height: 2px;
-  background: var(--space-700);
-  border-radius: 2px;
-  margin-top: 0.35rem;
-  width: 100%;
-  max-width: 200px;
-}
-.ev-conf-fill {
-  height: 100%;
-  border-radius: 2px;
-  background: linear-gradient(90deg, var(--solar-400), var(--solar-200));
-}
-.ev-conf-text {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  color: var(--text-dim);
-  margin-top: 0.15rem;
-}
-.no-events-home {
-  background: var(--space-900);
-  border: 1px solid var(--space-700);
-  border-radius: 10px;
-  padding: 1.5rem;
-  text-align: center;
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  color: var(--text-tertiary);
-}
+        .stat-box { text-align: center; }
+        .stat-box .val {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary);
+            font-family: var(--font-mono);
+            display: block;
+        }
+        .stat-box .lbl {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-top: 0.5rem;
+        }
 
-/* ─── SPARKLINES ─────────────────────────────────────────────────────── */
-.spark-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1px;
-  background: var(--space-700);
-  border: 1px solid var(--space-700);
-  border-radius: 10px;
-  overflow: hidden;
-  margin-top: 1.5rem;
-}
-.spark-card {
-  background: var(--space-900);
-  padding: 1rem 1.2rem;
-}
-.spark-label {
-  font-size: 0.68rem;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 0.4rem;
-}
-.spark-canvas {
-  width: 100%;
-  height: 40px;
-  display: block;
-}
+        /* --- Footer --- */
+        footer {
+            padding: 4rem 2rem;
+            border-top: 1px solid var(--border);
+            background: rgba(5, 7, 10, 0.8);
+            text-align: center;
+        }
 
-/* ─── CTA SECTION ─────────────────────────────────────────────────────── */
-.cta-section {
-  margin: 0 var(--page-gutter) 4rem;
-  padding: 3.5rem var(--page-gutter);
-  background: var(--space-850);
-  border: 1px solid var(--space-700);
-  border-radius: 14px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-}
-.cta-section::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background:
-    radial-gradient(ellipse 60% 50% at 30% 50%, rgba(255, 122, 43, 0.07) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 60% at 70% 50%, rgba(41, 203, 232, 0.05) 0%, transparent 60%);
-  pointer-events: none;
-}
-.cta-section h2 { font-size: 1.8rem; margin-bottom: 0.7rem; position: relative; }
-.cta-section p { color: var(--text-secondary); max-width: 480px; margin: 0 auto 2rem; font-size: 0.92rem; position: relative; }
-.cta-btns { display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center; position: relative; }
-.cta-note { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-dim); margin-top: 1.2rem; position: relative; }
+        .footer-logo {
+            font-weight: 800;
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
 
-/* ─── FOOTER ──────────────────────────────────────────────────────────── */
-footer {
-  border-top: 1px solid var(--space-800);
-  padding: 1.5rem var(--page-gutter);
-  text-align: center;
-  font-size: 0.73rem;
-  color: var(--text-tertiary);
-  font-family: var(--font-mono);
-}
-footer a { color: var(--text-tertiary); }
-footer a:hover { color: var(--text-secondary); }
+        .footer-logo i { color: var(--secondary); }
 
-/* ─── Glow decorations ────────────────────────────────────────────────── */
-.glow-orb {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(80px);
-}
-.glow-solar { background: radial-gradient(circle, rgba(255,107,43,0.15) 0%, transparent 70%); }
-.glow-plasma { background: radial-gradient(circle, rgba(41,203,232,0.1) 0%, transparent 70%); }
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
 
-/* Responsive nav */
-@media (max-width: 700px) {
-  .nav-links .hide-sm { display: none; }
-  .param-grid { grid-template-columns: 1fr; }
-}
-</style>
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .footer-links a:hover { color: var(--primary); }
+
+        .copy {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            font-family: var(--font-mono);
+        }
+
+        /* --- Animations --- */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease-out;
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 3rem; }
+            .stats-container { flex-direction: column; gap: 2rem; }
+            section { padding: 4rem 1.5rem; }
+        }
+    </style>
 </head>
 <body>
 
-<!-- Particle canvas -->
-<canvas id="particle-canvas"></canvas>
-
-<!-- ── NAV ──────────────────────────────────────────────────────────── -->
-<nav id="nav">
-  <div class="nav-logo">
-    <span class="dot"></span>
-    <span>ADITYA-L1 / PLASMA LAB</span>
-  </div>
-  <div class="nav-links">
-    <a href="#instruments" class="nav-link hide-sm">Instruments</a>
-    <a href="#tutorial" class="nav-link hide-sm">Tutorial</a>
-    <a href="#methods" class="nav-link hide-sm">Methods</a>
-    <a href="dashboard.html" class="nav-link">Dashboard</a>
-    <a href="explorer.html" class="nav-link hide-sm">Explorer</a>
-    <a href="visualizer.html" class="nav-link">Visualizer</a>
-    <a href="dashboard.html" class="nav-cta">Live Data →</a>
-  </div>
-</nav>
-
-<main>
-
-<!-- ── HERO ─────────────────────────────────────────────────────────── -->
-<section id="hero">
-  <!-- Glow orbs -->
-  <div class="glow-orb glow-solar" style="width:600px;height:600px;top:-200px;left:-150px;opacity:.7"></div>
-  <div class="glow-orb glow-plasma" style="width:500px;height:500px;bottom:-100px;right:-100px;opacity:.6"></div>
-
-  <div class="hero-left">
-    <div class="hero-eyebrow">
-      <span class="pill">ISRO · 2024</span>
-      <span class="sep">·</span>
-      <span class="inst-text">Sun–Earth L1 Lagrange Point</span>
-    </div>
-
-    <h1 class="display-xl hero-title">
-      <span class="line-1">Aditya-L1</span>
-      <span class="line-2">Plasma Lab</span>
-    </h1>
-
-    <p class="hero-desc">
-      Learn the physics of solar wind plasma, study ISRO's in-situ instruments, 
-      and explore real measurement data — grounded in the ISSI SR-001 analysis methodology.
-    </p>
-
-    <div class="hero-btns">
-      <a href="#live-conditions" class="btn-primary">Current Conditions ↓</a>
-      <a href="dashboard.html" class="btn-ghost">Live Dashboard</a>
-      <a href="explorer.html" class="btn-ghost">Science Explorer</a>
-      <a href="visualizer.html" class="btn-ghost">Data Visualizer</a>
-    </div>
-
-    <div class="hero-stats">
-      <div class="stat-item">
-        <div class="stat-val">L1</div>
-        <div class="stat-lbl">Sun–Earth Lagrange</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-val">5</div>
-        <div class="stat-lbl">In-situ instruments</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-val">6h</div>
-        <div class="stat-lbl">Auto-update cadence</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-val mono" style="font-size:1.1rem;padding-top:0.2rem">SR-001</div>
-        <div class="stat-lbl">Analysis methodology</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Mission SVG diagram -->
-  <div class="hero-right">
-    <div class="mission-diagram">
-      <svg viewBox="0 0 380 380" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-        <!-- Orbital rings -->
-        <circle cx="190" cy="190" r="160" stroke="rgba(255,255,255,0.04)" stroke-width="1" stroke-dasharray="4 6"/>
-        <circle cx="190" cy="190" r="120" stroke="rgba(255,255,255,0.03)" stroke-width="1" stroke-dasharray="3 5"/>
-        <!-- Sun -->
-        <circle cx="190" cy="190" r="42" fill="url(#sun-grad)" opacity="0.95"/>
-        <circle cx="190" cy="190" r="55" stroke="rgba(255,122,43,0.25)" stroke-width="1" stroke-dasharray="3 4"/>
-        <circle cx="190" cy="190" r="68" stroke="rgba(255,173,66,0.12)" stroke-width="1"/>
-        <!-- Coronal glow -->
-        <circle cx="190" cy="190" r="52" fill="url(#corona-grad)"/>
-        <!-- L1 point -->
-        <circle cx="330" cy="190" r="8" fill="rgba(255,173,66,0.2)" stroke="rgba(255,173,66,0.5)" stroke-width="1"/>
-        <circle cx="330" cy="190" r="3.5" fill="#ffad42"/>
-        <!-- Halo orbit -->
-        <ellipse cx="330" cy="190" rx="18" ry="28" stroke="rgba(255,173,66,0.3)" stroke-width="0.8" stroke-dasharray="3 3" fill="none"/>
-        <!-- Earth -->
-        <circle cx="356" cy="190" r="14" fill="url(#earth-grad)"/>
-        <!-- Solar wind arrows -->
-        <g opacity="0.45">
-          <line x1="258" y1="158" x2="318" y2="158" stroke="#ff7a2b" stroke-width="1" marker-end="url(#sw-arrow)"/>
-          <line x1="262" y1="190" x2="316" y2="190" stroke="#ff7a2b" stroke-width="1.3" marker-end="url(#sw-arrow)"/>
-          <line x1="258" y1="222" x2="318" y2="222" stroke="#ff7a2b" stroke-width="1" marker-end="url(#sw-arrow)"/>
-        </g>
-        <!-- Labels -->
-        <text x="190" y="194" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" font-weight="600" fill="#ffad42">SUN</text>
-        <text x="330" y="176" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#ffad42">L1</text>
-        <text x="356" y="213" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#7ae0f2">EARTH</text>
-        <text x="285" y="152" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#ff7a2b" opacity="0.7">Solar wind</text>
-        <!-- Warning time label -->
-        <text x="342" y="240" text-anchor="middle" font-family="IBM Plex Mono" font-size="6.5" fill="#6edcaa">~50 min</text>
-        <text x="342" y="250" text-anchor="middle" font-family="IBM Plex Mono" font-size="6.5" fill="#6edcaa">warning</text>
-        <!-- Defs -->
-        <defs>
-          <radialGradient id="sun-grad" cx="40%" cy="35%">
-            <stop offset="0%" stop-color="#ffd04a"/>
-            <stop offset="50%" stop-color="#ff8820"/>
-            <stop offset="100%" stop-color="#c94400"/>
-          </radialGradient>
-          <radialGradient id="corona-grad">
-            <stop offset="0%" stop-color="transparent"/>
-            <stop offset="70%" stop-color="transparent"/>
-            <stop offset="100%" stop-color="rgba(255,122,43,0.18)"/>
-          </radialGradient>
-          <radialGradient id="earth-grad" cx="35%" cy="30%">
-            <stop offset="0%" stop-color="#5ab8e0"/>
-            <stop offset="60%" stop-color="#1a6ea8"/>
-            <stop offset="100%" stop-color="#0a3d6b"/>
-          </radialGradient>
-          <marker id="sw-arrow" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto">
-            <path d="M1 1L7 4L1 7" fill="none" stroke="#ff7a2b" stroke-width="1.5"/>
-          </marker>
-        </defs>
-      </svg>
-    </div>
-  </div>
-</section>
-
-<div class="streak-divider"></div>
-
-<!-- ── LIVE CONDITIONS ───────────────────────────────────────────────── -->
-<section class="section" id="live-conditions">
-  <div class="section-header">
-    <span class="section-label">00 — Real-Time Data</span>
-    <h2 class="display-lg">Current Solar Wind Conditions</h2>
-    <p>Live readings from Aditya-L1 at the Sun–Earth L1 point. Data refreshes every 6 hours via the automated pipeline.</p>
-  </div>
-
-  <div id="conditions-container">
-    <div class="cond-loading" id="cond-loading">Fetching latest data from L1…</div>
-  </div>
-
-  <!-- Events summary -->
-  <div id="events-home-container"></div>
-
-  <!-- History sparklines -->
-  <div id="sparklines-container"></div>
-</section>
-
-<div class="streak-divider"></div>
-
-<!-- ── PIPELINE ──────────────────────────────────────────────────────── -->
-<section class="section" id="pipeline">
-  <div class="section-header">
-    <span class="section-label">Data Pipeline</span>
-    <h2 class="display-lg">Automated Data Pipeline</h2>
-    <p>From the spacecraft to your browser — a fully automated processing chain that runs every 6 hours without human intervention.</p>
-  </div>
-
-  <div class="pipeline-flow">
-    <div class="pipe-step">
-      <div class="pipe-icon">🛰️</div>
-      <h4>Aditya-L1</h4>
-      <p>Spacecraft collects in-situ plasma and magnetic field data at the L1 Lagrange point</p>
-      <span class="pipe-tech">CDF Level-2</span>
-    </div>
-    <div class="pipe-step">
-      <div class="pipe-icon">📡</div>
-      <h4>PRADAN / ISSDC</h4>
-      <p>ISRO's data archive processes and publishes calibrated science-ready data files</p>
-      <span class="pipe-tech">pradan.issdc.gov.in</span>
-    </div>
-    <div class="pipe-step">
-      <div class="pipe-icon">⚙️</div>
-      <h4>GitHub Actions</h4>
-      <p>Automated pipeline fetches CDF files, computes moments, derived parameters, and PSD</p>
-      <span class="pipe-tech">Every 6 hours</span>
-    </div>
-    <div class="pipe-step">
-      <div class="pipe-icon">📊</div>
-      <h4>This Website</h4>
-      <p>Interactive dashboard and tools visualize the processed data in your browser</p>
-      <span class="pipe-tech">Plotly.js</span>
-    </div>
-  </div>
-</section>
-
-<div class="streak-divider"></div>
-<section class="section" id="why-l1">
-  <div class="section-header">
-    <span class="section-label">01 — Mission Context</span>
-    <h2 class="display-lg">Why the L1 Lagrange Point?</h2>
-    <p>The Sun–Earth L1 point sits 1.5 million km sunward — a gravitational saddle where Aditya-L1 orbits the Sun synchronously with Earth, sampling pristine solar wind before it reaches us.</p>
-  </div>
-
-  <div class="l1-grid">
-    <div class="l1-card">
-      <div class="l1-icon">⏱</div>
-      <h4>45–60 Min Early Warning</h4>
-      <p>Solar wind detected at L1 reaches Earth ~50 minutes later. This window enables geomagnetic storm alerts before CMEs compress the magnetosphere and disrupt satellites and power grids.</p>
-    </div>
-    <div class="l1-card">
-      <div class="l1-icon">🔭</div>
-      <h4>Unobstructed Sun View</h4>
-      <p>L1 maintains continuous Sun-facing geometry. Remote instruments (VELC, SUIT) observe the corona uninterrupted, while in-situ instruments sample the solar wind arriving from upstream.</p>
-    </div>
-    <div class="l1-card">
-      <div class="l1-icon">🌊</div>
-      <h4>Pristine Solar Wind</h4>
-      <p>Unlike near-Earth measurements, L1 sits upstream of Earth's bow shock — sampling the solar wind before it interacts with the magnetosphere. These are the true boundary conditions for space weather.</p>
-    </div>
-    <div class="l1-card">
-      <div class="l1-icon">📡</div>
-      <h4>Continuous Monitoring</h4>
-      <p>Aditya-L1's halo orbit maintains near-continuous Earth visibility. Combined with the uninterrupted Sun view, this enables real-time data relay and 24/7 space weather monitoring.</p>
-    </div>
-  </div>
-</section>
-
-<div class="streak-divider"></div>
-
-<!-- ── INSTRUMENTS ───────────────────────────────────────────────────── -->
-<section class="section" id="instruments">
-  <div class="section-header">
-    <span class="section-label">02 — Instrumentation</span>
-    <h2 class="display-lg">In-Situ Plasma Payloads</h2>
-    <p>Aditya-L1 carries seven instruments. Four are in-situ — they physically sample the plasma at L1. This lab focuses exclusively on those four.</p>
-  </div>
-
-  <div class="inst-layout">
-    <div class="inst-sidebar">
-      <button class="inst-tab active" onclick="showInst('aspex',this)"><span class="itag">01</span> ASPEX</button>
-      <button class="inst-tab" onclick="showInst('swis',this)"><span class="itag">02</span> SWIS</button>
-      <button class="inst-tab" onclick="showInst('steps',this)"><span class="itag">03</span> STEPS</button>
-      <button class="inst-tab" onclick="showInst('papa',this)"><span class="itag">04</span> PAPA</button>
-      <button class="inst-tab" onclick="showInst('mag',this)"><span class="itag">05</span> MAG</button>
-    </div>
-
-    <div>
-      <div id="inst-aspex" class="inst-content active">
-        <div class="inst-header">
-          <h3>ASPEX — Aditya Solar Wind Particle EXperiment</h3>
-          <p>The composite in-situ particle suite. ASPEX combines SWIS (thermal solar wind, 100 eV–20 keV) with STEPS (suprathermal and energetic particles, 20 keV–6 MeV/n) — covering six decades in energy to trace particles from the bulk wind through to galactic cosmic rays.</p>
+    <nav>
+        <a href="index.html" class="nav-brand">
+            <i class="fas fa-satellite-dish"></i>
+            <span>ADITYA-L1 <span style="font-weight: 300; opacity: 0.6; margin-left: 0.2rem;">PLASMA LAB</span></span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link active">Science</a>
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="visualizer.html" class="nav-link">Visualizer</a>
+            <a href="explorer.html" class="nav-link">Explorer</a>
         </div>
-        <table class="inst-table">
-          <tr><td>Sub-instruments</td><td>SWIS + STEPS</td></tr>
-          <tr><td>Science goal</td><td>Composition, origin, and acceleration of solar wind and energetic particles</td></tr>
-          <tr><td>Key questions</td><td>Where do suprathermal particles come from? How does the Sun accelerate them to MeV?</td></tr>
-          <tr><td>Data products</td><td>Ion spectra, bulk moments, directional flux, anisotropy, pitch-angle distributions</td></tr>
-        </table>
-      </div>
+    </nav>
 
-      <div id="inst-swis" class="inst-content">
-        <div class="inst-header">
-          <h3>SWIS — Solar Wind Ion Spectrometer</h3>
-          <p>Measures the thermal solar wind using a toroidal electrostatic analyser that selects ions by energy-per-charge. Full 360° ecliptic coverage enables complete velocity distribution functions for protons and alpha particles.</p>
+    <div class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">L1 Lagrange Point • ISRO Mission</div>
+            <h1>The Physics of the Solar Wind</h1>
+            <p>Explore the dynamic plasma environment at the Sun-Earth L1 point with real-time data from Aditya-L1's in-situ instruments.</p>
+            <div class="cta-group">
+                <a href="dashboard.html" class="btn btn-primary">
+                    <i class="fas fa-chart-line"></i> View Live Data
+                </a>
+                <a href="#science" class="btn">
+                    <i class="fas fa-book-open"></i> Learn Science
+                </a>
+            </div>
         </div>
-        <table class="inst-table">
-          <tr><td>Species</td><td>Protons (H⁺), Alpha particles (He²⁺)</td></tr>
-          <tr><td>Energy range</td><td>~100 eV – 20 keV</td></tr>
-          <tr><td>Analyser type</td><td>Toroidal electrostatic analyser + imaging detector</td></tr>
-          <tr><td>Angular coverage</td><td>~360° in the ecliptic plane</td></tr>
-          <tr><td>Data products</td><td>Ion spectra, n, V, T, α/p ratio, full VDF</td></tr>
-        </table>
-        <div class="inst-note">⚠ Verify actual variable names, cadence, and energy channel definitions from the official SWIS payload user guide. Do not assume values.</div>
-      </div>
+    </div>
 
-      <div id="inst-steps" class="inst-content">
-        <div class="inst-header">
-          <h3>STEPS — SupraThermal & Energetic Particle Spectrometer</h3>
-          <p>Bridges the gap between thermal solar wind and galactic cosmic rays using six solid-state detectors pointing in different directions. Critical for studying particle acceleration at interplanetary shocks and solar energetic particle (SEP) events.</p>
+    <div class="stats-strip">
+        <div class="stats-container">
+            <div class="stat-box">
+                <span class="val">1.5M</span>
+                <span class="lbl">km from Earth</span>
+            </div>
+            <div class="stat-box">
+                <span class="val">5+</span>
+                <span class="lbl">Instruments</span>
+            </div>
+            <div class="stat-box">
+                <span class="val">L1</span>
+                <span class="lbl">Lagrange Point</span>
+            </div>
+            <div class="stat-box">
+                <span class="val">6h</span>
+                <span class="lbl">Sync Cadence</span>
+            </div>
         </div>
-        <table class="inst-table">
-          <tr><td>Energy range</td><td>~20 keV – 6 MeV/nucleon</td></tr>
-          <tr><td>Technique</td><td>Solid-state detectors (SSDs)</td></tr>
-          <tr><td>Detectors</td><td>6 directional, including Sun-radial, Parker spiral, Earth-pointing</td></tr>
-          <tr><td>Species</td><td>Electrons, protons, heavier ions</td></tr>
-          <tr><td>Data products</td><td>Directional flux, energy spectra, anisotropy, pitch-angle distributions</td></tr>
-        </table>
-        <div class="inst-note">⚠ Exact look directions must be confirmed from SPICE kernels or the STEPS user guide. The nominal directions above may not reflect as-flown geometry.</div>
-      </div>
+    </div>
 
-      <div id="inst-papa" class="inst-content">
-        <div class="inst-header">
-          <h3>PAPA — Plasma Analyser Package for Aditya</h3>
-          <p>Measures both solar wind ions and electrons, providing full velocity distribution functions and derived moments. The electron measurements are especially valuable — PAPA sees the electron strahl (field-aligned beam) that traces magnetic connectivity back to the Sun.</p>
+    <section id="science" class="reveal">
+        <div class="section-header">
+            <h2>Mission Payloads</h2>
+            <p>Aditya-L1 carries advanced in-situ particle and magnetic field suites to decode the solar wind's mysteries.</p>
         </div>
-        <table class="inst-table">
-          <tr><td>Species</td><td>Solar wind ions and electrons</td></tr>
-          <tr><td>Science focus</td><td>VDFs, pressure tensor, electron heat flux, temperature anisotropy</td></tr>
-          <tr><td>Key products</td><td>n, V vector, T tensor, heat flux Q, electron strahl</td></tr>
-          <tr><td>Unique value</td><td>Electron strahl traces magnetic connection to Sun; T_perp/T_par tests instability thresholds</td></tr>
-        </table>
-      </div>
-
-      <div id="inst-mag" class="inst-content">
-        <div class="inst-header">
-          <h3>MAG — Magnetometer</h3>
-          <p>Measures the three-component vector IMF on a dedicated boom away from the spacecraft body to minimise contamination. IMF Bz is the single most critical space weather parameter — southward Bz drives dayside reconnection via the Dungey cycle and controls energy input to the magnetosphere.</p>
+        <div class="grid">
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-atom"></i></div>
+                <h3>ASPEX / SWIS</h3>
+                <p>The Solar Wind Ion Spectrometer measures the energy and angular distribution of the solar wind ions, primarily protons and alphas.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+                <h3>ASPEX / STEPS</h3>
+                <p>Supra-Thermal and Energetic Particle Spectrometer tracks high-energy particles to study solar flares and acceleration mechanisms.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-wind"></i></div>
+                <h3>PAPA Suite</h3>
+                <p>Plasma Analyser Package for Aditya studies the composition of solar wind and its distribution across various energy levels.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-magnet"></i></div>
+                <h3>Magnetometer</h3>
+                <p>Measures the magnitude and nature of the Interplanetary Magnetic Field (IMF) at the Sun-Earth L1 point.</p>
+            </div>
         </div>
-        <table class="inst-table">
-          <tr><td>Measurement</td><td>3-component vector B: Bx, By, Bz</td></tr>
-          <tr><td>Location</td><td>Deployed boom — minimises spacecraft field contamination</td></tr>
-          <tr><td>Coordinates</td><td>GSE (Geocentric Solar Ecliptic) — always verify in file headers</td></tr>
-          <tr><td>Key products</td><td>B vector, |B|, clock angle θ, cone angle φ, PSD of fluctuations</td></tr>
-        </table>
-        <div class="inst-note">IMF Bz &lt; −10 nT sustained for ≥3 hours typically drives a geomagnetic storm (Dst &lt; −50 nT). The clock angle θ = arctan2(By, Bz) — 180° is maximally geoeffective.</div>
-      </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<div class="streak-divider"></div>
+    <footer>
+        <div class="footer-logo">
+            <i class="fas fa-satellite-dish"></i>
+            <span>ADITYA-L1 PLASMA LAB</span>
+        </div>
+        <div class="footer-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="visualizer.html">Data Visualizer</a>
+            <a href="explorer.html">Mission Explorer</a>
+            <a href="https://www.isro.gov.in/Aditya_L1.html" target="_blank">Official ISRO Site</a>
+        </div>
+        <p class="copy">&copy; 2024 • Built with Data from ISRO PRADAN Pipeline</p>
+    </footer>
 
-<!-- ── TUTORIAL ──────────────────────────────────────────────────────── -->
-<section class="section" id="tutorial">
-  <div class="section-header">
-    <span class="section-label">03 — Data Tutorial</span>
-    <h2 class="display-lg">What Does Each Measurement Mean?</h2>
-    <p>Before reading a plot, understand the physics behind each quantity — its moment in the VDF, its typical range, and what it tells you about the Sun's state.</p>
-  </div>
+    <script>
+        // Scroll Disclosure
+        const observerOptions = {
+            threshold: 0.1
+        };
 
-  <div class="param-grid">
-    <div class="param-card">
-      <div class="param-top">
-        <div class="param-symbol">n</div>
-        <span class="param-instrument">SWIS · PAPA</span>
-      </div>
-      <div class="param-name">Proton Number Density</div>
-      <div class="param-desc">Zeroth moment of the velocity distribution function — the integral of f(v) over all velocities. Sets the mass density of the solar wind.</div>
-      <code class="param-formula">n = ∫ f(v) d³v ≈ 4π ∫ f(v) v² dv</code>
-      <div class="param-ranges">
-        <span class="range-tag range-quiet">Quiet: 3–10 cm⁻³</span>
-        <span class="range-tag range-active">CIR: 15–30 cm⁻³</span>
-        <span class="range-tag range-extreme">CME sheath: >30 cm⁻³</span>
-      </div>
-    </div>
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, observerOptions);
 
-    <div class="param-card">
-      <div class="param-top">
-        <div class="param-symbol">V</div>
-        <span class="param-instrument">SWIS</span>
-      </div>
-      <div class="param-name">Solar Wind Bulk Speed</div>
-      <div class="param-desc">First moment — the mean flow velocity. Directly encodes the solar source region: slow wind from the coronal streamer belt, fast wind from open coronal holes.</div>
-      <code class="param-formula">V = (1/n) ∫ v f(v) d³v</code>
-      <div class="param-ranges">
-        <span class="range-tag range-quiet">Slow: 300–450 km/s</span>
-        <span class="range-tag range-active">Fast: 500–800 km/s</span>
-        <span class="range-tag range-extreme">CME: >800 km/s</span>
-      </div>
-    </div>
-
-    <div class="param-card">
-      <div class="param-top">
-        <div class="param-symbol">T</div>
-        <span class="param-instrument">SWIS · PAPA</span>
-      </div>
-      <div class="param-name">Proton Temperature</div>
-      <div class="param-desc">Second moment — thermal energy per particle. Hot fast wind expands adiabatically. Anomalously cold + fast is a key CME ejecta signature (flux rope interior).</div>
-      <code class="param-formula">T = m/(3k_B n) ∫ (v−V)² f(v) d³v</code>
-      <div class="param-ranges">
-        <span class="range-tag range-quiet">Slow cold: 3–8 eV</span>
-        <span class="range-tag range-active">Fast hot: 15–30 eV</span>
-        <span class="range-tag range-extreme">CME ejecta: &lt;expected T</span>
-      </div>
-    </div>
-
-    <div class="param-card">
-      <div class="param-top">
-        <div class="param-symbol">|B|</div>
-        <span class="param-instrument">MAG</span>
-      </div>
-      <div class="param-name">IMF Magnitude</div>
-      <div class="param-desc">Total interplanetary magnetic field strength. Drops as ~1/r from the Sun. Enhancements signal compressed regions (CIR, CME sheath) or structured flux ropes.</div>
-      <code class="param-formula">|B| = √(Bx² + By² + Bz²)</code>
-      <div class="param-ranges">
-        <span class="range-tag range-quiet">Quiet: 3–8 nT</span>
-        <span class="range-tag range-active">CIR/sheath: 10–25 nT</span>
-        <span class="range-tag range-extreme">Strong CME: >30 nT</span>
-      </div>
-    </div>
-
-    <div class="param-card">
-      <div class="param-top">
-        <div class="param-symbol">Bz</div>
-        <span class="param-instrument">MAG · GSE</span>
-      </div>
-      <div class="param-name">IMF North-South Component</div>
-      <div class="param-desc">The most critical space weather parameter. Southward Bz enables dayside magnetic reconnection via the Dungey cycle. Reconnection rate ∝ V_sw · B_T · sin²(θ/2).</div>
-      <code class="param-formula">θ (clock angle) = arctan2(By, Bz)</code>
-      <div class="param-ranges">
-        <span class="range-tag range-quiet">North +: minimal coupling</span>
-        <span class="range-tag range-active">South −5 nT: moderate</span>
-        <span class="range-tag range-extreme">South −10 nT: storm</span>
-      </div>
-    </div>
-
-    <div class="param-card">
-      <div class="param-top">
-        <div class="param-symbol">β</div>
-        <span class="param-instrument">Derived</span>
-      </div>
-      <div class="param-name">Plasma Beta</div>
-      <div class="param-desc">Ratio of thermal to magnetic pressure. Determines whether plasma dynamics are governed by waves (β &lt; 1) or kinetic effects (β &gt; 1). Sets the character of instabilities.</div>
-      <code class="param-formula">β = nk_BT / (B²/2μ₀) = P_thermal/P_magnetic</code>
-      <div class="param-ranges">
-        <span class="range-tag range-quiet">β≪1: flux rope interior</span>
-        <span class="range-tag range-active">β~1: typical SW</span>
-        <span class="range-tag range-extreme">β≫1: CIR compressed</span>
-      </div>
-    </div>
-
-    <div class="param-card">
-      <div class="param-top">
-        <div class="param-symbol">V_A</div>
-        <span class="param-instrument">Derived</span>
-      </div>
-      <div class="param-name">Alfvén Speed</div>
-      <div class="param-desc">Speed at which magnetic tension perturbations propagate along field lines. The solar wind is super-Alfvénic (M_A ≈ 6–10) at 1 AU — this is why a bow shock forms at Earth.</div>
-      <code class="param-formula">V_A = B / √(μ₀ρ) = B / √(μ₀ n m_p)</code>
-      <div class="param-ranges">
-        <span class="range-tag range-quiet">Typical 1 AU: 40–80 km/s</span>
-        <span class="range-tag range-active">M_A = V/V_A ~ 6–10</span>
-      </div>
-    </div>
-
-    <div class="param-card">
-      <div class="param-top">
-        <div class="param-symbol">E(f)</div>
-        <span class="param-instrument">MAG · PSD</span>
-      </div>
-      <div class="param-name">Power Spectral Density</div>
-      <div class="param-desc">Distribution of magnetic fluctuation power across frequencies. Reveals the turbulent energy cascade. The spectral slope α is the primary turbulence diagnostic.</div>
-      <code class="param-formula">E(f) ∝ f^α  |  Kolmogorov: α = −5/3</code>
-      <div class="param-ranges">
-        <span class="range-tag range-quiet">Inertial: α = −5/3</span>
-        <span class="range-tag range-active">Kinetic: α &lt; −2.5</span>
-        <span class="range-tag range-extreme">Energy injection: α &gt; −1</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="streak-divider"></div>
-
-<!-- ── METHODS ───────────────────────────────────────────────────────── -->
-<section class="section" id="methods">
-  <div class="section-header">
-    <span class="section-label">04 — Analysis Methods · ISSI SR-001</span>
-    <h2 class="display-lg">Scientific Toolkit</h2>
-    <p>Methods from <em>Analysis Methods for Multi-Spacecraft Data</em> (Paschmann & Daly, ISSI Scientific Report SR-001). Each technique is implemented in the Analysis Lab.</p>
-  </div>
-
-  <div class="method-grid">
-    <div class="method-card" onclick="window.location='explorer.html#spectral'">
-      <div class="method-chapter">Chapter 1 · Spectral Analysis</div>
-      <h4>FFT · Welch PSD · Morlet Wavelet</h4>
-      <p>Transform time-series into the frequency domain. Welch's averaged periodogram reduces variance. Morlet wavelets handle non-stationary signals like CME transients. Reveals turbulent cascades, wave modes, spectral indices.</p>
-      <div class="method-ref">Eriksson (1998) · Paschmann & Daly Ch. 1</div>
-      <span class="method-link">Open Spectral Lab</span>
-    </div>
-    <div class="method-card" onclick="window.location='dashboard.html'">
-      <div class="method-chapter">Chapters 5–6 · Plasma Moments</div>
-      <h4>Density · Velocity · Temperature · Pressure Tensor</h4>
-      <p>Compute the moments of the velocity distribution function: n (zeroth), V (first), T (second), P tensor (second). These macroscopic fluid quantities govern bulk plasma behavior.</p>
-      <div class="method-ref">Paschmann & Daly Ch. 5–6</div>
-      <span class="method-link">Moments Calculator</span>
-    </div>
-    <div class="method-card" onclick="window.location='dashboard.html'">
-      <div class="method-chapter">Chapter 8 · MVA</div>
-      <h4>Minimum Variance Analysis</h4>
-      <p>Finds the coordinate system where B-field variance is minimised — the normal direction to a boundary crossing, shock, or magnetic cloud. Quality criterion: λ_int/λ_min &gt; 2 for a reliable normal.</p>
-      <div class="method-ref">Sonnerup & Scheible (1998) · Ch. 8</div>
-      <span class="method-link">MVA Tool</span>
-    </div>
-    <div class="method-card" onclick="window.location='explorer.html#interactive'">
-      <div class="method-chapter">Chapter 10 · Discontinuities</div>
-      <h4>Rankine-Hugoniot Shock Analysis</h4>
-      <p>Apply conservation of mass, momentum, and energy across a shock to determine compression ratio, Mach number, and shock angle θ_Bn. Classify tangential vs rotational discontinuities.</p>
-      <div class="method-ref">Schwartz (1998) · Ch. 10</div>
-      <span class="method-link">Shock Analyser</span>
-    </div>
-    <div class="method-card" onclick="window.location='visualizer.html'">
-      <div class="method-chapter">Chapter 2 · Time Series</div>
-      <h4>Resampling · Filtering · Gap Handling</h4>
-      <p>Pre-process multi-instrument data: resample to a common cadence, apply anti-aliasing filters, handle gaps via interpolation, verify Nyquist requirements before spectral analysis.</p>
-      <div class="method-ref">Harvey (1998) · Ch. 2</div>
-      <span class="method-link">Time Series Tools</span>
-    </div>
-    <div class="method-card" onclick="window.location='explorer.html#questions'">
-      <div class="method-chapter">Chapter 5 · Distributions</div>
-      <h4>VDF · Pitch-Angle · Anisotropy</h4>
-      <p>Compute pitch-angle distributions relative to the local B field (from STEPS), test fire-hose and mirror instability thresholds from T_perp/T_par, detect beam-like or strahl populations.</p>
-      <div class="method-ref">Fazakerley (1998) · Ch. 5</div>
-      <span class="method-link">Distribution Lab</span>
-    </div>
-  </div>
-</section>
-
-<div class="streak-divider"></div>
-
-<!-- ── ARCHIVE ───────────────────────────────────────────────────────── -->
-<section class="section" id="archive">
-  <div class="section-header">
-    <span class="section-label">05 — Data Access</span>
-    <h2 class="display-lg">Getting Aditya-L1 Data</h2>
-    <p>All Aditya-L1 science data is freely available through PRADAN at ISSDC on a rolling release basis. No long proprietary period after Level-2 processing.</p>
-  </div>
-
-  <div class="archive-steps">
-    <div class="archive-step">
-      <div class="step-num">1</div>
-      <div>
-        <h4>Register at PRADAN</h4>
-        <p>Create a free account at <a href="https://pradan.issdc.gov.in" target="_blank">pradan.issdc.gov.in</a>. Required for data download. Use these credentials in GitHub Secrets for automated fetching.</p>
-      </div>
-    </div>
-    <div class="archive-step">
-      <div class="step-num">2</div>
-      <div>
-        <h4>Browse datasets</h4>
-        <p>Navigate: Aditya-L1 → instrument → Level-2 → year → date. Level-1 is calibrated; Level-2 is science-ready with derived moments.</p>
-      </div>
-    </div>
-    <div class="archive-step">
-      <div class="step-num">3</div>
-      <div>
-        <h4>Download CDF files</h4>
-        <p>Data is in CDF (Common Data Format). Use <code style="font-family:var(--font-mono);font-size:.75rem">cdflib</code> (Python) to read. Session timeout ~30 min — use bulk download for large datasets.</p>
-      </div>
-    </div>
-    <div class="archive-step">
-      <div class="step-num">4</div>
-      <div>
-        <h4>Or use this lab</h4>
-        <p>Upload any CDF/JSON file directly in the <a href="visualizer.html">Data Visualizer</a> for instant plots — or set GitHub Secrets for automated 6-hour fetches.</p>
-      </div>
-    </div>
-  </div>
-  <div class="warn-box">⚠ Do NOT assume cadence values — check the CDF DEPEND_0 attribute. Do NOT assume variable names — inspect headers first. Calibration may be updated; re-check payload user guides with each download.</div>
-</section>
-
-<!-- ── CTA ───────────────────────────────────────────────────────────── -->
-<div class="cta-section">
-  <h2 class="display-md">Ready to Explore the Data?</h2>
-  <p>You know the instruments, the physics, and the methods. Now go observe the Sun's plasma in real time — or dig into any historical data window you choose.</p>
-  <div class="cta-btns">
-    <a href="dashboard.html" class="btn-primary">Live Dashboard →</a>
-    <a href="explorer.html" class="btn-ghost">Science Explorer</a>
-    <a href="visualizer.html" class="btn-ghost">Date Picker & Visualizer</a>
-  </div>
-  <div class="cta-note">Data updates automatically every 6 hours via GitHub Actions · PRADAN / ISSDC</div>
-</div>
-
-</main>
-
-<footer>
-  <span>ADITYA-L1 PLASMA LAB · Mission data © ISRO / ISSDC · 
-  <a href="https://pradan.issdc.gov.in" target="_blank">pradan.issdc.gov.in</a> · 
-  Methods: Paschmann & Daly ISSI SR-001 · 
-  <a href="https://github.com/Vivek-Shrivastav/Aditya-L1_Plasma_Lab" target="_blank">GitHub</a></span>
-</footer>
-
-<script>
-/* ── Instrument tab switcher ────────────────────────────────────────── */
-function showInst(id, btn) {
-  document.querySelectorAll('.inst-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.inst-tab').forEach(el => el.classList.remove('active'));
-  document.getElementById('inst-' + id).classList.add('active');
-  btn.classList.add('active');
-}
-
-/* ── Particle canvas ────────────────────────────────────────────────── */
-(function() {
-  const canvas = document.getElementById('particle-canvas');
-  const ctx = canvas.getContext('2d');
-  let W, H, particles;
-
-  function resize() {
-    W = canvas.width  = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-  }
-
-  function initParticles() {
-    particles = Array.from({ length: 55 }, () => ({
-      x: Math.random() * W,
-      y: Math.random() * H,
-      r: Math.random() * 1.4 + 0.3,
-      vx: (Math.random() - 0.5) * 0.18,
-      vy: Math.random() * 0.12 + 0.04,
-      alpha: Math.random() * 0.5 + 0.15,
-      hue: Math.random() > 0.6 ? 'solar' : 'plasma',
-    }));
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-    particles.forEach(p => {
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = p.hue === 'solar'
-        ? `rgba(255,122,43,${p.alpha})`
-        : `rgba(41,203,232,${p.alpha * 0.7})`;
-      ctx.fill();
-      p.x += p.vx;
-      p.y += p.vy;
-      if (p.y > H + 5) { p.y = -5; p.x = Math.random() * W; }
-      if (p.x < -5) p.x = W + 5;
-      if (p.x > W + 5) p.x = -5;
-    });
-    requestAnimationFrame(draw);
-  }
-
-  resize();
-  initParticles();
-  draw();
-  window.addEventListener('resize', () => { resize(); initParticles(); });
-})();
-
-/* ── Smooth scroll for nav links ────────────────────────────────────── */
-document.querySelectorAll('a[href^="#"]').forEach(a => {
-  a.addEventListener('click', e => {
-    const target = document.querySelector(a.getAttribute('href'));
-    if (target) {
-      e.preventDefault();
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  });
-});
-
-/* ── Active nav on scroll ───────────────────────────────────────────── */
-const sections = ['live-conditions','pipeline','why-l1','instruments','tutorial','methods','archive'];
-const observer = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-      const match = document.querySelector(`.nav-link[href="#${e.target.id}"]`);
-      if (match) match.classList.add('active');
-    }
-  });
-}, { rootMargin: '-40% 0px -50% 0px' });
-sections.forEach(id => { const el = document.getElementById(id); if (el) observer.observe(el); });
-
-/* ── Live conditions fetch ──────────────────────────────────────────── */
-(function() {
-  const container = document.getElementById('conditions-container');
-  const loading = document.getElementById('cond-loading');
-
-  function classifyBz(bz) {
-    if (bz <= -10) return { cls: 'alert', text: 'Storm driver' };
-    if (bz <= -5)  return { cls: 'warn',  text: 'Moderate coupling' };
-    if (bz < 0)    return { cls: 'warn',  text: 'Weak southward' };
-    return { cls: 'ok', text: 'Northward' };
-  }
-
-  function classifyDensity(n) {
-    if (n > 30) return { cls: 'alert', text: 'CME sheath' };
-    if (n > 15) return { cls: 'warn',  text: 'Enhanced' };
-    return { cls: 'ok', text: 'Quiet' };
-  }
-
-  function classifyVelocity(v) {
-    if (v > 800) return { cls: 'alert', text: 'CME' };
-    if (v > 500) return { cls: 'warn',  text: 'Fast wind' };
-    return { cls: 'ok', text: 'Slow wind' };
-  }
-
-  function classifyBmag(b) {
-    if (b > 30) return { cls: 'alert', text: 'Strong CME' };
-    if (b > 10) return { cls: 'warn',  text: 'Enhanced' };
-    return { cls: 'ok', text: 'Quiet' };
-  }
-
-  function regimeClass(regime) {
-    if (!regime) return 'slow';
-    var r = regime.toLowerCase();
-    if (r.indexOf('fast') !== -1) return 'fast';
-    if (r.indexOf('cme') !== -1 || r.indexOf('transient') !== -1) return 'cme';
-    return 'slow';
-  }
-
-  function bzTagClass(status) {
-    if (!status) return 'neutral';
-    var s = status.toLowerCase();
-    if (s.indexOf('south') !== -1) return 'south';
-    if (s.indexOf('north') !== -1) return 'north';
-    return 'neutral';
-  }
-
-  function escapeHtml(text) {
-    var div = document.createElement('div');
-    div.textContent = text || '';
-    return div.innerHTML;
-  }
-
-  function renderConditions(data) {
-    var s = data.scalars || {};
-    var simulated = data.simulated;
-    var runTime = data.run_time;
-    var regime = data.sw_regime || 'Unknown';
-    var bzStatus = data.bz_status || 'Unknown';
-
-    var timeStr = '';
-    if (runTime) {
-      try { timeStr = new Date(runTime).toUTCString(); } catch(e) { timeStr = runTime; }
-    }
-
-    var bz = classifyBz(s.Bz_nT || 0);
-    var dens = classifyDensity(s.density_cm3 || 0);
-    var vel = classifyVelocity(s.velocity_kms || 0);
-    var bmag = classifyBmag(s.B_mag_nT || 0);
-    var bzVal = s.Bz_nT || 0;
-    var bzCardClass = bzVal < 0 ? 'bz-south' : 'bz-north';
-
-    var html = '';
-    html += '<div class="live-banner">';
-    html += '  <span class="live-dot' + (simulated ? ' sim' : '') + '"></span>';
-    html += '  <span class="live-label' + (simulated ? ' sim' : '') + '">' + (simulated ? 'Simulated Data' : 'Live Data') + '</span>';
-    if (timeStr) html += '  <span class="live-time">Updated: ' + escapeHtml(timeStr) + '</span>';
-    html += '</div>';
-
-    html += '<div class="conditions-grid">';
-
-    html += '<div class="cond-card">';
-    html += '  <div class="cond-label">Density</div>';
-    html += '  <div class="cond-value">' + escapeHtml(String(s.density_cm3 != null ? s.density_cm3 : '—')) + '<span class="cond-unit">cm⁻³</span></div>';
-    html += '  <span class="cond-status ' + dens.cls + '">' + escapeHtml(dens.text) + '</span>';
-    html += '</div>';
-
-    html += '<div class="cond-card">';
-    html += '  <div class="cond-label">Velocity</div>';
-    html += '  <div class="cond-value">' + escapeHtml(String(s.velocity_kms != null ? s.velocity_kms : '—')) + '<span class="cond-unit">km/s</span></div>';
-    html += '  <span class="cond-status ' + vel.cls + '">' + escapeHtml(vel.text) + '</span>';
-    html += '</div>';
-
-    html += '<div class="cond-card">';
-    html += '  <div class="cond-label">Temperature</div>';
-    html += '  <div class="cond-value">' + escapeHtml(String(s.temperature_eV != null ? s.temperature_eV : '—')) + '<span class="cond-unit">eV</span></div>';
-    html += '</div>';
-
-    html += '<div class="cond-card">';
-    html += '  <div class="cond-label">|B| Magnitude</div>';
-    html += '  <div class="cond-value">' + escapeHtml(String(s.B_mag_nT != null ? s.B_mag_nT : '—')) + '<span class="cond-unit">nT</span></div>';
-    html += '  <span class="cond-status ' + bmag.cls + '">' + escapeHtml(bmag.text) + '</span>';
-    html += '</div>';
-
-    html += '<div class="cond-card ' + bzCardClass + '">';
-    html += '  <div class="cond-label">Bz (GSE)</div>';
-    html += '  <div class="cond-value">' + escapeHtml(String(s.Bz_nT != null ? s.Bz_nT : '—')) + '<span class="cond-unit">nT</span></div>';
-    html += '  <span class="cond-status ' + bz.cls + '">' + escapeHtml(bz.text) + '</span>';
-    html += '</div>';
-
-    html += '<div class="cond-card">';
-    html += '  <div class="cond-label">Plasma β</div>';
-    html += '  <div class="cond-value">' + escapeHtml(String(s.plasma_beta != null ? s.plasma_beta : '—')) + '</div>';
-    html += '</div>';
-
-    html += '<div class="cond-card">';
-    html += '  <div class="cond-label">Alfvén Speed</div>';
-    html += '  <div class="cond-value">' + escapeHtml(String(s.alfven_speed_kms != null ? s.alfven_speed_kms : '—')) + '<span class="cond-unit">km/s</span></div>';
-    html += '</div>';
-
-    html += '<div class="cond-card">';
-    html += '  <div class="cond-label">Clock Angle</div>';
-    html += '  <div class="cond-value">' + escapeHtml(String(s.clock_angle_deg != null ? s.clock_angle_deg : '—')) + '<span class="cond-unit">°</span></div>';
-    html += '</div>';
-
-    html += '</div>';
-
-    html += '<div class="regime-bar">';
-    html += '  <span class="regime-tag ' + regimeClass(regime) + '">' + escapeHtml(regime) + '</span>';
-    html += '  <span class="regime-tag ' + bzTagClass(bzStatus) + '">' + escapeHtml(bzStatus) + '</span>';
-    if (simulated) html += '  <span class="regime-tag sim-notice">Simulated — PRADAN credentials not set</span>';
-    html += '</div>';
-
-    container.innerHTML = html;
-  }
-
-  function fetchConditions() {
-    fetch('data/latest.json')
-      .then(function(r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      })
-      .then(function(data) {
-        renderConditions(data);
-        renderEventsHome(data.events || []);
-      })
-      .catch(function() {
-        loading.textContent = 'Unable to load live data. The data file may be temporarily unavailable. Visit the Dashboard for full details.';
-      });
-
-    // Fetch history for sparklines
-    fetch('data/history.json')
-      .then(function(r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      })
-      .then(function(hist) {
-        if (hist && hist.length > 1) renderSparklines(hist);
-      })
-      .catch(function() {
-        // Sparklines are optional — fail silently
-      });
-  }
-
-  function renderEventsHome(events) {
-    var container = document.getElementById('events-home-container');
-    if (!events || !events.length) {
-      container.innerHTML = '<div class="events-summary"><div class="no-events-home">✅ No significant plasma events detected in the current data window.</div></div>';
-      return;
-    }
-    var html = '<div class="events-summary">';
-    events.forEach(function(ev) {
-      html += '<div class="ev-summary-card">';
-      html += '  <div class="ev-summary-icon">' + escapeHtml(ev.icon || '❓') + '</div>';
-      html += '  <div style="flex:1">';
-      html += '    <div class="ev-summary-type">' + escapeHtml(ev.type || 'Event') + '</div>';
-      html += '    <div class="ev-summary-desc">' + escapeHtml(ev.explanation || '') + '</div>';
-      if (ev.values) {
-        html += '    <div class="ev-summary-vals">';
-        var keys = Object.keys(ev.values);
-        for (var i = 0; i < keys.length; i++) {
-          html += '<span class="ev-summary-val">' + escapeHtml(keys[i]) + ': ' + escapeHtml(String(ev.values[keys[i]])) + '</span>';
-        }
-        html += '    </div>';
-      }
-      if (ev.confidence != null) {
-        html += '    <div class="ev-conf"><div class="ev-conf-fill" style="width:' + (ev.confidence * 100) + '%"></div></div>';
-        html += '    <div class="ev-conf-text">Confidence: ' + (ev.confidence * 100).toFixed(0) + '%' + (ev.experimental ? ' · experimental' : '') + '</div>';
-      }
-      html += '  </div>';
-      html += '</div>';
-    });
-    html += '</div>';
-    container.innerHTML = html;
-  }
-
-  function drawSparkline(canvas, values, color) {
-    var ctx = canvas.getContext('2d');
-    var w = canvas.width = canvas.offsetWidth * 2;
-    var h = canvas.height = canvas.offsetHeight * 2;
-    ctx.scale(2, 2);
-    var cw = w / 2;
-    var ch = h / 2;
-    var min = values[0], max = values[0];
-    for (var i = 1; i < values.length; i++) {
-      if (values[i] < min) min = values[i];
-      if (values[i] > max) max = values[i];
-    }
-    var range = max - min || 1;
-    var pad = 4;
-    ctx.beginPath();
-    for (var j = 0; j < values.length; j++) {
-      var x = pad + (j / (values.length - 1)) * (cw - pad * 2);
-      var y = ch - pad - ((values[j] - min) / range) * (ch - pad * 2);
-      if (j === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.5;
-    ctx.lineJoin = 'round';
-    ctx.stroke();
-
-    // Fill area below
-    ctx.lineTo(pad + cw - pad * 2, ch - pad);
-    ctx.lineTo(pad, ch - pad);
-    ctx.closePath();
-    ctx.fillStyle = color.replace(')', ',0.08)').replace('rgb', 'rgba');
-    ctx.fill();
-
-    // End dot
-    var lastX = pad + ((values.length - 1) / (values.length - 1)) * (cw - pad * 2);
-    var lastY = ch - pad - ((values[values.length - 1] - min) / range) * (ch - pad * 2);
-    ctx.beginPath();
-    ctx.arc(lastX, lastY, 2.5, 0, Math.PI * 2);
-    ctx.fillStyle = color;
-    ctx.fill();
-  }
-
-  function renderSparklines(hist) {
-    var container = document.getElementById('sparklines-container');
-    var metrics = [
-      { key: 'density',  label: 'Density (6-month)', color: 'rgb(110,220,170)' },
-      { key: 'velocity', label: 'Velocity (6-month)', color: 'rgb(41,203,232)' },
-      { key: 'B_mag',    label: '|B| (6-month)',      color: 'rgb(255,173,107)' },
-      { key: 'Bz',       label: 'Bz (6-month)',       color: 'rgb(245,146,192)' },
-    ];
-
-    var html = '<div class="spark-row">';
-    metrics.forEach(function(m) {
-      html += '<div class="spark-card">';
-      html += '  <div class="spark-label">' + escapeHtml(m.label) + '</div>';
-      html += '  <canvas class="spark-canvas" data-key="' + m.key + '" data-color="' + m.color + '"></canvas>';
-      html += '</div>';
-    });
-    html += '</div>';
-    container.innerHTML = html;
-
-    // Draw after DOM update
-    setTimeout(function() {
-      var canvases = container.querySelectorAll('.spark-canvas');
-      canvases.forEach(function(canvas) {
-        var key = canvas.getAttribute('data-key');
-        var color = canvas.getAttribute('data-color');
-        var vals = hist.map(function(r) { return r[key]; }).filter(function(v) { return v != null; });
-        if (vals.length > 1) drawSparkline(canvas, vals, color);
-      });
-    }, 50);
-  }
-
-  fetchConditions();
-})();
-</script>
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    </script>
 </body>
 </html>
