@@ -10,11 +10,22 @@
 
 | Page | Purpose |
 |------|---------|
-| [`index.html`](index.html) | **Learn first** — mission context, instruments, data tutorials, analysis methods |
+| [`index.html`](index.html) | **Learn first** — mission context, live solar wind conditions, instruments, data tutorials, analysis methods |
 | [`dashboard.html`](dashboard.html) | **Live monitor** — real-time panels, auto-updated every 6h |
 | [`visualizer.html`](visualizer.html) | **Data explorer** — pick any date/time, upload CDF, instant plots |
-| [`lab.html`](lab.html) | **Analysis lab** — spectral, MVA, shock tools (see branch `lab`) |
-| [`explorer.html`](explorer.html) | **Science reference** — full interactive instrument explorer |
+| [`explorer.html`](explorer.html) | **Science reference** — full interactive instrument and physics explorer |
+
+---
+
+## What's on the Homepage
+
+- **Live Solar Wind Conditions** — real-time plasma metrics (density, velocity, temperature, |B|, Bz, β, Alfvén speed, clock angle) with color-coded status indicators
+- **Auto-detected Events** — shocks, southward IMF episodes, fast streams displayed inline
+- **6-month History Sparklines** — mini trend charts from the rolling history data
+- **Pipeline Architecture** — visual diagram showing data flow from spacecraft to browser
+- **Instrument Guides** — ASPEX, SWIS, STEPS, PAPA, MAG with specs and science context
+- **Measurement Tutorial** — physics behind each parameter with VDF moment formulas
+- **Analysis Methods** — ISSI SR-001 toolkit (spectral analysis, MVA, shock analysis, etc.)
 
 ---
 
@@ -70,20 +81,26 @@ The pipeline runs fine without credentials — it generates **physically realist
 
 Methods follow **Analysis Methods for Multi-Spacecraft Data** (Paschmann & Daly, ISSI SR-001):
 
-| Method | Chapter | Tool |
-|--------|---------|------|
-| Spectral analysis (FFT/Welch/Morlet) | Ch. 1 | `lab.html#spectral` |
-| Plasma moments (n, V, T, tensor) | Ch. 5–6 | `lab.html#moments` |
-| Minimum Variance Analysis (MVA) | Ch. 8 | `lab.html#mva` + dashboard |
-| Rankine-Hugoniot shocks | Ch. 10 | `lab.html#shock` |
-| Time series resampling/filtering | Ch. 2 | `lab.html#timeseries` |
-| Velocity distributions + anisotropy | Ch. 5 | `lab.html#anisotropy` |
+| Method | Chapter | Where |
+|--------|---------|-------|
+| Spectral analysis (FFT/Welch/Morlet) | Ch. 1 | Dashboard (Plasma Physics tab) |
+| Plasma moments (n, V, T, tensor) | Ch. 5–6 | Dashboard (Overview + Particles tabs) |
+| Minimum Variance Analysis (MVA) | Ch. 8 | Dashboard (Magnetic Field tab) |
+| Rankine-Hugoniot shocks | Ch. 10 | Dashboard (Events tab) |
+| Time series resampling/filtering | Ch. 2 | Visualizer (upload & plot) |
+| Velocity distributions + anisotropy | Ch. 5 | Explorer (Science Questions section) |
 
 ---
 
 ## New in This Version
 
-- **Learn-first flow**: `index.html` teaches mission, instruments, physics, and methods before directing users to experiment
+- **Live conditions on homepage**: real-time solar wind readout with color-coded status indicators
+- **Event summaries on homepage**: auto-detected plasma events shown inline below conditions
+- **History sparklines**: 6-month trend mini-charts for key parameters
+- **Pipeline diagram**: visual data flow from Aditya-L1 → PRADAN → GitHub Actions → website
+- **Cross-page navigation**: consistent nav links across all pages
+- **Favicon**: solar icon on all tabs
+- **Fixed broken links**: removed references to non-existent `lab.html`
 - **Per-plot timestamps**: every chart shows exact UTC data window, source, and instrument
 - **Interactive data visualizer**: pick any date/time or upload a CDF file
 - **Tooltips on every metric card**: hover for physical interpretation
