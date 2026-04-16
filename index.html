@@ -609,9 +609,14 @@
             try {
                 const r = await fetch('data/latest.json?t=' + Date.now());
                 const data = await r.json();
-                const s = data.summary || {};
+                const s = data.scalars || {}; // updated from 'summary' to 'scalars' to match current latest.json
+                const meta = data.metadata || {};
                 
-                document.getElementById('last-sync').textContent = 'SYNCED ' + new Date().toLocaleTimeString();
+                let syncText = 'SYNCED ' + new Date().toLocaleTimeString();
+                if (meta.window_end) {
+                    syncText += ' — Data until: ' + meta.window_end.replace('Z', '').replace('T', ' ');
+                }
+                document.getElementById('last-sync').textContent = syncText;
                 
                 const grid = document.getElementById('conditions-grid');
                 grid.innerHTML = `

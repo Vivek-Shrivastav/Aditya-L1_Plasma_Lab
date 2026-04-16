@@ -441,9 +441,9 @@
             <a href="visualizer.html" class="nav-link">Visualizer</a>
             <a href="explorer.html" class="nav-link">Explorer</a>
         </div>
-        <div class="status-badge">
+        <div class="status-badge" id="status-container">
             <div class="dot pulse" id="status-dot"></div>
-            <span id="status-text">LIVE STREAM</span>
+            <span id="status-text">INITIALIZING</span>
         </div>
     </nav>
 
@@ -452,6 +452,9 @@
             <div class="page-title">
                 <h1 id="mission-time">Real-time Solar Wind</h1>
                 <p id="data-source">Fetching data from ISRO PRADAN Pipeline...</p>
+                <div id="data-window-badge" style="display: inline-block; margin-top: 0.5rem; padding: 0.2rem 0.6rem; background: rgba(0, 212, 255, 0.1); border: 1px solid var(--primary); border-radius: 4px; font-size: 0.7rem; font-family: var(--font-mono); color: var(--primary); visibility: hidden;">
+                    INTERVAL: <span id="window-start">...</span> → <span id="window-end">...</span>
+                </div>
             </div>
             <div class="controls">
                 <div class="last-updated" style="text-align: right; margin-right: 1rem;">
@@ -477,7 +480,7 @@
         <div id="overview" class="page-content active">
             <div class="dashboard-grid">
                 <!-- Metrics -->
-                <div class="card">
+                <div class="card" data-tip="Number of protons per cubic centimeter. Nominal solar wind: 3-10 cm⁻³. Higher values (>15) may indicate CME compression or stream interfaces.">
                     <div class="card-header">
                         <span class="card-title">Proton Density</span>
                         <i class="fas fa-atom card-icon"></i>
@@ -486,7 +489,7 @@
                     <div class="metric-unit">cm⁻³ • SWIS/PAPA</div>
                     <div class="metric-trend"><i class="fas fa-info-circle"></i> Quiet wind: 3-10 cm⁻³</div>
                 </div>
-                <div class="card">
+                <div class="card" data-tip="The bulk velocity of the proton flow from the Sun. Slow wind: 300-450 km/s. Fast wind (from coronal holes): >600 km/s. Significant jumps indicate shocks.">
                     <div class="card-header">
                         <span class="card-title">Bulk Speed</span>
                         <i class="fas fa-wind card-icon"></i>
@@ -495,7 +498,7 @@
                     <div class="metric-unit">km/s • SWIS</div>
                     <div class="metric-trend" id="trend-speed">---</div>
                 </div>
-                <div class="card">
+                <div class="card" data-tip="Proton kinetic temperature in eV. 1 eV corresponds to approximately 11,604 Kelvin. Useful for identifying different solar wind plasma regimes.">
                     <div class="card-header">
                         <span class="card-title">Temperature</span>
                         <i class="fas fa-thermometer-half card-icon"></i>
@@ -504,7 +507,7 @@
                     <div class="metric-unit">eV • 1 eV ≈ 11.6k K</div>
                     <div class="metric-trend"><i class="fas fa-info-circle"></i> CME Signature: low T</div>
                 </div>
-                <div class="card">
+                <div class="card" data-tip="Total Interplanetary Magnetic Field magnitude. Bz is the North-South component; sustained Southward Bz (< -5 nT) drives geomagnetic activity (reconnection).">
                     <div class="card-header">
                         <span class="card-title">Magnetic IMF</span>
                         <i class="fas fa-magnet card-icon"></i>
@@ -679,6 +682,22 @@
             }
         };
 
+        // --- Tooltip Logic ---
+        const tooltip = document.getElementById('tooltip');
+        document.addEventListener('mouseover', e => {
+            const card = e.target.closest('[data-tip]');
+            if (card) {
+                tooltip.textContent = card.dataset.tip;
+                tooltip.style.opacity = '1';
+                const rect = card.getBoundingClientRect();
+                tooltip.style.left = rect.left + 'px';
+                tooltip.style.top = (rect.bottom + 10) + 'px';
+            }
+        });
+        document.addEventListener('mouseout', e => {
+            if (e.target.closest('[data-tip]')) tooltip.style.opacity = '0';
+        });
+
         // --- State Management ---
         let latestData = null;
         let historyData = null;
@@ -755,12 +774,39 @@
         function updateUI() {
             if (!latestData) return;
             
-            const sc = latestData.scalars;
-            document.getElementById('val-density').textContent = sc.density_cm3 || '--.-';
-            document.getElementById('val-speed').textContent = sc.velocity_kms || '---';
-            document.getElementById('val-temp').textContent = sc.temperature_eV || '--.-';
-            document.getElementById('val-imf').textContent = sc.B_mag_nT || '--.-';
-            document.getElementById('val-bz').textContent = `Bz: ${sc.Bz_nT || '-.--'} nT`;
+            const s = latestData.scalars;
+            const meta = latestData.metadata || {};
+            
+            // Status Update
+            const statusText = document.getElementById('status-text');
+            const statusDot = document.getElementById('status-dot');
+            if (latestData.simulated) {
+                statusText.textContent = 'SIMULATED';
+                statusDot.className = 'dot'; // no pulse
+                document.getElementById('data-source').textContent = 'Direct pipeline access unavailable — displaying high-fidelity simulation.';
+            } else if (meta.is_historical) {
+                statusText.textContent = 'HISTORICAL ARCHIVE';
+                statusDot.className = 'dot pulse-orange';
+                document.getElementById('data-source').textContent = 'Live data unavailable — displaying latest available mission data from PRADAN.';
+                statusDot.style.background = 'var(--secondary)';
+            } else {
+                statusText.textContent = 'LIVE MISSION STREAM';
+                statusDot.className = 'dot pulse';
+                document.getElementById('data-source').textContent = 'Real-time telemetry from Aditya-L1 Mission Payloads.';
+            }
+
+            // Window update
+            if (meta.window_start && meta.window_end) {
+                document.getElementById('data-window-badge').style.visibility = 'visible';
+                document.getElementById('window-start').textContent = meta.window_start.replace('Z', '').replace('T', ' ');
+                document.getElementById('window-end').textContent = meta.window_end.replace('Z', '').replace('T', ' ');
+            }
+
+            document.getElementById('val-density').textContent = s.density_cm3 || '--.-';
+            document.getElementById('val-speed').textContent = s.velocity_kms || '---';
+            document.getElementById('val-temp').textContent = s.temperature_eV || '--.-';
+            document.getElementById('val-imf').textContent = s.B_mag_nT || '--.-';
+            document.getElementById('val-bz').textContent = `Bz: ${s.Bz_nT || '-.--'} nT`;
             
             document.getElementById('trend-speed').textContent = latestData.sw_regime || '---';
             document.getElementById('data-source').textContent = latestData.simulated 

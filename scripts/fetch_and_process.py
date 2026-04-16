@@ -566,13 +566,16 @@ def main() -> None:
 
     raw_swis = raw_mag = None
     if not simulated:
-        for delta in range(3):
+        # Search back 14 days for the latest available Level-2 data
+        for delta in range(14):
             raw_swis = fetch_instrument(sess, "SWIS", today - timedelta(days=delta))
             if raw_swis:
+                log.info("Found SWIS data from %s", (today - timedelta(days=delta)).isoformat())
                 break
-        for delta in range(3):
+        for delta in range(14):
             raw_mag = fetch_instrument(sess, "MAG", today - timedelta(days=delta))
             if raw_mag:
+                log.info("Found MAG data from %s", (today - timedelta(days=delta)).isoformat())
                 break
 
     mom    = analyse_moments(raw_swis)
@@ -585,6 +588,18 @@ def main() -> None:
     )
     events = detect_events(mom, mag, der)
     run_time = datetime.now(timezone.utc).isoformat()
+    
+    # Extract metadata for transparency
+    times_all = mom["times"] + mag["times"]
+    times_all = sorted([t for t in times_all if t])
+    window_start = times_all[0] if times_all else None
+    window_end   = times_all[-1] if times_all else None
+    
+    is_historical = False
+    if window_end:
+        dt_end = datetime.strptime(window_end, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        if (datetime.now(timezone.utc) - dt_end).days >= 1:
+            is_historical = True
 
     latest = {
         # run_id ensures every run produces a unique file → git always commits
@@ -615,6 +630,12 @@ def main() -> None:
         "sw_regime":    mom["regime"],
         "bz_status":    mag["bz_status"],
         "mva":          mag["mva"],
+        "metadata": {
+            "window_start":  window_start,
+            "window_end":    window_end,
+            "is_historical": is_historical,
+            "description":   "Latest available Level-2 plasma parameters from Aditya-L1 PRADAN portal." if not mom["simulated"] else "High-fidelity simulated data used because direct mission access is unavailable."
+        }
     }
 
     LATEST_F.write_text(json.dumps(latest, indent=2))
