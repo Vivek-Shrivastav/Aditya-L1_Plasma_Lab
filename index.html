@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aditya-L1 Plasma Lab</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%23ff7a2b'/><circle cx='16' cy='16' r='8' fill='%23ffd04a'/><circle cx='16' cy='16' r='3' fill='%23fff'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -854,6 +855,109 @@ main {
 
 .regime-tag.sim-notice { color: var(--text-tertiary); border-color: var(--space-500); background: rgba(255,255,255,0.02); font-style: italic; }
 
+/* ─── EVENTS SUMMARY ─────────────────────────────────────────────────── */
+.events-summary {
+  margin-top: 1.5rem;
+}
+.ev-summary-card {
+  background: var(--space-900);
+  border: 1px solid var(--space-700);
+  border-radius: 10px;
+  padding: 1.2rem 1.4rem;
+  margin-bottom: 0.6rem;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  transition: border-color 0.2s;
+}
+.ev-summary-card:hover { border-color: var(--space-400); }
+.ev-summary-icon { font-size: 1.3rem; flex-shrink: 0; }
+.ev-summary-type {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--solar-300);
+  letter-spacing: 0.04em;
+}
+.ev-summary-desc {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin-top: 0.2rem;
+}
+.ev-summary-vals {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 0.3rem;
+}
+.ev-summary-val {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  background: var(--space-800);
+  border: 1px solid var(--space-600);
+  padding: 0.12em 0.45em;
+  border-radius: 3px;
+  color: var(--text-tertiary);
+}
+.ev-conf {
+  height: 2px;
+  background: var(--space-700);
+  border-radius: 2px;
+  margin-top: 0.35rem;
+  width: 100%;
+  max-width: 200px;
+}
+.ev-conf-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--solar-400), var(--solar-200));
+}
+.ev-conf-text {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  margin-top: 0.15rem;
+}
+.no-events-home {
+  background: var(--space-900);
+  border: 1px solid var(--space-700);
+  border-radius: 10px;
+  padding: 1.5rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+}
+
+/* ─── SPARKLINES ─────────────────────────────────────────────────────── */
+.spark-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1px;
+  background: var(--space-700);
+  border: 1px solid var(--space-700);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 1.5rem;
+}
+.spark-card {
+  background: var(--space-900);
+  padding: 1rem 1.2rem;
+}
+.spark-label {
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.4rem;
+}
+.spark-canvas {
+  width: 100%;
+  height: 40px;
+  display: block;
+}
+
 /* ─── CTA SECTION ─────────────────────────────────────────────────────── */
 .cta-section {
   margin: 0 var(--page-gutter) 4rem;
@@ -1055,6 +1159,12 @@ footer a:hover { color: var(--text-secondary); }
   <div id="conditions-container">
     <div class="cond-loading" id="cond-loading">Fetching latest data from L1…</div>
   </div>
+
+  <!-- Events summary -->
+  <div id="events-home-container"></div>
+
+  <!-- History sparklines -->
+  <div id="sparklines-container"></div>
 </section>
 
 <div class="streak-divider"></div>
@@ -1363,42 +1473,42 @@ footer a:hover { color: var(--text-secondary); }
   </div>
 
   <div class="method-grid">
-    <div class="method-card" onclick="window.location='lab.html#spectral'">
+    <div class="method-card" onclick="window.location='explorer.html#spectral'">
       <div class="method-chapter">Chapter 1 · Spectral Analysis</div>
       <h4>FFT · Welch PSD · Morlet Wavelet</h4>
       <p>Transform time-series into the frequency domain. Welch's averaged periodogram reduces variance. Morlet wavelets handle non-stationary signals like CME transients. Reveals turbulent cascades, wave modes, spectral indices.</p>
       <div class="method-ref">Eriksson (1998) · Paschmann & Daly Ch. 1</div>
       <span class="method-link">Open Spectral Lab</span>
     </div>
-    <div class="method-card" onclick="window.location='lab.html#moments'">
+    <div class="method-card" onclick="window.location='dashboard.html'">
       <div class="method-chapter">Chapters 5–6 · Plasma Moments</div>
       <h4>Density · Velocity · Temperature · Pressure Tensor</h4>
       <p>Compute the moments of the velocity distribution function: n (zeroth), V (first), T (second), P tensor (second). These macroscopic fluid quantities govern bulk plasma behavior.</p>
       <div class="method-ref">Paschmann & Daly Ch. 5–6</div>
       <span class="method-link">Moments Calculator</span>
     </div>
-    <div class="method-card" onclick="window.location='lab.html#mva'">
+    <div class="method-card" onclick="window.location='dashboard.html'">
       <div class="method-chapter">Chapter 8 · MVA</div>
       <h4>Minimum Variance Analysis</h4>
       <p>Finds the coordinate system where B-field variance is minimised — the normal direction to a boundary crossing, shock, or magnetic cloud. Quality criterion: λ_int/λ_min &gt; 2 for a reliable normal.</p>
       <div class="method-ref">Sonnerup & Scheible (1998) · Ch. 8</div>
       <span class="method-link">MVA Tool</span>
     </div>
-    <div class="method-card" onclick="window.location='lab.html#shock'">
+    <div class="method-card" onclick="window.location='explorer.html#interactive'">
       <div class="method-chapter">Chapter 10 · Discontinuities</div>
       <h4>Rankine-Hugoniot Shock Analysis</h4>
       <p>Apply conservation of mass, momentum, and energy across a shock to determine compression ratio, Mach number, and shock angle θ_Bn. Classify tangential vs rotational discontinuities.</p>
       <div class="method-ref">Schwartz (1998) · Ch. 10</div>
       <span class="method-link">Shock Analyser</span>
     </div>
-    <div class="method-card" onclick="window.location='lab.html#timeseries'">
+    <div class="method-card" onclick="window.location='visualizer.html'">
       <div class="method-chapter">Chapter 2 · Time Series</div>
       <h4>Resampling · Filtering · Gap Handling</h4>
       <p>Pre-process multi-instrument data: resample to a common cadence, apply anti-aliasing filters, handle gaps via interpolation, verify Nyquist requirements before spectral analysis.</p>
       <div class="method-ref">Harvey (1998) · Ch. 2</div>
       <span class="method-link">Time Series Tools</span>
     </div>
-    <div class="method-card" onclick="window.location='lab.html#anisotropy'">
+    <div class="method-card" onclick="window.location='explorer.html#questions'">
       <div class="method-chapter">Chapter 5 · Distributions</div>
       <h4>VDF · Pitch-Angle · Anisotropy</h4>
       <p>Compute pitch-angle distributions relative to the local B field (from STEPS), test fire-hose and mirror instability thresholds from T_perp/T_par, detect beam-like or strahl populations.</p>
@@ -1695,10 +1805,129 @@ sections.forEach(id => { const el = document.getElementById(id); if (el) observe
       })
       .then(function(data) {
         renderConditions(data);
+        renderEventsHome(data.events || []);
       })
       .catch(function() {
         loading.textContent = 'Unable to load live data. The data file may be temporarily unavailable. Visit the Dashboard for full details.';
       });
+
+    // Fetch history for sparklines
+    fetch('data/history.json')
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(hist) {
+        if (hist && hist.length > 1) renderSparklines(hist);
+      })
+      .catch(function() {
+        // Sparklines are optional — fail silently
+      });
+  }
+
+  function renderEventsHome(events) {
+    var container = document.getElementById('events-home-container');
+    if (!events || !events.length) {
+      container.innerHTML = '<div class="events-summary"><div class="no-events-home">✅ No significant plasma events detected in the current data window.</div></div>';
+      return;
+    }
+    var html = '<div class="events-summary">';
+    events.forEach(function(ev) {
+      html += '<div class="ev-summary-card">';
+      html += '  <div class="ev-summary-icon">' + escapeHtml(ev.icon || '❓') + '</div>';
+      html += '  <div style="flex:1">';
+      html += '    <div class="ev-summary-type">' + escapeHtml(ev.type || 'Event') + '</div>';
+      html += '    <div class="ev-summary-desc">' + escapeHtml(ev.explanation || '') + '</div>';
+      if (ev.values) {
+        html += '    <div class="ev-summary-vals">';
+        var keys = Object.keys(ev.values);
+        for (var i = 0; i < keys.length; i++) {
+          html += '<span class="ev-summary-val">' + escapeHtml(keys[i]) + ': ' + escapeHtml(String(ev.values[keys[i]])) + '</span>';
+        }
+        html += '    </div>';
+      }
+      if (ev.confidence != null) {
+        html += '    <div class="ev-conf"><div class="ev-conf-fill" style="width:' + (ev.confidence * 100) + '%"></div></div>';
+        html += '    <div class="ev-conf-text">Confidence: ' + (ev.confidence * 100).toFixed(0) + '%' + (ev.experimental ? ' · experimental' : '') + '</div>';
+      }
+      html += '  </div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  function drawSparkline(canvas, values, color) {
+    var ctx = canvas.getContext('2d');
+    var w = canvas.width = canvas.offsetWidth * 2;
+    var h = canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    var cw = w / 2;
+    var ch = h / 2;
+    var min = values[0], max = values[0];
+    for (var i = 1; i < values.length; i++) {
+      if (values[i] < min) min = values[i];
+      if (values[i] > max) max = values[i];
+    }
+    var range = max - min || 1;
+    var pad = 4;
+    ctx.beginPath();
+    for (var j = 0; j < values.length; j++) {
+      var x = pad + (j / (values.length - 1)) * (cw - pad * 2);
+      var y = ch - pad - ((values[j] - min) / range) * (ch - pad * 2);
+      if (j === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    // Fill area below
+    ctx.lineTo(pad + cw - pad * 2, ch - pad);
+    ctx.lineTo(pad, ch - pad);
+    ctx.closePath();
+    ctx.fillStyle = color.replace(')', ',0.08)').replace('rgb', 'rgba');
+    ctx.fill();
+
+    // End dot
+    var lastX = pad + ((values.length - 1) / (values.length - 1)) * (cw - pad * 2);
+    var lastY = ch - pad - ((values[values.length - 1] - min) / range) * (ch - pad * 2);
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+
+  function renderSparklines(hist) {
+    var container = document.getElementById('sparklines-container');
+    var metrics = [
+      { key: 'density',  label: 'Density (6-month)', color: 'rgb(110,220,170)' },
+      { key: 'velocity', label: 'Velocity (6-month)', color: 'rgb(41,203,232)' },
+      { key: 'B_mag',    label: '|B| (6-month)',      color: 'rgb(255,173,107)' },
+      { key: 'Bz',       label: 'Bz (6-month)',       color: 'rgb(245,146,192)' },
+    ];
+
+    var html = '<div class="spark-row">';
+    metrics.forEach(function(m) {
+      html += '<div class="spark-card">';
+      html += '  <div class="spark-label">' + escapeHtml(m.label) + '</div>';
+      html += '  <canvas class="spark-canvas" data-key="' + m.key + '" data-color="' + m.color + '"></canvas>';
+      html += '</div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+
+    // Draw after DOM update
+    setTimeout(function() {
+      var canvases = container.querySelectorAll('.spark-canvas');
+      canvases.forEach(function(canvas) {
+        var key = canvas.getAttribute('data-key');
+        var color = canvas.getAttribute('data-color');
+        var vals = hist.map(function(r) { return r[key]; }).filter(function(v) { return v != null; });
+        if (vals.length > 1) drawSparkline(canvas, vals, color);
+      });
+    }, 50);
   }
 
   fetchConditions();
