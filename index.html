@@ -363,6 +363,99 @@
             .stats-container { flex-direction: column; gap: 2rem; }
             section { padding: 4rem 1.5rem; }
         }
+
+        /* --- Live Briefing --- */
+        .live-briefing {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-top: -2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .live-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(var(--blur));
+        }
+
+        .briefing-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .briefing-header h3 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .briefing-header h3 i { color: var(--primary); }
+
+        .live-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .cond-item {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+        }
+
+        .cond-label { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .cond-val { font-family: var(--font-mono); font-size: 1.25rem; font-weight: 700; color: var(--primary); }
+        .cond-unit { font-size: 0.8rem; opacity: 0.6; margin-left: 0.2rem; }
+
+        .events-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .ev-home-item {
+            padding: 1rem;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+        }
+
+        .ev-home-ico { font-size: 1.2rem; }
+        .ev-home-type { font-weight: 700; margin-bottom: 0.2rem; }
+        .ev-home-desc { color: var(--text-muted); line-height: 1.4; }
+
+        .spark-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .spark-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .spark-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+        .spark-canvas { width: 100%; height: 40px; }
+
+        @media (max-width: 992px) {
+            .live-briefing { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -402,6 +495,40 @@
                 <span class="val">1.5M</span>
                 <span class="lbl">km from Earth</span>
             </div>
+
+    <section class="reveal" style="padding-top: 0; margin-top: -3rem;">
+        <div class="live-briefing" style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
+            <!-- Current Conditions -->
+            <div class="live-card">
+                <div class="briefing-header">
+                    <h3><i class="fas fa-satellite"></i> Live Conditions</h3>
+                    <span id="last-sync" style="font-size: 0.75rem; color: var(--text-dim); font-family: var(--font-mono);">SYNCING...</span>
+                </div>
+                <div id="conditions-grid" class="live-grid">
+                    <!-- Loaded via JS -->
+                    <div class="cond-item"><div class="cond-label">Density</div><div class="cond-val">—</div></div>
+                    <div class="cond-item"><div class="cond-label">Velocity</div><div class="cond-val">—</div></div>
+                    <div class="cond-item"><div class="cond-label">Temp</div><div class="cond-val">—</div></div>
+                    <div class="cond-item"><div class="cond-label">|B| Mag</div><div class="cond-val">—</div></div>
+                </div>
+                
+                <div id="spark-container" class="spark-row">
+                    <!-- Sparklines loaded via JS -->
+                </div>
+            </div>
+
+            <!-- Events -->
+            <div class="live-card">
+                <div class="briefing-header">
+                    <h3><i class="fas fa-bolt"></i> Recent Events</h3>
+                </div>
+                <div id="events-home" class="events-panel">
+                    <div style="color: var(--text-dim); font-size: 0.9rem; text-align: center; padding: 2rem;">Fetching pipeline events...</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
             <div class="stat-box">
                 <span class="val">5+</span>
                 <span class="lbl">Instruments</span>
@@ -460,6 +587,7 @@
         <p class="copy">&copy; 2024 • Built with Data from ISRO PRADAN Pipeline</p>
     </footer>
 
+    <canvas id="particle-canvas" style="position:fixed; top:0; left:0; z-index:-1; opacity:0.3;"></canvas>
     <script>
         // Scroll Disclosure
         const observerOptions = {
@@ -475,6 +603,146 @@
         }, observerOptions);
 
         document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // --- Live Data Integration ---
+        async function fetchLive() {
+            try {
+                const r = await fetch('data/latest.json?t=' + Date.now());
+                const data = await r.json();
+                const s = data.summary || {};
+                
+                document.getElementById('last-sync').textContent = 'SYNCED ' + new Date().toLocaleTimeString();
+                
+                const grid = document.getElementById('conditions-grid');
+                grid.innerHTML = `
+                    <div class="cond-item">
+                        <div class="cond-label">Density</div>
+                        <div class="cond-val">${s.density_n_cc || '—'}<span class="cond-unit">cm⁻³</span></div>
+                    </div>
+                    <div class="cond-item">
+                        <div class="cond-label">Velocity</div>
+                        <div class="cond-val">${s.velocity_kms || '—'}<span class="cond-unit">km/s</span></div>
+                    </div>
+                    <div class="cond-item">
+                        <div class="cond-label">Temp</div>
+                        <div class="cond-val">${s.temperature_eV || '—'}<span class="cond-unit">eV</span></div>
+                    </div>
+                    <div class="cond-item">
+                        <div class="cond-label">|B| Mag</div>
+                        <div class="cond-val">${s.B_mag_nT || '—'}<span class="cond-unit">nT</span></div>
+                    </div>
+                `;
+
+                const evCont = document.getElementById('events-home');
+                const evs = data.events || [];
+                if (!evs.length) {
+                    evCont.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;">No major solar events detected in recent window.</div>';
+                } else {
+                    evCont.innerHTML = evs.slice(0, 3).map(ev => `
+                        <div class="ev-home-item">
+                            <div class="ev-home-ico">${ev.icon || '🛸'}</div>
+                            <div>
+                                <div class="ev-home-type">${ev.type}</div>
+                                <div class="ev-home-desc">${ev.explanation || ''}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error('Live fetch failed', e);
+            }
+        }
+
+        async function fetchHistory() {
+            try {
+                const r = await fetch('data/history.json?t=' + Date.now());
+                const hist = await r.json();
+                if (!hist.length) return;
+
+                const cont = document.getElementById('spark-container');
+                const metrics = [
+                    { k: 'density', l: '6m Density', c: '#6beec0' },
+                    { k: 'velocity', l: '6m Velocity', c: '#29cbe8' },
+                    { k: 'B_mag', l: '6m |B|', c: '#ffad6b' }
+                ];
+
+                cont.innerHTML = metrics.map(m => `
+                    <div class="spark-card">
+                        <div class="spark-label">${m.l}</div>
+                        <canvas class="spark-canvas" id="spark-${m.k}"></canvas>
+                    </div>
+                `).join('');
+
+                setTimeout(() => {
+                    metrics.forEach(m => {
+                        const cv = document.getElementById('spark-' + m.k);
+                        const vals = hist.map(r => r[m.k]).filter(v => v != null);
+                        drawSpark(cv, vals, m.c);
+                    });
+                }, 100);
+            } catch (e) { console.error('History fetch failed', e); }
+        }
+
+        function drawSpark(canvas, values, color) {
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width = canvas.offsetWidth * 2;
+            const h = canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+            const cw = w / 2;
+            const ch = h / 2;
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            const range = max - min || 1;
+            
+            ctx.beginPath();
+            values.forEach((v, i) => {
+                const x = (i / (values.length - 1)) * cw;
+                const y = ch - ((v - min) / range) * ch;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            
+            ctx.lineTo(cw, ch);
+            ctx.lineTo(0, ch);
+            ctx.closePath();
+            ctx.fillStyle = color + '15';
+            ctx.fill();
+        }
+
+        fetchLive();
+        fetchHistory();
+
+        (function() {
+            const cv = document.getElementById('particle-canvas');
+            const ctx = cv.getContext('2d');
+            let W, H, particles;
+            function resize() { W = cv.width = window.innerWidth; H = cv.height = window.innerHeight; }
+            function init() {
+                particles = Array.from({ length: 40 }, () => ({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.5 + 0.5,
+                    vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2,
+                    alpha: Math.random() * 0.5 + 0.1
+                }));
+            }
+            function draw() {
+                ctx.clearRect(0, 0, W, H);
+                particles.forEach(p => {
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(0, 212, 255, ${p.alpha})`;
+                    ctx.fill();
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0 || p.x > W) p.vx *= -1;
+                    if (p.y < 0 || p.y > H) p.vy *= -1;
+                });
+                requestAnimationFrame(draw);
+            }
+            resize(); init(); draw();
+            window.addEventListener('resize', () => { resize(); init(); });
+        })();
     </script>
 </body>
 </html>
