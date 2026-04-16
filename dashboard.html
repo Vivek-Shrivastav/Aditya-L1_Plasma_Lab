@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script>
 <style>
 /* ─── Design tokens (matches index.html) ─────────────────────────────── */
 :root {
@@ -211,7 +211,7 @@ main{position:relative;z-index:1;padding-top:calc(56px + 38px)}
 .cw-150{height:150px}.cw-180{height:180px}.cw-220{height:220px}.cw-260{height:260px}
 
 /* ─── SPECTROGRAM ─────────────────────────────────────────────────────── */
-canvas.spec{width:100%;display:block;border-radius:4px;image-rendering:pixelated}
+.spec{width:100%;display:block;border-radius:4px}
 .spec-legend{
   display:flex;justify-content:space-between;align-items:center;
   font-family:var(--font-mono);font-size:.63rem;color:var(--text-tertiary);
@@ -331,6 +331,17 @@ canvas.spec{width:100%;display:block;border-radius:4px;image-rendering:pixelated
 }
 @keyframes sp{to{transform:rotate(360deg)}}
 
+/* ─── TOAST ───────────────────────────────────────────────────────────── */
+#toast{
+  position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;
+  background:var(--space-800);border:1px solid var(--red);
+  border-radius:8px;padding:.7rem 1.1rem;
+  font-family:var(--font-mono);font-size:.78rem;color:var(--red);
+  box-shadow:0 8px 24px rgba(0,0,0,.6);opacity:0;
+  transition:opacity .3s;pointer-events:none;max-width:340px;
+}
+#toast.show{opacity:1;pointer-events:auto}
+
 /* ─── RESPONSIVE ──────────────────────────────────────────────────────── */
 @media(max-width:600px){
   .nav-links .hide-sm{display:none}
@@ -342,6 +353,7 @@ canvas.spec{width:100%;display:block;border-radius:4px;image-rendering:pixelated
 <body>
 
 <canvas id="particle-canvas"></canvas>
+<div id="toast"></div>
 
 <!-- ── NAV ────────────────────────────────────────────────────────────── -->
 <nav id="nav">
@@ -382,6 +394,7 @@ canvas.spec{width:100%;display:block;border-radius:4px;image-rendering:pixelated
       <span class="data-badge sim" id="mode-badge">⚙ Simulated</span>
       <span class="regime-tag" id="regime-tag">—</span>
       <span class="last-upd" id="last-upd">—</span>
+      <span class="last-upd" id="last-fetched" style="color:var(--plasma-200)">—</span>
     </div>
     <button class="refresh-btn" id="refresh-btn">↻ Refresh</button>
   </div>
@@ -456,25 +469,25 @@ canvas.spec{width:100%;display:block;border-radius:4px;image-rendering:pixelated
     <div class="panel">
       <div class="panel-title">Proton Density n</div>
       <div class="panel-meta">X: Time [UTC] · Y: n [cm⁻³] · Instrument: SWIS/PAPA · Source: Level-2</div>
-      <div class="cw cw-150"><canvas id="c-n"></canvas></div>
+      <div class="cw cw-150"><div id="c-n"></div></div>
       <div class="panel-note">Jumps ×2+ with simultaneous velocity and field increases = shock. Low density + smooth B rotation = CME flux rope interior.</div>
     </div>
     <div class="panel">
       <div class="panel-title">Solar Wind Bulk Speed V</div>
       <div class="panel-meta">X: Time [UTC] · Y: V [km/s] · Instrument: SWIS · Source: Level-2</div>
-      <div class="cw cw-150"><canvas id="c-v"></canvas></div>
+      <div class="cw cw-150"><div id="c-v"></div></div>
       <div class="panel-note">Below 450 km/s: slow wind (streamer belt). Above 550 km/s: fast wind (coronal hole). CIRs form where fast wind overtakes slow.</div>
     </div>
     <div class="panel">
       <div class="panel-title">Proton Temperature T</div>
       <div class="panel-meta">X: Time [UTC] · Y: T [eV] · Instrument: SWIS/PAPA · 1 eV ≈ 11,600 K</div>
-      <div class="cw cw-150"><canvas id="c-t"></canvas></div>
+      <div class="cw cw-150"><div id="c-t"></div></div>
       <div class="panel-note">Hot fast wind (15–30 eV) vs cold slow wind (3–8 eV). Anomalously cold T for a given speed = CME ejecta signature.</div>
     </div>
     <div class="panel">
       <div class="panel-title">IMF Magnitude |B|</div>
       <div class="panel-meta">X: Time [UTC] · Y: |B| [nT] · Instrument: MAG boom · GSE frame</div>
-      <div class="cw cw-150"><canvas id="c-b"></canvas></div>
+      <div class="cw cw-150"><div id="c-b"></div></div>
       <div class="panel-note">Quiet: 3–8 nT. Sustained enhancement (>15 nT) = CIR compression or CME sheath. Sharp spike = shock front passage.</div>
     </div>
   </div>
@@ -488,7 +501,7 @@ canvas.spec{width:100%;display:block;border-radius:4px;image-rendering:pixelated
       Color: log₁₀ differential flux [particles cm⁻² s⁻¹ sr⁻¹ eV⁻¹] ·
       Instrument: STEPS (6 directional solid-state detectors) · Source: Level-2
     </div>
-    <canvas class="spec" id="spec-main" height="200"></canvas>
+    <div class="spec" id="spec-main" style="height:200px"></div>
     <div class="spec-legend">
       <span>▲ 6 MeV/n</span>
       <span id="spec-time-lbl" style="font-size:.62rem">—</span>
@@ -559,7 +572,7 @@ canvas.spec{width:100%;display:block;border-radius:4px;image-rendering:pixelated
   <div class="panel full-panel">
     <div class="panel-title">B Components — Bx, By, Bz (GSE)</div>
     <div class="panel-meta">X: Time [UTC] · Y: Field [nT] · Purple: Bx (Sun–Earth axis) · Pink: By (dusk–dawn) · Orange: Bz (north–south, critical) · MAG Level-2</div>
-    <div class="cw cw-220"><canvas id="c-bcomps"></canvas></div>
+    <div class="cw cw-220"><div id="c-bcomps"></div></div>
     <div class="panel-note">Smooth rotation of all three components over hours = flux rope/magnetic cloud. Rapid direction change = tangential or rotational discontinuity. Large sustained southward Bz = storm driver.</div>
   </div>
 
@@ -568,13 +581,13 @@ canvas.spec{width:100%;display:block;border-radius:4px;image-rendering:pixelated
     <div class="panel">
       <div class="panel-title">Hodogram — By vs Bz</div>
       <div class="panel-meta">By [nT] vs Bz [nT] · Color: time (purple → yellow = early → late)</div>
-      <div class="cw cw-180"><canvas id="c-hyz"></canvas></div>
+      <div class="cw cw-180"><div id="c-hyz"></div></div>
       <div class="panel-note">Elliptical/circular trajectory = smooth field rotation (flux rope). Random scatter = turbulent field. Elongated = dominant oscillation direction.</div>
     </div>
     <div class="panel">
       <div class="panel-title">Hodogram — Bx vs Bz</div>
       <div class="panel-meta">Bx [nT] vs Bz [nT] · The axis of minimum spread = MVA normal direction</div>
-      <div class="cw cw-180"><canvas id="c-hxz"></canvas></div>
+      <div class="cw cw-180"><div id="c-hxz"></div></div>
       <div class="panel-note">The minimum-variance axis in both hodograms is the boundary normal found by MVA (see table below).</div>
     </div>
   </div>
@@ -605,17 +618,17 @@ canvas.spec{width:100%;display:block;border-radius:4px;image-rendering:pixelated
     <div class="panel">
       <div class="panel-title">Proton Density n</div>
       <div class="panel-meta">X: UTC · Y: n [cm⁻³] · SWIS/PAPA Level-2</div>
-      <div class="cw cw-180"><canvas id="c-n2"></canvas></div>
+      <div class="cw cw-180"><div id="c-n2"></div></div>
     </div>
     <div class="panel">
       <div class="panel-title">Bulk Speed V</div>
       <div class="panel-meta">X: UTC · Y: V [km/s] · SWIS Level-2</div>
-      <div class="cw cw-180"><canvas id="c-v2"></canvas></div>
+      <div class="cw cw-180"><div id="c-v2"></div></div>
     </div>
     <div class="panel">
       <div class="panel-title">Temperature T</div>
       <div class="panel-meta">X: UTC · Y: T [eV] · SWIS/PAPA Level-2</div>
-      <div class="cw cw-180"><canvas id="c-t2"></canvas></div>
+      <div class="cw cw-180"><div id="c-t2"></div></div>
     </div>
   </div>
 
@@ -626,7 +639,7 @@ canvas.spec{width:100%;display:block;border-radius:4px;image-rendering:pixelated
       Y: Particle energy [eV] log scale — 20 keV (bottom) → 6 MeV/n (top) ·
       Color: log₁₀ differential flux [p cm⁻² s⁻¹ sr⁻¹ eV⁻¹] · 6 directional detectors
     </div>
-    <canvas class="spec" id="spec-particles" height="260"></canvas>
+    <div class="spec" id="spec-particles" style="height:260px"></div>
     <div class="spec-legend" style="margin-top:.3rem">
       <span>▲ 6 MeV/n (STEPS high)</span>
       <span id="spec-p-lbl">—</span>
@@ -655,7 +668,7 @@ canvas.spec{width:100%;display:block;border-radius:4px;image-rendering:pixelated
       Orange dashed: Kolmogorov −5/3 (MHD inertial range) · Purple dashed: IK −3/2 ·
       Method: Welch averaged periodogram (Paschmann & Daly SR-001 Ch. 1)
     </div>
-    <div class="cw cw-220"><canvas id="c-psd"></canvas></div>
+    <div class="cw cw-220"><div id="c-psd"></div></div>
     <div class="panel-note" id="psd-note">Kolmogorov −5/3 applies in the MHD inertial range. Below the ion cyclotron frequency the spectrum steepens to −7/3 or −4 (kinetic Alfvén waves). Shallower than −5/3 = energy injection (shock, CME). A spectral break marks the MHD→kinetic transition.</div>
   </div>
 
@@ -669,16 +682,16 @@ canvas.spec{width:100%;display:block;border-radius:4px;image-rendering:pixelated
   <div class="hist-info" id="hist-info">Loading history…</div>
 
   <div class="hist-grid">
-    <div class="panel"><div class="panel-title">Proton Density</div><div class="panel-meta">n [cm⁻³] vs Date/Time UTC</div><div class="cw cw-220"><canvas id="h-n"></canvas></div></div>
-    <div class="panel"><div class="panel-title">Solar Wind Speed</div><div class="panel-meta">V [km/s] vs Date/Time UTC · dashed: 450 km/s fast-wind threshold</div><div class="cw cw-220"><canvas id="h-v"></canvas></div></div>
+    <div class="panel"><div class="panel-title">Proton Density</div><div class="panel-meta">n [cm⁻³] vs Date/Time UTC</div><div class="cw cw-220"><div id="h-n"></div></div></div>
+    <div class="panel"><div class="panel-title">Solar Wind Speed</div><div class="panel-meta">V [km/s] vs Date/Time UTC · dashed: 450 km/s fast-wind threshold</div><div class="cw cw-220"><div id="h-v"></div></div></div>
   </div>
   <div class="hist-grid">
-    <div class="panel"><div class="panel-title">IMF |B|</div><div class="panel-meta">|B| [nT] vs Date/Time UTC</div><div class="cw cw-220"><canvas id="h-b"></canvas></div></div>
-    <div class="panel"><div class="panel-title">IMF Bz</div><div class="panel-meta">Bz [nT] vs Date/Time UTC · southward = geoeffective</div><div class="cw cw-220"><canvas id="h-bz"></canvas></div></div>
+    <div class="panel"><div class="panel-title">IMF |B|</div><div class="panel-meta">|B| [nT] vs Date/Time UTC</div><div class="cw cw-220"><div id="h-b"></div></div></div>
+    <div class="panel"><div class="panel-title">IMF Bz</div><div class="panel-meta">Bz [nT] vs Date/Time UTC · southward = geoeffective</div><div class="cw cw-220"><div id="h-bz"></div></div></div>
   </div>
   <div class="hist-grid">
-    <div class="panel"><div class="panel-title">Plasma β</div><div class="panel-meta">β vs Date/Time UTC · dashed: β = 1 boundary</div><div class="cw cw-220"><canvas id="h-beta"></canvas></div></div>
-    <div class="panel"><div class="panel-title">Alfvén Speed V_A</div><div class="panel-meta">V_A [km/s] vs Date/Time UTC</div><div class="cw cw-220"><canvas id="h-va"></canvas></div></div>
+    <div class="panel"><div class="panel-title">Plasma β</div><div class="panel-meta">β vs Date/Time UTC · dashed: β = 1 boundary</div><div class="cw cw-220"><div id="h-beta"></div></div></div>
+    <div class="panel"><div class="panel-title">Alfvén Speed V_A</div><div class="panel-meta">V_A [km/s] vs Date/Time UTC</div><div class="cw cw-220"><div id="h-va"></div></div></div>
   </div>
 
 </div><!-- /history -->
@@ -697,163 +710,210 @@ canvas.spec{width:100%;display:block;border-radius:4px;image-rendering:pixelated
 
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   Aditya-L1 Live Dashboard
-   Reads data/latest.json (written by GitHub Actions every 6 hours)
-   and data/history.json (rolling 6-month record)
+   Aditya-L1 Live Dashboard  –  Plotly.js edition
+   Reads data/latest.json and data/history.json (written by GitHub Actions)
 ═══════════════════════════════════════════════════════════════════════ */
 
 const LATEST_URL  = 'data/latest.json';
 const HISTORY_URL = 'data/history.json';
 
-// ── Chart defaults ──────────────────────────────────────────────────────
-Chart.defaults.color       = '#4a6a8a';
-Chart.defaults.borderColor = '#112035';
-Chart.defaults.plugins.legend.display = false;
-const FONT = { family: "'IBM Plex Mono','Fira Code',monospace", size: 10 };
+// ── Cached data (for error fallback) ────────────────────────────────────
+let cachedLatest  = null;
+let cachedHistory = null;
 
-// ── Color palette (matches CSS vars) ───────────────────────────────────
+// ── Color palette (matches CSS vars) ────────────────────────────────────
 const C = {
   n:  '#1cba7f', v: '#29cbe8', t: '#ff7a2b', b: '#ffad6b',
   bx: '#8b7cf0', by: '#e84393', bz: '#ff7a2b', bmag: '#ffad6b',
+  beta: '#8b7cf0', va: '#e84393',
 };
 
-// ── Chart factory ───────────────────────────────────────────────────────
-function mkLine(id, color, fill=true) {
-  return new Chart(document.getElementById(id), {
-    type: 'line',
-    data: { labels: [], datasets: [{ data: [], borderColor: color,
-      borderWidth: 1.6, pointRadius: 0, tension: .35, fill,
-      backgroundColor: fill ? color + '14' : false }] },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      animation: { duration: 350 },
-      scales: {
-        x: { ticks: { font: FONT, maxTicksLimit: 6, maxRotation: 0 },
-             grid: { color: '#11203530' } },
-        y: { ticks: { font: FONT }, grid: { color: '#11203530' } },
-      },
-    },
-  });
-}
-
-function mkScatter(id) {
-  return new Chart(document.getElementById(id), {
-    type: 'scatter',
-    data: { datasets: [{ data: [], pointRadius: 1.8,
-      pointBackgroundColor: ctx => {
-        const i = ctx.dataIndex, n = ctx.dataset.data.length, t = i / n;
-        return `hsl(${260 + t * 80}, 70%, ${48 + t * 22}%)`;
-      }}] },
-    options: {
-      responsive: true, maintainAspectRatio: false, animation: false,
-      scales: {
-        x: { ticks: { font: FONT }, grid: { color: '#11203530' },
-             title: { display: true, text: 'nT', color: '#4a6a8a', font: FONT } },
-        y: { ticks: { font: FONT }, grid: { color: '#11203530' },
-             title: { display: true, text: 'nT', color: '#4a6a8a', font: FONT } },
-      },
-    },
-  });
-}
-
-// ── Instantiate all charts ──────────────────────────────────────────────
-const charts = {
-  n:  mkLine('c-n',  C.n),
-  v:  mkLine('c-v',  C.v),
-  t:  mkLine('c-t',  C.t),
-  b:  mkLine('c-b',  C.b),
-  n2: mkLine('c-n2', C.n),
-  v2: mkLine('c-v2', C.v),
-  t2: mkLine('c-t2', C.t),
-  hyz: mkScatter('c-hyz'),
-  hxz: mkScatter('c-hxz'),
-  bcomps: new Chart(document.getElementById('c-bcomps'), {
-    type: 'line',
-    data: { labels: [], datasets: [
-      { label: 'Bx', data: [], borderColor: C.bx, borderWidth: 1.2, pointRadius: 0, tension: .3 },
-      { label: 'By', data: [], borderColor: C.by, borderWidth: 1.2, pointRadius: 0, tension: .3 },
-      { label: 'Bz (critical)', data: [], borderColor: C.bz, borderWidth: 1.8, pointRadius: 0, tension: .3 },
-    ]},
-    options: {
-      responsive: true, maintainAspectRatio: false, animation: { duration: 350 },
-      plugins: { legend: { display: true, labels: { font: FONT, boxWidth: 10, color: '#8aaed8' } } },
-      scales: {
-        x: { ticks: { font: FONT, maxTicksLimit: 7 }, grid: { color: '#11203530' } },
-        y: { ticks: { font: FONT }, grid: { color: '#11203530' },
-             title: { display: true, text: 'B [nT]', color: '#4a6a8a', font: FONT } },
-      },
-    },
-  }),
-  psd: new Chart(document.getElementById('c-psd'), {
-    type: 'scatter',
-    data: { datasets: [
-      { label: 'Measured PSD', data: [], borderColor: C.v, showLine: true, borderWidth: 1.5, pointRadius: 0, tension: .3 },
-      { label: 'Kolmogorov −5/3', data: [], borderColor: '#ffad6b', showLine: true, borderWidth: 1, pointRadius: 0, borderDash: [5, 3] },
-      { label: 'IK −3/2',         data: [], borderColor: '#8b7cf0', showLine: true, borderWidth: 1, pointRadius: 0, borderDash: [3, 3] },
-    ]},
-    options: {
-      responsive: true, maintainAspectRatio: false, animation: false,
-      plugins: { legend: { display: true, labels: { font: FONT, boxWidth: 10, color: '#8aaed8' } } },
-      scales: {
-        x: { type: 'logarithmic', ticks: { font: FONT }, grid: { color: '#11203530' },
-             title: { display: true, text: 'f [Hz]', color: '#4a6a8a', font: FONT } },
-        y: { type: 'logarithmic', ticks: { font: FONT }, grid: { color: '#11203530' },
-             title: { display: true, text: 'PSD [(nT)² Hz⁻¹]', color: '#4a6a8a', font: FONT } },
-      },
-    },
-  }),
-  // History
-  hn:    mkLine('h-n',    C.n,    false),
-  hv:    mkLine('h-v',    C.v,    false),
-  hb:    mkLine('h-b',    C.b,    false),
-  hbz:   mkLine('h-bz',   C.bz,   false),
-  hbeta: mkLine('h-beta', '#8b7cf0', false),
-  hva:   mkLine('h-va',   '#e84393', false),
+// ── Plotly base layout (dark theme) ─────────────────────────────────────
+const BASE_LAYOUT = {
+  paper_bgcolor: 'rgba(0,0,0,0)',
+  plot_bgcolor:  'rgba(4,8,15,0.5)',
+  font: { family: "'IBM Plex Mono', monospace", color: '#8aaed8', size: 11 },
+  margin: { t: 10, r: 10, b: 40, l: 50 },
+  xaxis: { gridcolor: '#112035', zerolinecolor: '#1e3558', color: '#4a6a8a' },
+  yaxis: { gridcolor: '#112035', zerolinecolor: '#1e3558', color: '#4a6a8a' },
 };
 
-// ── Spectrogram (plasma colormap) ───────────────────────────────────────
-const PLASMA_CM = [
-  [13,8,135],[84,2,163],[139,10,165],[185,50,137],
-  [219,92,104],[244,136,73],[254,188,43],[240,249,33]
+const PLOTLY_CFG = {
+  responsive: true,
+  displayModeBar: true,
+  modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+  displaylogo: false,
+};
+
+// ── Chart IDs for resize ─────────────────────────────────────────────────
+const CHART_IDS = [
+  'c-n','c-v','c-t','c-b',
+  'c-n2','c-v2','c-t2',
+  'c-bcomps','c-hyz','c-hxz',
+  'c-psd','spec-main','spec-particles',
+  'h-n','h-v','h-b','h-bz','h-beta','h-va',
 ];
-function lerpColor(norm) {
-  const i = Math.min(Math.floor(norm * (PLASMA_CM.length - 1)), PLASMA_CM.length - 2);
-  const t = norm * (PLASMA_CM.length - 1) - i;
-  return PLASMA_CM[i].map((c, j) => Math.round(c + t * (PLASMA_CM[i+1][j] - c)));
-}
-function drawSpec(canvasId, data) {
-  const cv = document.getElementById(canvasId);
-  if (!cv || !data?.flux?.length) return;
-  const flux = data.flux, nT = flux.length, nE = flux[0].length;
-  cv.width = nT; cv.height = nE;
-  const ctx = cv.getContext('2d'), img = ctx.createImageData(nT, nE);
-  let lo = Infinity, hi = -Infinity;
-  for (let t = 0; t < nT; t++)
-    for (let e = 0; e < nE; e++) {
-      const v = Math.log10(Math.max(flux[t][e], 1e-30));
-      if (v < lo) lo = v; if (v > hi) hi = v;
-    }
-  for (let t = 0; t < nT; t++)
-    for (let e = 0; e < nE; e++) {
-      const v = Math.log10(Math.max(flux[t][e], 1e-30));
-      const norm = Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
-      const [r, g, b] = lerpColor(norm);
-      const idx = ((nE - 1 - e) * nT + t) * 4;
-      img.data[idx] = r; img.data[idx+1] = g; img.data[idx+2] = b; img.data[idx+3] = 255;
-    }
-  ctx.putImageData(img, 0, 0);
+
+// ── Toast ────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = '⚠ ' + msg;
+  el.classList.add('show');
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => el.classList.remove('show'), 5000);
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
-function setLine(chart, times, vals) {
-  chart.data.labels = times.map(t => t.slice(11, 16)); // HH:MM
-  chart.data.datasets[0].data = vals;
-  chart.update('none');
-}
 function txt(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
 function fmtT(t) {
   try { return new Date(t).toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC'); }
   catch { return t || '—'; }
+}
+
+// ── Plotly chart helpers ─────────────────────────────────────────────────
+function plotLine(id, times, vals, color, yLabel, extraLayout) {
+  const trace = {
+    x: times, y: vals,
+    type: 'scatter', mode: 'lines',
+    line: { color, width: 1.6 },
+    fill: 'tozeroy', fillcolor: color + '18',
+    hovertemplate: '%{x|%H:%M}<br>%{y:.3g}<extra></extra>',
+  };
+  const layout = Object.assign({}, BASE_LAYOUT, {
+    xaxis: Object.assign({}, BASE_LAYOUT.xaxis),
+    yaxis: Object.assign({}, BASE_LAYOUT.yaxis, { title: { text: yLabel, standoff: 4 } }),
+  }, extraLayout || {});
+  Plotly.newPlot(id, [trace], layout, PLOTLY_CFG);
+}
+
+function plotMultiLine(id, traces, yLabel) {
+  const layout = Object.assign({}, BASE_LAYOUT, {
+    showlegend: true,
+    legend: { font: { family: "'IBM Plex Mono', monospace", color: '#8aaed8', size: 10 },
+              bgcolor: 'rgba(0,0,0,0)', orientation: 'h', y: 1.08 },
+    margin: { t: 28, r: 10, b: 40, l: 50 },
+    xaxis: Object.assign({}, BASE_LAYOUT.xaxis),
+    yaxis: Object.assign({}, BASE_LAYOUT.yaxis, { title: { text: yLabel, standoff: 4 } }),
+  });
+  Plotly.newPlot(id, traces, layout, PLOTLY_CFG);
+}
+
+function plotHodogram(id, xVals, yVals, xTitle, yTitle) {
+  const n = xVals.length;
+  const colors = xVals.map((_, i) => `hsl(${260 + (i / n) * 80}, 70%, ${48 + (i / n) * 22}%)`);
+  const trace = {
+    x: xVals, y: yVals,
+    type: 'scatter', mode: 'markers',
+    marker: { color: colors, size: 3, opacity: 0.85 },
+    hovertemplate: 'x=%{x:.2f} nT<br>y=%{y:.2f} nT<extra></extra>',
+  };
+  const layout = Object.assign({}, BASE_LAYOUT, {
+    xaxis: Object.assign({}, BASE_LAYOUT.xaxis, { title: { text: xTitle } }),
+    yaxis: Object.assign({}, BASE_LAYOUT.yaxis, { title: { text: yTitle } }),
+  });
+  Plotly.newPlot(id, [trace], layout, PLOTLY_CFG);
+}
+
+function plotSpectrogram(id, steps) {
+  if (!steps?.flux?.length) return;
+  const flux    = steps.flux;          // [nT][nE]
+  const nT      = flux.length;
+  const nE      = flux[0].length;
+  const times   = steps.times || Array.from({ length: nT }, (_, i) => i);
+  const energies = steps.energies_eV || Array.from({ length: nE }, (_, i) => i);
+
+  // Build z[e][t] = log10(flux[t][e])
+  const z = [];
+  for (let e = 0; e < nE; e++) {
+    z.push(flux.map(row => Math.log10(Math.max(row[e] || 0, 1e-30))));
+  }
+
+  const trace = {
+    x: times,
+    y: energies,
+    z,
+    type: 'heatmap',
+    colorscale: 'Plasma',
+    showscale: true,
+    colorbar: {
+      title: { text: 'log₁₀ flux', side: 'right', font: { size: 9 } },
+      tickfont: { size: 9 },
+      len: 0.85,
+    },
+    hovertemplate: 'Time: %{x}<br>Energy: %{y:.0f} eV<br>log flux: %{z:.2f}<extra></extra>',
+  };
+
+  const layout = Object.assign({}, BASE_LAYOUT, {
+    margin: { t: 10, r: 70, b: 50, l: 60 },
+    xaxis: Object.assign({}, BASE_LAYOUT.xaxis, { title: { text: 'Time [UTC]' } }),
+    yaxis: Object.assign({}, BASE_LAYOUT.yaxis, {
+      type: 'log', title: { text: 'Energy [eV]' },
+      autorange: true,
+    }),
+  });
+  Plotly.newPlot(id, [trace], layout, PLOTLY_CFG);
+}
+
+function plotPSD(id, freqs, psd, interpretation) {
+  if (!freqs?.length) return;
+  const f0 = freqs[0], p0 = psd[0];
+  const traces = [
+    {
+      x: freqs, y: psd,
+      type: 'scatter', mode: 'lines', name: 'Measured PSD',
+      line: { color: C.v, width: 1.5 },
+      hovertemplate: 'f=%{x:.3e} Hz<br>PSD=%{y:.3e}<extra></extra>',
+    },
+    {
+      x: freqs, y: freqs.map(v => p0 * Math.pow(v / f0, -5/3)),
+      type: 'scatter', mode: 'lines', name: 'Kolmogorov −5/3',
+      line: { color: '#ffad6b', width: 1, dash: 'dash' },
+      hoverinfo: 'skip',
+    },
+    {
+      x: freqs, y: freqs.map(v => p0 * Math.pow(v / f0, -3/2)),
+      type: 'scatter', mode: 'lines', name: 'IK −3/2',
+      line: { color: '#8b7cf0', width: 1, dash: 'dot' },
+      hoverinfo: 'skip',
+    },
+  ];
+  const layout = Object.assign({}, BASE_LAYOUT, {
+    showlegend: true,
+    legend: { font: { family: "'IBM Plex Mono', monospace", color: '#8aaed8', size: 10 },
+              bgcolor: 'rgba(0,0,0,0)', orientation: 'h', y: 1.08 },
+    margin: { t: 28, r: 10, b: 50, l: 60 },
+    xaxis: Object.assign({}, BASE_LAYOUT.xaxis, { type: 'log', title: { text: 'f [Hz]' } }),
+    yaxis: Object.assign({}, BASE_LAYOUT.yaxis, { type: 'log', title: { text: 'PSD [(nT)² Hz⁻¹]' } }),
+  });
+  Plotly.newPlot(id, traces, layout, PLOTLY_CFG);
+  if (interpretation) txt('psd-note', interpretation + ' (Paschmann & Daly SR-001 Ch. 1)');
+}
+
+function plotHistoryLine(id, times, vals, color, yLabel, refLine) {
+  const traces = [{
+    x: times, y: vals,
+    type: 'scatter', mode: 'lines',
+    line: { color, width: 1.4 },
+    hovertemplate: '%{x|%Y-%m-%d %H:%M}<br>%{y:.3g}<extra></extra>',
+  }];
+  if (refLine != null) {
+    traces.push({
+      x: [times[0], times[times.length - 1]],
+      y: [refLine, refLine],
+      type: 'scatter', mode: 'lines',
+      line: { color: '#4a6a8a', width: 1, dash: 'dash' },
+      hoverinfo: 'skip', showlegend: false,
+    });
+  }
+  const layout = Object.assign({}, BASE_LAYOUT, {
+    margin: { t: 10, r: 10, b: 60, l: 50 },
+    xaxis: Object.assign({}, BASE_LAYOUT.xaxis, {
+      type: 'date',
+      rangeslider: { visible: true, thickness: 0.06, bgcolor: 'rgba(4,8,15,0.5)' },
+    }),
+    yaxis: Object.assign({}, BASE_LAYOUT.yaxis, { title: { text: yLabel, standoff: 4 } }),
+  });
+  Plotly.newPlot(id, traces, layout, PLOTLY_CFG);
 }
 
 // ── Main render ───────────────────────────────────────────────────────────
@@ -885,8 +945,8 @@ function render(d) {
     : '● PRADAN / ISSDC — Level-2 data';
   srcEl.className = sim ? 'ts-val ts-source-sim' : 'ts-val ts-source-live';
 
-  txt('mag-ts',   times[0] ? fmtT(times[0]) + ' → ' + fmtT(times[times.length-1]) : '—');
-  txt('part-ts',  times[0] ? fmtT(times[0]) : fmtT(run_time));
+  txt('mag-ts',  times[0] ? fmtT(times[0]) + ' → ' + fmtT(times[times.length-1]) : '—');
+  txt('part-ts', times[0] ? fmtT(times[0]) : fmtT(run_time));
 
   // ── Metric cards ────────────────────────────────────────────────────────
   txt('m-n',    sc.density_cm3);
@@ -909,33 +969,37 @@ function render(d) {
 
   // ── Time-series charts ─────────────────────────────────────────────────
   if (mom) {
-    setLine(charts.n,  mom.times, mom.density);
-    setLine(charts.v,  mom.times, mom.velocity);
-    setLine(charts.t,  mom.times, mom.temperature);
-    setLine(charts.n2, mom.times, mom.density);
-    setLine(charts.v2, mom.times, mom.velocity);
-    setLine(charts.t2, mom.times, mom.temperature);
+    plotLine('c-n',  mom.times, mom.density,     C.n,  'n [cm⁻³]');
+    plotLine('c-v',  mom.times, mom.velocity,    C.v,  'V [km/s]');
+    plotLine('c-t',  mom.times, mom.temperature, C.t,  'T [eV]');
+    plotLine('c-n2', mom.times, mom.density,     C.n,  'n [cm⁻³]');
+    plotLine('c-v2', mom.times, mom.velocity,    C.v,  'V [km/s]');
+    plotLine('c-t2', mom.times, mom.temperature, C.t,  'T [eV]');
   }
 
   // ── MAG charts ──────────────────────────────────────────────────────────
   if (mag) {
-    setLine(charts.b, mag.times, mag.B_mag);
+    plotLine('c-b', mag.times, mag.B_mag, C.b, '|B| [nT]');
 
-    const lbl = mag.times.map(t => t.slice(11, 16));
-    charts.bcomps.data.labels = lbl;
-    charts.bcomps.data.datasets[0].data = mag.Bx;
-    charts.bcomps.data.datasets[1].data = mag.By;
-    charts.bcomps.data.datasets[2].data = mag.Bz;
-    charts.bcomps.update('none');
+    // B components
+    plotMultiLine('c-bcomps', [
+      { x: mag.times, y: mag.Bx, type: 'scatter', mode: 'lines',
+        name: 'Bx', line: { color: C.bx, width: 1.2 },
+        hovertemplate: '%{x|%H:%M}<br>Bx=%{y:.2f} nT<extra></extra>' },
+      { x: mag.times, y: mag.By, type: 'scatter', mode: 'lines',
+        name: 'By', line: { color: C.by, width: 1.2 },
+        hovertemplate: '%{x|%H:%M}<br>By=%{y:.2f} nT<extra></extra>' },
+      { x: mag.times, y: mag.Bz, type: 'scatter', mode: 'lines',
+        name: 'Bz (critical)', line: { color: C.bz, width: 1.8 },
+        hovertemplate: '%{x|%H:%M}<br>Bz=%{y:.2f} nT<extra></extra>' },
+    ], 'B [nT]');
 
     // Hodograms
-    charts.hyz.data.datasets[0].data = mag.By.map((v, i) => ({ x: v, y: mag.Bz[i] }));
-    charts.hyz.update('none');
-    charts.hxz.data.datasets[0].data = mag.Bx.map((v, i) => ({ x: v, y: mag.Bz[i] }));
-    charts.hxz.update('none');
+    plotHodogram('c-hyz', mag.By, mag.Bz, 'By [nT]', 'Bz [nT]');
+    plotHodogram('c-hxz', mag.Bx, mag.Bz, 'Bx [nT]', 'Bz [nT]');
 
     // Bz gauge
-    const bz = sc.Bz_nT;
+    const bz  = sc.Bz_nT;
     const col = bz_status?.color || '#4a6a8a';
     const bzEl = document.getElementById('bz-big');
     bzEl.textContent = (bz > 0 ? '+' : '') + bz;
@@ -984,8 +1048,8 @@ function render(d) {
 
   // ── Spectrograms ────────────────────────────────────────────────────────
   if (steps) {
-    drawSpec('spec-main', steps);
-    drawSpec('spec-particles', steps);
+    plotSpectrogram('spec-main',      steps);
+    plotSpectrogram('spec-particles', steps);
     const tl = steps.times
       ? steps.times[0]?.slice(0, 10) + ' → ' + steps.times.at(-1)?.slice(0, 10)
       : '—';
@@ -995,29 +1059,23 @@ function render(d) {
 
   // ── PSD chart ───────────────────────────────────────────────────────────
   if (psd?.valid) {
-    const f = psd.freqs, p = psd.psd;
-    const f0 = f[0], p0 = p[0];
-    charts.psd.data.datasets[0].data = f.map((v, i) => ({ x: v, y: p[i] }));
-    charts.psd.data.datasets[1].data = f.map(v => ({ x: v, y: p0 * Math.pow(v / f0, -5/3) }));
-    charts.psd.data.datasets[2].data = f.map(v => ({ x: v, y: p0 * Math.pow(v / f0, -3/2) }));
-    charts.psd.update('none');
-    if (psd.interpretation) txt('psd-note', psd.interpretation + ' (Paschmann & Daly SR-001 Ch. 1)');
+    plotPSD('c-psd', psd.freqs, psd.psd, psd.interpretation);
   }
 
   // ── Derived physics grid ────────────────────────────────────────────────
   if (der) {
     const ex = der.explanations || {};
     const items = [
-      { n: 'Plasma β',             v: der.plasma_beta,       e: ex.beta },
-      { n: 'Alfvén speed V_A',     v: der.alfven_speed_kms  + ' km/s', e: ex.alfven },
-      { n: 'Sound speed V_s',      v: der.sound_speed_kms   + ' km/s', e: 'Isothermal: √(k_BT/m_p)' },
-      { n: 'Magnetosonic V_ms',    v: der.magnetosonic_kms  + ' km/s', e: '√(V_A²+V_s²) — compressional speed' },
-      { n: 'Alfvénic Mach M_A',    v: der.alfvenic_mach,    e: ex.mach_a },
-      { n: 'Sonic Mach M_s',       v: der.sonic_mach,       e: ex.mach_s },
-      { n: 'Thermal pressure',     v: der.P_thermal_nPa   + ' nPa', e: 'P_th = nk_BT' },
-      { n: 'Magnetic pressure',    v: der.P_magnetic_nPa  + ' nPa', e: 'P_B = B²/(2μ₀)' },
-      { n: 'Proton gyroperiod',    v: der.gyroperiod_s    + ' s',   e: 'T_g = 2πm_p/(eB)' },
-      { n: 'Ion inertial length',  v: der.ion_inertial_km + ' km',  e: 'c/ω_pi — kinetic scale below which ions decouple from B' },
+      { n: 'Plasma β',             v: der.plasma_beta,                    e: ex.beta },
+      { n: 'Alfvén speed V_A',     v: der.alfven_speed_kms  + ' km/s',    e: ex.alfven },
+      { n: 'Sound speed V_s',      v: der.sound_speed_kms   + ' km/s',    e: 'Isothermal: √(k_BT/m_p)' },
+      { n: 'Magnetosonic V_ms',    v: der.magnetosonic_kms  + ' km/s',    e: '√(V_A²+V_s²) — compressional speed' },
+      { n: 'Alfvénic Mach M_A',    v: der.alfvenic_mach,                  e: ex.mach_a },
+      { n: 'Sonic Mach M_s',       v: der.sonic_mach,                     e: ex.mach_s },
+      { n: 'Thermal pressure',     v: der.P_thermal_nPa   + ' nPa',       e: 'P_th = nk_BT' },
+      { n: 'Magnetic pressure',    v: der.P_magnetic_nPa  + ' nPa',       e: 'P_B = B²/(2μ₀)' },
+      { n: 'Proton gyroperiod',    v: der.gyroperiod_s    + ' s',         e: 'T_g = 2πm_p/(eB)' },
+      { n: 'Ion inertial length',  v: der.ion_inertial_km + ' km',        e: 'c/ω_pi — kinetic scale below which ions decouple from B' },
     ];
     document.getElementById('der-grid').innerHTML = items.map(it => `
       <div class="der-item">
@@ -1063,25 +1121,33 @@ function renderHistory(hist) {
     return;
   }
   info.textContent = `${hist.length} records · ${hist[0].time.slice(0, 10)} → ${hist.at(-1).time.slice(0, 10)} · auto-updates every 6h`;
-  const times = hist.map(r => r.time.slice(5, 16));
-  const u = (c, k) => { c.data.labels = times; c.data.datasets[0].data = hist.map(r => r[k]); c.update('none'); };
-  u(charts.hn, 'density'); u(charts.hv, 'velocity');
-  u(charts.hb, 'B_mag');   u(charts.hbz, 'Bz');
-  u(charts.hbeta, 'beta'); u(charts.hva, 'va_kms');
+
+  const times = hist.map(r => r.time);
+  plotHistoryLine('h-n',    times, hist.map(r => r.density),   C.n,    'n [cm⁻³]');
+  plotHistoryLine('h-v',    times, hist.map(r => r.velocity),  C.v,    'V [km/s]',  450);
+  plotHistoryLine('h-b',    times, hist.map(r => r.B_mag),     C.b,    '|B| [nT]');
+  plotHistoryLine('h-bz',   times, hist.map(r => r.Bz),        C.bz,   'Bz [nT]',   0);
+  plotHistoryLine('h-beta', times, hist.map(r => r.beta),      C.beta, 'β',          1);
+  plotHistoryLine('h-va',   times, hist.map(r => r.va_kms),    C.va,   'V_A [km/s]');
 }
 
 // ── Fetch ─────────────────────────────────────────────────────────────────
 async function loadLatest() {
   const dot = document.getElementById('nav-dot');
-  dot.className = 'nav-dot sim'; // yellow while loading
+  dot.className = 'nav-dot sim';
   txt('status-text', '\u00a0');
   try {
     const r = await fetch(LATEST_URL + '?t=' + Date.now());
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    render(await r.json());
+    const data = await r.json();
+    cachedLatest = data;
+    render(data);
+    txt('last-fetched', '📡 ' + new Date().toLocaleTimeString());
   } catch (e) {
     dot.className = 'nav-dot err';
     txt('status-text', 'Error: ' + e.message);
+    showToast('Could not fetch latest.json: ' + e.message + '. Displaying cached data.');
+    if (cachedLatest) render(cachedLatest);
     console.error(e);
   }
 }
@@ -1089,9 +1155,15 @@ async function loadLatest() {
 let histLoaded = false;
 async function loadHistory() {
   try {
-    renderHistory(await (await fetch(HISTORY_URL + '?t=' + Date.now())).json());
+    const r = await fetch(HISTORY_URL + '?t=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    cachedHistory = data;
+    renderHistory(data);
   } catch (e) {
     txt('hist-info', 'History unavailable: ' + e.message);
+    showToast('Could not fetch history.json: ' + e.message);
+    if (cachedHistory) renderHistory(cachedHistory);
   }
 }
 
@@ -1100,12 +1172,34 @@ function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'pg-' + name));
   if (name === 'history' && !histLoaded) { loadHistory(); histLoaded = true; }
+  // Resize Plotly charts when tab becomes visible
+  setTimeout(() => {
+    CHART_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.data) Plotly.Plots.resize(el);
+    });
+  }, 50);
 }
 document.querySelectorAll('.tab').forEach(t =>
   t.addEventListener('click', () => switchTab(t.dataset.tab))
 );
 
-document.getElementById('refresh-btn').addEventListener('click', loadLatest);
+document.getElementById('refresh-btn').addEventListener('click', async () => {
+  await loadLatest();
+  if (histLoaded) await loadHistory();
+});
+
+// ── Debounced resize ──────────────────────────────────────────────────────
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    CHART_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.data) Plotly.Plots.resize(el);
+    });
+  }, 200);
+});
 
 // ── Particle canvas (same as index.html) ──────────────────────────────────
 (function() {
