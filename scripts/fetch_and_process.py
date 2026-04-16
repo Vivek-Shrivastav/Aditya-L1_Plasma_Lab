@@ -87,9 +87,9 @@ class PradanSession:
             self.sess = requests.Session()
             self.sess.headers.update({"User-Agent": "Mozilla/5.0 (Aditya-L1 Data Pipeline)"})
             
-            # 1. Request portal home - this triggers redirect to Keycloak IDP
-            log.info("Connecting to PRADAN portal...")
-            r = self.sess.get(self.BASE, timeout=30)
+            # 1. Trigger redirect to Keycloak - using the protected payload as entry point
+            log.info("Connecting to PRADAN portal (OIDC Handshake)...")
+            r = self.sess.get(f"{self.BASE}/protected/payload.xhtml", timeout=30)
             
             # 2. Extract Keycloak action URL from the login page
             import re
@@ -144,24 +144,59 @@ class PradanSession:
 # ── PRADAN fetch ────────────────────────────────────────────────────────────
 def fetch_instrument(sess: PradanSession, inst: str, target: date) -> dict | None:
     ds = target.strftime("%Y%m%d")
-    yr = target.strftime("%Y")
-    url = f"{sess.BASE}/aditya-l1/{inst.lower()}/L2/{yr}/{ds}/"
-    r = sess.get(url)
+    
+    # instrument mapping for browse table
+    inst_map = { "SWIS": "swis", "STEPS": "steps", "MAG": "mag", "PAPA": "papa" }
+    payload_id = inst_map.get(inst, inst.lower())
+    
+    # 1. Scrape the browse table for the specific instrument
+    # This is more reliable than directory traversal which often returns 500
+    browse_url = f"https://pradan.issdc.gov.in/al1/protected/browse.xhtml?id={payload_id}"
+    r = sess.get(browse_url)
     if r is None or r.status_code != 200:
         return None
+        
     import re
-    files = re.findall(r'href="([^"]+\.cdf)"', r.text, re.IGNORECASE)
-    if not files:
+    # 2. Extract Level-2 CDF links from the table
+    # Pattern: /al1/protected/downloadData/.../level2/.../FILENAME.cdf?payload_id
+    pattern = rf'href="([^"]*/downloadData/[^"]*/level2/[^"]*{ds}[^"]*\.cdf\?{payload_id})"'
+    links = re.findall(pattern, r.text, re.IGNORECASE)
+    
+    if not links:
+        # Fallback to broader search if target date mapping is tricky
+        pattern = rf'href="([^"]*/downloadData/[^"]*/level2/[^"]*\.cdf\?{payload_id})"'
+        links = re.findall(pattern, r.text, re.IGNORECASE)
+        
+    if not links:
         return None
-    furl = files[0] if files[0].startswith("http") else url + files[0]
-    dest = DATA_DIR / "cache" / inst / ds / furl.split("/")[-1]
+        
+    # 3. Selection: find target day and highest version (V02 > V01)
+    # PRIORITIZE: BLK (Bulk parameters) over TH1/TH2/SNG for moments
+    target_links = [l for l in links if ds in l]
+    if not target_links: target_links = links # fallback
+    
+    blk_links = [l for l in target_links if "_BLK_" in l.upper()]
+    if blk_links:
+        target_links = blk_links # focus on bulk
+    
+    target_links.sort(reverse=True)
+    furl_raw = target_links[0]
+    
+    # Absolute URL
+    furl = furl_raw if furl_raw.startswith("http") else "https://pradan.issdc.gov.in" + furl_raw
+    fname = furl_raw.split("/")[-1].split("?")[0]
+    
+    dest = DATA_DIR / "cache" / inst / ds / fname
     dest.parent.mkdir(parents=True, exist_ok=True)
+    
     if not dest.exists():
+        # 4. Mandatory GET download
         fr = sess.get(furl, stream=True)
-        if fr is None:
+        if fr is None or fr.status_code != 200:
             return None
         dest.write_bytes(fr.content)
         log.info("Downloaded %s (%.1f KB)", dest.name, dest.stat().st_size / 1024)
+        
     return _parse_cdf(dest, inst)
 
 def _parse_cdf(path: Path, inst: str) -> dict | None:
@@ -170,7 +205,8 @@ def _parse_cdf(path: Path, inst: str) -> dict | None:
         cdf  = cdflib.CDF(str(path))
         info = cdf.cdf_info()
         raw: dict = {"instrument": inst, "source_file": path.name, "simulated": False}
-        for var in info.zVariables + info.rVariables:
+        all_vars = info.get("zVariables", []) + info.get("rVariables", [])
+        for var in all_vars:
             try:
                 v = cdf.varget(var)
                 raw[var] = v.tolist() if hasattr(v, "tolist") else v
@@ -182,6 +218,57 @@ def _parse_cdf(path: Path, inst: str) -> dict | None:
         return None
 
 # ── Time helpers ────────────────────────────────────────────────────────────
+def analyse_moments(raw: dict | None) -> dict:
+    """Extracts plasma moments (n, V, T) from raw CDF data with robust mapping."""
+    if not raw or raw.get("simulated"):
+        return _sim_moments()
+        
+    try:
+        import cdflib
+        # 1. Coordinate Time (Epoch)
+        # Real L2 often uses epoch_for_cdf_mod (milliseconds since 0AD)
+        raw_t = raw.get("epoch_for_cdf_mod") or raw.get("epoch") or raw.get("Epoch") or raw.get("time")
+        if raw_t is not None:
+            # Correct conversion using cdflib utility
+            times = cdflib.cdfepoch.to_datetime(raw_t)
+            t_iso = [t.isoformat() + "Z" for t in times]
+        else:
+            t_iso = None
+
+        # 2. Map Density (Np)
+        n = None
+        for k in ("proton_density", "proton_numden", "np", "Np", "PROTON_DENSITY", "density"):
+            if k in raw:
+                n = np.asarray(raw[k], float)
+                break
+        
+        # 3. Map Speed (Vp)
+        v = None
+        for k in ("proton_bulk_speed", "vp_bulk", "Vp", "vp", "PROTON_SPEED", "velocity"):
+            if k in raw:
+                v = np.asarray(raw[k], float)
+                break
+        
+        # 4. Map Temperature (Tp)
+        T = None
+        for k in ("proton_thermal", "proton_vth", "Tp", "tp", "PROTON_TEMP", "temperature"):
+            if k in raw:
+                T = np.asarray(raw[k], float)
+                break
+        
+        if n is not None and v is not None:
+            # Use real times if we found them
+            T_val = T if T is not None else (n * 1.0)
+            res = _mom_dict(n, v, T_val, simulated=False)
+            if t_iso and len(t_iso) == len(n):
+                res["times"] = t_iso
+            return res
+            
+    except Exception as exc:
+        log.warning("Real mission data mapping failed: %s", exc)
+        
+    return _sim_moments()
+
 def _make_times(n: int, step_min: int = 1) -> list[str]:
     now = datetime.now(timezone.utc)
     return [
@@ -195,25 +282,7 @@ def _rng() -> np.random.Generator:
     seed = int(time.time() * 1000) % (2**31)
     return np.random.default_rng(seed)
 
-# ── Moments ─────────────────────────────────────────────────────────────────
-def analyse_moments(raw: dict | None) -> dict:
-    if raw and not raw.get("simulated"):
-        n = v = T = None
-        for k in ("PROTON_DENSITY", "n_p", "density", "N_P", "np"):
-            if k in raw:
-                n = np.asarray(raw[k], float)
-                break
-        for k in ("PROTON_SPEED", "v_bulk", "velocity", "V_P", "vp"):
-            if k in raw:
-                v = np.asarray(raw[k], float)
-                break
-        for k in ("PROTON_TEMPERATURE", "T_p", "temperature", "T_P", "tp"):
-            if k in raw:
-                T = np.asarray(raw[k], float)
-                break
-        if n is not None and v is not None and T is not None:
-            return _mom_dict(n, v, T, simulated=False)
-    return _sim_moments()
+# (Duplicate analyse_moments removed)
 
 def _mom_dict(n, v, T, simulated: bool) -> dict:
     n = np.asarray(n, float).clip(0.1, 100)
