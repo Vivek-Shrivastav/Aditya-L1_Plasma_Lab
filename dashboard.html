@@ -208,8 +208,13 @@ main{position:relative;z-index:1;padding-top:calc(56px + 38px)}
   margin-top:.4rem;line-height:1.45;
 }
 .full-panel{margin-bottom:.85rem}
-.cw{position:relative}
+.cw{position:relative;overflow:hidden}
 .cw-150{height:150px}.cw-180{height:180px}.cw-220{height:220px}.cw-260{height:260px}
+
+/* ─── PLOTLY MODEBAR ──────────────────────────────────────────────────── */
+.modebar{opacity:.3 !important;transition:opacity .2s}
+.modebar:hover{opacity:1 !important}
+.modebar-btn{font-size:14px !important}
 
 /* ─── SPECTROGRAM ─────────────────────────────────────────────────────── */
 .spec{width:100%;display:block;border-radius:4px}
@@ -470,25 +475,25 @@ main{position:relative;z-index:1;padding-top:calc(56px + 38px)}
     <div class="panel">
       <div class="panel-title">Proton Density n</div>
       <div class="panel-meta">X: Time [UTC] · Y: n [cm⁻³] · Instrument: SWIS/PAPA · Source: Level-2</div>
-      <div class="cw cw-150"><div id="c-n"></div></div>
+      <div class="cw cw-150"><div id="c-n" style="width:100%;height:100%"></div></div>
       <div class="panel-note">Jumps ×2+ with simultaneous velocity and field increases = shock. Low density + smooth B rotation = CME flux rope interior.</div>
     </div>
     <div class="panel">
       <div class="panel-title">Solar Wind Bulk Speed V</div>
       <div class="panel-meta">X: Time [UTC] · Y: V [km/s] · Instrument: SWIS · Source: Level-2</div>
-      <div class="cw cw-150"><div id="c-v"></div></div>
+      <div class="cw cw-150"><div id="c-v" style="width:100%;height:100%"></div></div>
       <div class="panel-note">Below 450 km/s: slow wind (streamer belt). Above 550 km/s: fast wind (coronal hole). CIRs form where fast wind overtakes slow.</div>
     </div>
     <div class="panel">
       <div class="panel-title">Proton Temperature T</div>
       <div class="panel-meta">X: Time [UTC] · Y: T [eV] · Instrument: SWIS/PAPA · 1 eV ≈ 11,600 K</div>
-      <div class="cw cw-150"><div id="c-t"></div></div>
+      <div class="cw cw-150"><div id="c-t" style="width:100%;height:100%"></div></div>
       <div class="panel-note">Hot fast wind (15–30 eV) vs cold slow wind (3–8 eV). Anomalously cold T for a given speed = CME ejecta signature.</div>
     </div>
     <div class="panel">
       <div class="panel-title">IMF Magnitude |B|</div>
       <div class="panel-meta">X: Time [UTC] · Y: |B| [nT] · Instrument: MAG boom · GSE frame</div>
-      <div class="cw cw-150"><div id="c-b"></div></div>
+      <div class="cw cw-150"><div id="c-b" style="width:100%;height:100%"></div></div>
       <div class="panel-note">Quiet: 3–8 nT. Sustained enhancement (>15 nT) = CIR compression or CME sheath. Sharp spike = shock front passage.</div>
     </div>
   </div>
@@ -573,7 +578,7 @@ main{position:relative;z-index:1;padding-top:calc(56px + 38px)}
   <div class="panel full-panel">
     <div class="panel-title">B Components — Bx, By, Bz (GSE)</div>
     <div class="panel-meta">X: Time [UTC] · Y: Field [nT] · Purple: Bx (Sun–Earth axis) · Pink: By (dusk–dawn) · Orange: Bz (north–south, critical) · MAG Level-2</div>
-    <div class="cw cw-220"><div id="c-bcomps"></div></div>
+    <div class="cw cw-220"><div id="c-bcomps" style="width:100%;height:100%"></div></div>
     <div class="panel-note">Smooth rotation of all three components over hours = flux rope/magnetic cloud. Rapid direction change = tangential or rotational discontinuity. Large sustained southward Bz = storm driver.</div>
   </div>
 
@@ -582,13 +587,13 @@ main{position:relative;z-index:1;padding-top:calc(56px + 38px)}
     <div class="panel">
       <div class="panel-title">Hodogram — By vs Bz</div>
       <div class="panel-meta">By [nT] vs Bz [nT] · Color: time (purple → yellow = early → late)</div>
-      <div class="cw cw-180"><div id="c-hyz"></div></div>
+      <div class="cw cw-180"><div id="c-hyz" style="width:100%;height:100%"></div></div>
       <div class="panel-note">Elliptical/circular trajectory = smooth field rotation (flux rope). Random scatter = turbulent field. Elongated = dominant oscillation direction.</div>
     </div>
     <div class="panel">
       <div class="panel-title">Hodogram — Bx vs Bz</div>
       <div class="panel-meta">Bx [nT] vs Bz [nT] · The axis of minimum spread = MVA normal direction</div>
-      <div class="cw cw-180"><div id="c-hxz"></div></div>
+      <div class="cw cw-180"><div id="c-hxz" style="width:100%;height:100%"></div></div>
       <div class="panel-note">The minimum-variance axis in both hodograms is the boundary normal found by MVA (see table below).</div>
     </div>
   </div>
@@ -619,17 +624,17 @@ main{position:relative;z-index:1;padding-top:calc(56px + 38px)}
     <div class="panel">
       <div class="panel-title">Proton Density n</div>
       <div class="panel-meta">X: UTC · Y: n [cm⁻³] · SWIS/PAPA Level-2</div>
-      <div class="cw cw-180"><div id="c-n2"></div></div>
+      <div class="cw cw-180"><div id="c-n2" style="width:100%;height:100%"></div></div>
     </div>
     <div class="panel">
       <div class="panel-title">Bulk Speed V</div>
       <div class="panel-meta">X: UTC · Y: V [km/s] · SWIS Level-2</div>
-      <div class="cw cw-180"><div id="c-v2"></div></div>
+      <div class="cw cw-180"><div id="c-v2" style="width:100%;height:100%"></div></div>
     </div>
     <div class="panel">
       <div class="panel-title">Temperature T</div>
       <div class="panel-meta">X: UTC · Y: T [eV] · SWIS/PAPA Level-2</div>
-      <div class="cw cw-180"><div id="c-t2"></div></div>
+      <div class="cw cw-180"><div id="c-t2" style="width:100%;height:100%"></div></div>
     </div>
   </div>
 
@@ -669,7 +674,7 @@ main{position:relative;z-index:1;padding-top:calc(56px + 38px)}
       Orange dashed: Kolmogorov −5/3 (MHD inertial range) · Purple dashed: IK −3/2 ·
       Method: Welch averaged periodogram (Paschmann & Daly SR-001 Ch. 1)
     </div>
-    <div class="cw cw-220"><div id="c-psd"></div></div>
+    <div class="cw cw-220"><div id="c-psd" style="width:100%;height:100%"></div></div>
     <div class="panel-note" id="psd-note">Kolmogorov −5/3 applies in the MHD inertial range. Below the ion cyclotron frequency the spectrum steepens to −7/3 or −4 (kinetic Alfvén waves). Shallower than −5/3 = energy injection (shock, CME). A spectral break marks the MHD→kinetic transition.</div>
   </div>
 
@@ -683,16 +688,16 @@ main{position:relative;z-index:1;padding-top:calc(56px + 38px)}
   <div class="hist-info" id="hist-info">Loading history…</div>
 
   <div class="hist-grid">
-    <div class="panel"><div class="panel-title">Proton Density</div><div class="panel-meta">n [cm⁻³] vs Date/Time UTC</div><div class="cw cw-220"><div id="h-n"></div></div></div>
-    <div class="panel"><div class="panel-title">Solar Wind Speed</div><div class="panel-meta">V [km/s] vs Date/Time UTC · dashed: 450 km/s fast-wind threshold</div><div class="cw cw-220"><div id="h-v"></div></div></div>
+    <div class="panel"><div class="panel-title">Proton Density</div><div class="panel-meta">n [cm⁻³] vs Date/Time UTC</div><div class="cw cw-220"><div id="h-n" style="width:100%;height:100%"></div></div></div>
+    <div class="panel"><div class="panel-title">Solar Wind Speed</div><div class="panel-meta">V [km/s] vs Date/Time UTC · dashed: 450 km/s fast-wind threshold</div><div class="cw cw-220"><div id="h-v" style="width:100%;height:100%"></div></div></div>
   </div>
   <div class="hist-grid">
-    <div class="panel"><div class="panel-title">IMF |B|</div><div class="panel-meta">|B| [nT] vs Date/Time UTC</div><div class="cw cw-220"><div id="h-b"></div></div></div>
-    <div class="panel"><div class="panel-title">IMF Bz</div><div class="panel-meta">Bz [nT] vs Date/Time UTC · southward = geoeffective</div><div class="cw cw-220"><div id="h-bz"></div></div></div>
+    <div class="panel"><div class="panel-title">IMF |B|</div><div class="panel-meta">|B| [nT] vs Date/Time UTC</div><div class="cw cw-220"><div id="h-b" style="width:100%;height:100%"></div></div></div>
+    <div class="panel"><div class="panel-title">IMF Bz</div><div class="panel-meta">Bz [nT] vs Date/Time UTC · southward = geoeffective</div><div class="cw cw-220"><div id="h-bz" style="width:100%;height:100%"></div></div></div>
   </div>
   <div class="hist-grid">
-    <div class="panel"><div class="panel-title">Plasma β</div><div class="panel-meta">β vs Date/Time UTC · dashed: β = 1 boundary</div><div class="cw cw-220"><div id="h-beta"></div></div></div>
-    <div class="panel"><div class="panel-title">Alfvén Speed V_A</div><div class="panel-meta">V_A [km/s] vs Date/Time UTC</div><div class="cw cw-220"><div id="h-va"></div></div></div>
+    <div class="panel"><div class="panel-title">Plasma β</div><div class="panel-meta">β vs Date/Time UTC · dashed: β = 1 boundary</div><div class="cw cw-220"><div id="h-beta" style="width:100%;height:100%"></div></div></div>
+    <div class="panel"><div class="panel-title">Alfvén Speed V_A</div><div class="panel-meta">V_A [km/s] vs Date/Time UTC</div><div class="cw cw-220"><div id="h-va" style="width:100%;height:100%"></div></div></div>
   </div>
 
 </div><!-- /history -->
@@ -777,7 +782,6 @@ function plotLine(id, times, vals, color, yLabel, extraLayout) {
     x: times, y: vals,
     type: 'scatter', mode: 'lines',
     line: { color, width: 1.6 },
-    fill: 'tozeroy', fillcolor: color + '18',
     hovertemplate: '%{x|%H:%M}<br>%{y:.3g}<extra></extra>',
   };
   const layout = Object.assign({}, BASE_LAYOUT, {
