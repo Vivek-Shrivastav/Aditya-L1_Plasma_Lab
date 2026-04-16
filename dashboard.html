@@ -1167,18 +1167,20 @@ async function loadHistory() {
   }
 }
 
+// ── Resize helper ─────────────────────────────────────────────────────────
+function resizeAllPlots() {
+  CHART_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el._fullLayout) Plotly.Plots.resize(el);
+  });
+}
+
 // ── Tabs ──────────────────────────────────────────────────────────────────
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'pg-' + name));
   if (name === 'history' && !histLoaded) { loadHistory(); histLoaded = true; }
-  // Resize Plotly charts when tab becomes visible
-  setTimeout(() => {
-    CHART_IDS.forEach(id => {
-      const el = document.getElementById(id);
-      if (el && el._fullLayout) Plotly.Plots.resize(el);
-    });
-  }, 50);
+  setTimeout(resizeAllPlots, 50);
 }
 document.querySelectorAll('.tab').forEach(t =>
   t.addEventListener('click', () => switchTab(t.dataset.tab))
@@ -1193,12 +1195,7 @@ document.getElementById('refresh-btn').addEventListener('click', async () => {
 let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    CHART_IDS.forEach(id => {
-      const el = document.getElementById(id);
-      if (el && el._fullLayout) Plotly.Plots.resize(el);
-    });
-  }, 200);
+  resizeTimer = setTimeout(resizeAllPlots, 200);
 });
 
 // ── Particle canvas (same as index.html) ──────────────────────────────────
