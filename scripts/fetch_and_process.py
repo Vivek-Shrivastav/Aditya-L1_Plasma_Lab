@@ -69,7 +69,7 @@ def get_creds() -> tuple[str, str]:
 
 # ── PRADAN session ──────────────────────────────────────────────────────────
 class PradanSession:
-    BASE = "https://pradan.issdc.gov.in"
+    BASE = "https://pradan.issdc.gov.in/al1"
 
     def __init__(self, email: str, password: str):
         self.email = email
@@ -85,17 +85,48 @@ class PradanSession:
             return False
         try:
             self.sess = requests.Session()
+            self.sess.headers.update({"User-Agent": "Mozilla/5.0 (Aditya-L1 Data Pipeline)"})
+            
+            # 1. Request portal home - this triggers redirect to Keycloak IDP
+            log.info("Connecting to PRADAN portal...")
+            r = self.sess.get(self.BASE, timeout=30)
+            
+            # 2. Extract Keycloak action URL from the login page
+            import re
+            # Keycloak forms use 'action="URL"'
+            match = re.search(r'action="([^"]+)"', r.text)
+            if not match:
+                log.warning("Failed to identify login form. Portal base might have changed.")
+                return False
+                
+            action_url = match.group(1).replace("&amp;", "&")
+            log.info("IDP Handshake: Action URL identified.")
+
+            # 3. Post to Keycloak with 'username' and 'password'
             r = self.sess.post(
-                f"{self.BASE}/login",
-                data={"email": self.email, "password": self.password},
+                action_url,
+                data={"username": self.email, "password": self.password},
                 timeout=30,
+                allow_redirects=True
             )
+            
+            # 4. Verify login state
+            # If we are still at idp.issdc.gov.in with 'authenticate' in URL, login likely failed
+            if "authenticate" in r.url or "login" in r.url.lower():
+                # Check for "Invalid username or password" in response
+                if "invalid" in r.text.lower():
+                    log.warning("PRADAN login failed: Invalid username or password (SECRET CHECK REQUIRED)")
+                else:
+                    log.warning("PRADAN login failed: Redirected back to login page. Possible 2FA or CAPTCHA required.")
+                self.sess = None
+                return False
+            
             r.raise_for_status()
             self._t = time.time()
-            log.info("PRADAN login OK")
+            log.info("PRADAN login OK — Session established.")
             return True
         except Exception as exc:
-            log.warning("PRADAN login failed: %s", exc)
+            log.warning("PRADAN login system error: %s", exc)
             self.sess = None
             return False
 
