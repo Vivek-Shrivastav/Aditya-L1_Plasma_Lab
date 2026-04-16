@@ -852,6 +852,8 @@ main {
   border-radius: 3px;
 }
 
+.regime-tag.sim-notice { color: var(--text-tertiary); border-color: var(--space-500); background: rgba(255,255,255,0.02); font-style: italic; }
+
 /* ─── CTA SECTION ─────────────────────────────────────────────────────── */
 .cta-section {
   margin: 0 var(--page-gutter) 4rem;
@@ -1060,7 +1062,7 @@ footer a:hover { color: var(--text-secondary); }
 <!-- ── PIPELINE ──────────────────────────────────────────────────────── -->
 <section class="section" id="pipeline">
   <div class="section-header">
-    <span class="section-label">00b — How It Works</span>
+    <span class="section-label">Data Pipeline</span>
     <h2 class="display-lg">Automated Data Pipeline</h2>
     <p>From the spacecraft to your browser — a fully automated processing chain that runs every 6 hours without human intervention.</p>
   </div>
@@ -1087,7 +1089,7 @@ footer a:hover { color: var(--text-secondary); }
     <div class="pipe-step">
       <div class="pipe-icon">📊</div>
       <h4>This Website</h4>
-      <p>Interactive dashboard and tools visualise the processed data in your browser</p>
+      <p>Interactive dashboard and tools visualize the processed data in your browser</p>
       <span class="pipe-tech">Plotly.js</span>
     </div>
   </div>
@@ -1679,7 +1681,7 @@ sections.forEach(id => { const el = document.getElementById(id); if (el) observe
     html += '<div class="regime-bar">';
     html += '  <span class="regime-tag ' + regimeClass(regime) + '">' + escapeHtml(regime) + '</span>';
     html += '  <span class="regime-tag ' + bzTagClass(bzStatus) + '">' + escapeHtml(bzStatus) + '</span>';
-    if (simulated) html += '  <span class="regime-tag" style="color:var(--text-tertiary);border-color:var(--space-500);background:rgba(255,255,255,0.02);font-style:italic">Simulated — PRADAN credentials not set</span>';
+    if (simulated) html += '  <span class="regime-tag sim-notice">Simulated — PRADAN credentials not set</span>';
     html += '</div>';
 
     container.innerHTML = html;
@@ -1695,7 +1697,7 @@ sections.forEach(id => { const el = document.getElementById(id); if (el) observe
         renderConditions(data);
       })
       .catch(function() {
-        loading.textContent = 'Unable to load live data. Visit the Dashboard for full details.';
+        loading.textContent = 'Unable to load live data. The data file may be temporarily unavailable. Visit the Dashboard for full details.';
       });
   }
 
