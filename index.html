@@ -682,6 +682,176 @@ main {
   line-height: 1.55;
 }
 
+/* ─── LIVE CONDITIONS ─────────────────────────────────────────────────── */
+.live-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.live-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 10px rgba(34,197,94,0.6);
+  animation: live-pulse 2s ease-in-out infinite;
+}
+.live-dot.sim { background: #f0c040; box-shadow: 0 0 10px rgba(240,192,64,0.6); }
+@keyframes live-pulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.live-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #22c55e;
+}
+.live-label.sim { color: #f0c040; }
+.live-time {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+}
+.conditions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1px;
+  background: var(--space-700);
+  border: 1px solid var(--space-700);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+.cond-card {
+  background: var(--space-900);
+  padding: 1.3rem 1.4rem;
+  transition: background 0.2s;
+}
+.cond-card:hover { background: var(--space-850); }
+.cond-label {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.4rem;
+}
+.cond-value {
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text-primary);
+}
+.cond-unit {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--text-tertiary);
+  margin-left: 0.2rem;
+}
+.cond-status {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  margin-top: 0.35rem;
+  padding: 0.15em 0.5em;
+  border-radius: 3px;
+  display: inline-block;
+}
+.cond-status.ok { color: var(--proton-200); background: rgba(110,220,170,0.08); border: 1px solid rgba(110,220,170,0.2); }
+.cond-status.warn { color: var(--solar-200); background: rgba(255,173,107,0.08); border: 1px solid rgba(255,173,107,0.2); }
+.cond-status.alert { color: var(--electron-200); background: rgba(245,146,192,0.08); border: 1px solid rgba(245,146,192,0.2); }
+.cond-card.bz-south .cond-value { color: var(--electron-200); }
+.cond-card.bz-north .cond-value { color: var(--proton-200); }
+.regime-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.regime-tag {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.3em 0.75em;
+  border-radius: 4px;
+  border: 1px solid;
+}
+.regime-tag.slow { color: var(--proton-200); border-color: rgba(110,220,170,0.3); background: rgba(110,220,170,0.06); }
+.regime-tag.fast { color: var(--solar-200); border-color: rgba(255,173,107,0.3); background: rgba(255,173,107,0.06); }
+.regime-tag.cme { color: var(--electron-200); border-color: rgba(245,146,192,0.3); background: rgba(245,146,192,0.06); }
+.bz-tag.south { color: var(--electron-200); border-color: rgba(245,146,192,0.3); background: rgba(245,146,192,0.06); }
+.bz-tag.north { color: var(--proton-200); border-color: rgba(110,220,170,0.3); background: rgba(110,220,170,0.06); }
+.bz-tag.neutral { color: var(--text-tertiary); border-color: var(--space-500); background: rgba(255,255,255,0.02); }
+.cond-loading {
+  text-align: center;
+  padding: 3rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+}
+
+/* ─── PIPELINE SECTION ───────────────────────────────────────────────── */
+.pipeline-flow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0;
+  position: relative;
+  margin-bottom: 1rem;
+}
+.pipe-step {
+  background: var(--space-900);
+  border: 1px solid var(--space-700);
+  border-radius: 10px;
+  padding: 1.4rem;
+  text-align: center;
+  position: relative;
+}
+.pipe-step:not(:last-child)::after {
+  content: '→';
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  color: var(--solar-300);
+  z-index: 2;
+}
+@media (max-width: 700px) {
+  .pipe-step:not(:last-child)::after { content: '↓'; right: 50%; top: auto; bottom: -16px; transform: translateX(50%); }
+  .pipeline-flow { gap: 1.2rem; }
+}
+.pipe-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.7rem;
+}
+.pipe-step h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.3rem;
+}
+.pipe-step p {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.pipe-tech {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--plasma-200);
+  margin-top: 0.5rem;
+  display: inline-block;
+  padding: 0.15em 0.5em;
+  background: var(--space-800);
+  border: 1px solid var(--space-600);
+  border-radius: 3px;
+}
+
 /* ─── CTA SECTION ─────────────────────────────────────────────────────── */
 .cta-section {
   margin: 0 var(--page-gutter) 4rem;
@@ -752,6 +922,7 @@ footer a:hover { color: var(--text-secondary); }
     <a href="#tutorial" class="nav-link hide-sm">Tutorial</a>
     <a href="#methods" class="nav-link hide-sm">Methods</a>
     <a href="dashboard.html" class="nav-link">Dashboard</a>
+    <a href="explorer.html" class="nav-link hide-sm">Explorer</a>
     <a href="visualizer.html" class="nav-link">Visualizer</a>
     <a href="dashboard.html" class="nav-cta">Live Data →</a>
   </div>
@@ -783,8 +954,9 @@ footer a:hover { color: var(--text-secondary); }
     </p>
 
     <div class="hero-btns">
-      <a href="#why-l1" class="btn-primary">Start Learning ↓</a>
+      <a href="#live-conditions" class="btn-primary">Current Conditions ↓</a>
       <a href="dashboard.html" class="btn-ghost">Live Dashboard</a>
+      <a href="explorer.html" class="btn-ghost">Science Explorer</a>
       <a href="visualizer.html" class="btn-ghost">Data Visualizer</a>
     </div>
 
@@ -870,7 +1042,58 @@ footer a:hover { color: var(--text-secondary); }
 
 <div class="streak-divider"></div>
 
-<!-- ── WHY L1 ────────────────────────────────────────────────────────── -->
+<!-- ── LIVE CONDITIONS ───────────────────────────────────────────────── -->
+<section class="section" id="live-conditions">
+  <div class="section-header">
+    <span class="section-label">00 — Real-Time Data</span>
+    <h2 class="display-lg">Current Solar Wind Conditions</h2>
+    <p>Live readings from Aditya-L1 at the Sun–Earth L1 point. Data refreshes every 6 hours via the automated pipeline.</p>
+  </div>
+
+  <div id="conditions-container">
+    <div class="cond-loading" id="cond-loading">Fetching latest data from L1…</div>
+  </div>
+</section>
+
+<div class="streak-divider"></div>
+
+<!-- ── PIPELINE ──────────────────────────────────────────────────────── -->
+<section class="section" id="pipeline">
+  <div class="section-header">
+    <span class="section-label">00b — How It Works</span>
+    <h2 class="display-lg">Automated Data Pipeline</h2>
+    <p>From the spacecraft to your browser — a fully automated processing chain that runs every 6 hours without human intervention.</p>
+  </div>
+
+  <div class="pipeline-flow">
+    <div class="pipe-step">
+      <div class="pipe-icon">🛰️</div>
+      <h4>Aditya-L1</h4>
+      <p>Spacecraft collects in-situ plasma and magnetic field data at the L1 Lagrange point</p>
+      <span class="pipe-tech">CDF Level-2</span>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-icon">📡</div>
+      <h4>PRADAN / ISSDC</h4>
+      <p>ISRO's data archive processes and publishes calibrated science-ready data files</p>
+      <span class="pipe-tech">pradan.issdc.gov.in</span>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-icon">⚙️</div>
+      <h4>GitHub Actions</h4>
+      <p>Automated pipeline fetches CDF files, computes moments, derived parameters, and PSD</p>
+      <span class="pipe-tech">Every 6 hours</span>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-icon">📊</div>
+      <h4>This Website</h4>
+      <p>Interactive dashboard and tools visualise the processed data in your browser</p>
+      <span class="pipe-tech">Plotly.js</span>
+    </div>
+  </div>
+</section>
+
+<div class="streak-divider"></div>
 <section class="section" id="why-l1">
   <div class="section-header">
     <span class="section-label">01 — Mission Context</span>
@@ -1232,8 +1455,8 @@ footer a:hover { color: var(--text-secondary); }
   <p>You know the instruments, the physics, and the methods. Now go observe the Sun's plasma in real time — or dig into any historical data window you choose.</p>
   <div class="cta-btns">
     <a href="dashboard.html" class="btn-primary">Live Dashboard →</a>
+    <a href="explorer.html" class="btn-ghost">Science Explorer</a>
     <a href="visualizer.html" class="btn-ghost">Date Picker & Visualizer</a>
-    <a href="explorer.html" class="btn-ghost">Full Science Explorer</a>
   </div>
   <div class="cta-note">Data updates automatically every 6 hours via GitHub Actions · PRADAN / ISSDC</div>
 </div>
@@ -1315,7 +1538,7 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
 });
 
 /* ── Active nav on scroll ───────────────────────────────────────────── */
-const sections = ['why-l1','instruments','tutorial','methods','archive'];
+const sections = ['live-conditions','pipeline','why-l1','instruments','tutorial','methods','archive'];
 const observer = new IntersectionObserver(entries => {
   entries.forEach(e => {
     if (e.isIntersecting) {
@@ -1326,6 +1549,158 @@ const observer = new IntersectionObserver(entries => {
   });
 }, { rootMargin: '-40% 0px -50% 0px' });
 sections.forEach(id => { const el = document.getElementById(id); if (el) observer.observe(el); });
+
+/* ── Live conditions fetch ──────────────────────────────────────────── */
+(function() {
+  const container = document.getElementById('conditions-container');
+  const loading = document.getElementById('cond-loading');
+
+  function classifyBz(bz) {
+    if (bz <= -10) return { cls: 'alert', text: 'Storm driver' };
+    if (bz <= -5)  return { cls: 'warn',  text: 'Moderate coupling' };
+    if (bz < 0)    return { cls: 'warn',  text: 'Weak southward' };
+    return { cls: 'ok', text: 'Northward' };
+  }
+
+  function classifyDensity(n) {
+    if (n > 30) return { cls: 'alert', text: 'CME sheath' };
+    if (n > 15) return { cls: 'warn',  text: 'Enhanced' };
+    return { cls: 'ok', text: 'Quiet' };
+  }
+
+  function classifyVelocity(v) {
+    if (v > 800) return { cls: 'alert', text: 'CME' };
+    if (v > 500) return { cls: 'warn',  text: 'Fast wind' };
+    return { cls: 'ok', text: 'Slow wind' };
+  }
+
+  function classifyBmag(b) {
+    if (b > 30) return { cls: 'alert', text: 'Strong CME' };
+    if (b > 10) return { cls: 'warn',  text: 'Enhanced' };
+    return { cls: 'ok', text: 'Quiet' };
+  }
+
+  function regimeClass(regime) {
+    if (!regime) return 'slow';
+    var r = regime.toLowerCase();
+    if (r.indexOf('fast') !== -1) return 'fast';
+    if (r.indexOf('cme') !== -1 || r.indexOf('transient') !== -1) return 'cme';
+    return 'slow';
+  }
+
+  function bzTagClass(status) {
+    if (!status) return 'neutral';
+    var s = status.toLowerCase();
+    if (s.indexOf('south') !== -1) return 'south';
+    if (s.indexOf('north') !== -1) return 'north';
+    return 'neutral';
+  }
+
+  function escapeHtml(text) {
+    var div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+  }
+
+  function renderConditions(data) {
+    var s = data.scalars || {};
+    var simulated = data.simulated;
+    var runTime = data.run_time;
+    var regime = data.sw_regime || 'Unknown';
+    var bzStatus = data.bz_status || 'Unknown';
+
+    var timeStr = '';
+    if (runTime) {
+      try { timeStr = new Date(runTime).toUTCString(); } catch(e) { timeStr = runTime; }
+    }
+
+    var bz = classifyBz(s.Bz_nT || 0);
+    var dens = classifyDensity(s.density_cm3 || 0);
+    var vel = classifyVelocity(s.velocity_kms || 0);
+    var bmag = classifyBmag(s.B_mag_nT || 0);
+    var bzVal = s.Bz_nT || 0;
+    var bzCardClass = bzVal < 0 ? 'bz-south' : 'bz-north';
+
+    var html = '';
+    html += '<div class="live-banner">';
+    html += '  <span class="live-dot' + (simulated ? ' sim' : '') + '"></span>';
+    html += '  <span class="live-label' + (simulated ? ' sim' : '') + '">' + (simulated ? 'Simulated Data' : 'Live Data') + '</span>';
+    if (timeStr) html += '  <span class="live-time">Updated: ' + escapeHtml(timeStr) + '</span>';
+    html += '</div>';
+
+    html += '<div class="conditions-grid">';
+
+    html += '<div class="cond-card">';
+    html += '  <div class="cond-label">Density</div>';
+    html += '  <div class="cond-value">' + escapeHtml(String(s.density_cm3 != null ? s.density_cm3 : '—')) + '<span class="cond-unit">cm⁻³</span></div>';
+    html += '  <span class="cond-status ' + dens.cls + '">' + escapeHtml(dens.text) + '</span>';
+    html += '</div>';
+
+    html += '<div class="cond-card">';
+    html += '  <div class="cond-label">Velocity</div>';
+    html += '  <div class="cond-value">' + escapeHtml(String(s.velocity_kms != null ? s.velocity_kms : '—')) + '<span class="cond-unit">km/s</span></div>';
+    html += '  <span class="cond-status ' + vel.cls + '">' + escapeHtml(vel.text) + '</span>';
+    html += '</div>';
+
+    html += '<div class="cond-card">';
+    html += '  <div class="cond-label">Temperature</div>';
+    html += '  <div class="cond-value">' + escapeHtml(String(s.temperature_eV != null ? s.temperature_eV : '—')) + '<span class="cond-unit">eV</span></div>';
+    html += '</div>';
+
+    html += '<div class="cond-card">';
+    html += '  <div class="cond-label">|B| Magnitude</div>';
+    html += '  <div class="cond-value">' + escapeHtml(String(s.B_mag_nT != null ? s.B_mag_nT : '—')) + '<span class="cond-unit">nT</span></div>';
+    html += '  <span class="cond-status ' + bmag.cls + '">' + escapeHtml(bmag.text) + '</span>';
+    html += '</div>';
+
+    html += '<div class="cond-card ' + bzCardClass + '">';
+    html += '  <div class="cond-label">Bz (GSE)</div>';
+    html += '  <div class="cond-value">' + escapeHtml(String(s.Bz_nT != null ? s.Bz_nT : '—')) + '<span class="cond-unit">nT</span></div>';
+    html += '  <span class="cond-status ' + bz.cls + '">' + escapeHtml(bz.text) + '</span>';
+    html += '</div>';
+
+    html += '<div class="cond-card">';
+    html += '  <div class="cond-label">Plasma β</div>';
+    html += '  <div class="cond-value">' + escapeHtml(String(s.plasma_beta != null ? s.plasma_beta : '—')) + '</div>';
+    html += '</div>';
+
+    html += '<div class="cond-card">';
+    html += '  <div class="cond-label">Alfvén Speed</div>';
+    html += '  <div class="cond-value">' + escapeHtml(String(s.alfven_speed_kms != null ? s.alfven_speed_kms : '—')) + '<span class="cond-unit">km/s</span></div>';
+    html += '</div>';
+
+    html += '<div class="cond-card">';
+    html += '  <div class="cond-label">Clock Angle</div>';
+    html += '  <div class="cond-value">' + escapeHtml(String(s.clock_angle_deg != null ? s.clock_angle_deg : '—')) + '<span class="cond-unit">°</span></div>';
+    html += '</div>';
+
+    html += '</div>';
+
+    html += '<div class="regime-bar">';
+    html += '  <span class="regime-tag ' + regimeClass(regime) + '">' + escapeHtml(regime) + '</span>';
+    html += '  <span class="regime-tag ' + bzTagClass(bzStatus) + '">' + escapeHtml(bzStatus) + '</span>';
+    if (simulated) html += '  <span class="regime-tag" style="color:var(--text-tertiary);border-color:var(--space-500);background:rgba(255,255,255,0.02);font-style:italic">Simulated — PRADAN credentials not set</span>';
+    html += '</div>';
+
+    container.innerHTML = html;
+  }
+
+  function fetchConditions() {
+    fetch('data/latest.json')
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(data) {
+        renderConditions(data);
+      })
+      .catch(function() {
+        loading.textContent = 'Unable to load live data. Visit the Dashboard for full details.';
+      });
+  }
+
+  fetchConditions();
+})();
 </script>
 </body>
 </html>
