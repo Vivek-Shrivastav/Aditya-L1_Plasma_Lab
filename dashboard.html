@@ -1176,7 +1176,7 @@ function switchTab(name) {
   setTimeout(() => {
     CHART_IDS.forEach(id => {
       const el = document.getElementById(id);
-      if (el && el.data) Plotly.Plots.resize(el);
+      if (el && el._fullLayout) Plotly.Plots.resize(el);
     });
   }, 50);
 }
@@ -1196,7 +1196,7 @@ window.addEventListener('resize', () => {
   resizeTimer = setTimeout(() => {
     CHART_IDS.forEach(id => {
       const el = document.getElementById(id);
-      if (el && el.data) Plotly.Plots.resize(el);
+      if (el && el._fullLayout) Plotly.Plots.resize(el);
     });
   }, 200);
 });
