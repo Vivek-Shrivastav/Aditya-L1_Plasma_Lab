@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="css/nova.css">
     <style>
         .lab-main {
-            padding-top: 100px;
+            padding-top: 130px;
             background: #03020A;
             min-height: 100vh;
         }
@@ -60,23 +60,38 @@
             font-size: 0.8rem;
             margin-top: 0.5rem;
         }
-        .terminal-input:focus {
-            outline: none;
-            border-color: var(--accent-plasma);
-        }
     </style>
 </head>
 <body>
 
-    <!-- Navigation -->
+    <!-- Navigation HUD -->
     <nav class="nova-nav">
-        <a href="index.html" class="nav-brand">ADITYA-L1 // PLASMA LAB</a>
+        <div class="nav-brand-group">
+            <a href="index.html" class="nav-brand" style="color: var(--accent-plasma); text-decoration: none; font-family: var(--font-display); font-weight: 700;">ADITYA-L1</a>
+            <div id="mission-timer">MET: ---D --:--:--</div>
+        </div>
+        
+        <div class="mini-hud-strip">
+            <div class="hud-metric">
+                <span class="hud-metric-label">Density</span>
+                <span class="hud-metric-value" id="hud-density">--.-<span>cm⁻³</span></span>
+            </div>
+            <div class="hud-metric">
+                <span class="hud-metric-label">Velocity</span>
+                <span class="hud-metric-value" id="hud-speed">---<span>km/s</span></span>
+            </div>
+            <div class="hud-metric">
+                <span class="hud-metric-label">B-Field</span>
+                <span class="hud-metric-value" id="hud-mag">--.-<span>nT</span></span>
+            </div>
+        </div>
+
         <div class="nav-links">
             <a href="index.html" class="nav-link">SCIENCE</a>
             <a href="dashboard.html" class="nav-link">DASHBOARD</a>
             <a href="visualizer.html" class="nav-link">VISUALIZER</a>
             <a href="explorer.html" class="nav-link">EXPLORER</a>
-            <a href="lab.html" class="nav-link">LAB</a>
+            <a href="lab.html" class="nav-link active">LAB</a>
         </div>
     </nav>
 
@@ -86,98 +101,20 @@
             <header class="page-header reveal-text">
                 <span class="chapter-label">[ SCIENTIFIC COMMAND • EXPERIMENTAL ]</span>
                 <h1>ANALYSIS LAB</h1>
-                <p>Advanced diagnostic workspace for plasma moments, spectral index fitting, and shock-boundary analysis.</p>
+                <p>Advanced diagnostic workspace for plasma moments and spectral analysis.</p>
             </header>
 
             <div class="terminal-grid reveal-text">
-                
-                <!-- Tool Selector Overlay -->
                 <div class="tool-nav">
                     <div class="tool-btn active" onclick="toggleTool('tool-spectral')">01_SPECTRAL_PSD</div>
                     <div class="tool-btn" onclick="toggleTool('tool-moments')">02_MOMENTS_CALC</div>
-                    <div class="tool-btn">03_MVA_HODOGRAM</div>
-                    <div class="tool-btn">04_RANKINE_HUGONIOT</div>
                 </div>
 
-                <!-- Tool Workspace -->
                 <div class="hologram-panel" id="tool-spectral">
                     <span class="chapter-label">ANALYSIS_MODE // PSD_WELCH</span>
                     <h3 style="margin-bottom: 2rem;">Frequency Domain Diagnostics</h3>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
-                        <div>
-                            <span class="hud-label">TELEMETRY_STREAM</span>
-                            <select id="spectral-var" class="terminal-input">
-                                <option value="density">Proton Density (n)</option>
-                                <option value="velocity">Bulk Speed (V)</option>
-                                <option value="B_mag">Magnetic Field (|B|)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <span class="hud-label">FAST_FOURIER_TRANSFORM</span>
-                            <button class="nova-btn btn-plasma" style="width: 100%; margin-top: 0.5rem;" onclick="computeSpectral()">EXECUTE_ANALYSIS</button>
-                        </div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 200px 1fr; gap: 2rem;">
-                        <div>
-                            <div class="hud-card" style="margin-bottom: 1rem;">
-                                <span class="hud-label">Spectral Index α</span>
-                                <span class="hud-value" id="spectral-alpha" style="font-size: 2rem;">--</span>
-                            </div>
-                            <p style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted);">
-                                Result analysis: -1.67 indicates a classic Kolmogorov inertial range in the solar wind turbulence.
-                            </p>
-                        </div>
-                        <div id="spectral-chart" style="height: 300px;"></div>
-                    </div>
+                    <div id="spectral-chart" style="height: 300px;"></div>
                 </div>
-
-                <!-- Moments Tool (Hidden initially) -->
-                 <div class="hologram-panel" id="tool-moments" style="display: none; grid-column: 2;">
-                    <span class="chapter-label">ANALYSIS_MODE // MOMENTS</span>
-                    <h3 style="margin-bottom: 2rem;">Component Derived Parameters</h3>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
-                        <div>
-                            <span class="hud-label">Density (n)</span>
-                            <input type="number" id="moments-n" value="6.0" class="terminal-input">
-                        </div>
-                        <div>
-                            <span class="hud-label">Speed (V)</span>
-                            <input type="number" id="moments-v" value="430" class="terminal-input">
-                        </div>
-                        <div>
-                            <span class="hud-label">Temp (T)</span>
-                            <input type="number" id="moments-t" value="10" class="terminal-input">
-                        </div>
-                        <div>
-                            <span class="hud-label">Field (B)</span>
-                            <input type="number" id="moments-b" value="5" class="terminal-input">
-                        </div>
-                    </div>
-                    <button class="nova-btn btn-ghost" style="margin-bottom: 2rem;" onclick="computeMoments()">RECALCULATE_MOMENTS</button>
-
-                    <div class="hud-grid">
-                        <div class="hud-card">
-                            <span class="hud-label">Ther_Speed (Vth)</span>
-                            <span class="hud-value" id="mom-vth" style="font-size: 1.2rem;">--</span>
-                        </div>
-                        <div class="hud-card">
-                            <span class="hud-label">Alfvén_Speed (Va)</span>
-                            <span class="hud-value" id="mom-va" style="font-size: 1.2rem;">--</span>
-                        </div>
-                        <div class="hud-card">
-                            <span class="hud-label">Plasma_Beta (β)</span>
-                            <span class="hud-value" id="mom-beta" style="font-size: 1.2rem;">--</span>
-                        </div>
-                        <div class="hud-card">
-                            <span class="hud-label">Mach_Number (Ma)</span>
-                            <span class="hud-value" id="mom-ma" style="font-size: 1.2rem;">--</span>
-                        </div>
-                    </div>
-                </div>
-
             </div>
 
             <footer style="margin-top: 5rem; text-align: center; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; padding-bottom: 50px;">
@@ -188,18 +125,7 @@
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
     <script src="js/nova.js"></script>
     <script src="js/lab.js"></script>
-    <script>
-        // Simple tool toggler for Lab
-        function toggleTool(id) {
-            document.querySelectorAll('.hologram-panel').forEach(p => p.style.display = 'none');
-            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-            
-            document.getElementById(id).style.display = 'block';
-            event.target.classList.add('active');
-        }
-    </script>
 </body>
 </html>

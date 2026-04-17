@@ -10,31 +10,47 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     
-    <!-- Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <!-- Styles -->
     <link rel="stylesheet" href="css/nova.css">
-    <style>
-        /* Specific overrides or local tweaks */
-        #solar-wind-canvas {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            opacity: 0.2;
-            pointer-events: none;
-        }
-    </style>
 </head>
 <body>
 
     <!-- Section 0: Preloader -->
     <div id="preloader">
         <div class="preloader-status">INITIALISING ADITYA-L1 PLASMA LAB...</div>
-        <div class="preloader-bar-bg">
-            <div class="preloader-bar-fill"></div>
-        </div>
+        <div class="preloader-bar-bg"><div class="preloader-bar-fill"></div></div>
     </div>
+
+    <!-- Navigation HUD -->
+    <nav class="nova-nav">
+        <div class="nav-brand-group">
+            <a href="index.html" class="nav-brand" style="color: var(--accent-plasma); text-decoration: none; font-family: var(--font-display); font-weight: 700;">ADITYA-L1</a>
+            <div id="mission-timer">MET: ---D --:--:--</div>
+        </div>
+        
+        <div class="mini-hud-strip">
+            <div class="hud-metric">
+                <span class="hud-metric-label">Density</span>
+                <span class="hud-metric-value" id="hud-density">--.-<span>cm⁻³</span></span>
+            </div>
+            <div class="hud-metric">
+                <span class="hud-metric-label">Velocity</span>
+                <span class="hud-metric-value" id="hud-speed">---<span>km/s</span></span>
+            </div>
+            <div class="hud-metric">
+                <span class="hud-metric-label">B-Field</span>
+                <span class="hud-metric-value" id="hud-mag">--.-<span>nT</span></span>
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a href="index.html" class="nav-link active">SCIENCE</a>
+            <a href="dashboard.html" class="nav-link">DASHBOARD</a>
+            <a href="visualizer.html" class="nav-link">VISUALIZER</a>
+            <a href="explorer.html" class="nav-link">EXPLORER</a>
+            <a href="lab.html" class="nav-link">LAB</a>
+        </div>
+    </nav>
 
     <canvas id="solar-wind-canvas"></canvas>
 
@@ -53,34 +69,20 @@
                 <a href="dashboard.html" class="nova-btn btn-plasma">View Live Data →</a>
                 <a href="#journey" class="nova-btn btn-ghost">Begin Journey ↓</a>
             </div>
-            
-            <div class="stats-strip-bottom hero-reveal" style="margin-top: 15vh; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid rgba(255,255,255,0.1); padding-top: 2rem;">
-                <div>
-                    <span class="hud-label">Distance from Earth</span>
-                    <span style="font-size: 1.5rem; font-weight: 500;">1.5M km</span>
-                </div>
-                <div>
-                    <span class="hud-label">Instruments</span>
-                    <span style="font-size: 1.5rem; font-weight: 500;">5+ Payloads</span>
-                </div>
-                <div>
-                    <span class="hud-label">Data Cadence</span>
-                    <span style="font-size: 1.5rem; font-weight: 500;">6h Syncing</span>
-                </div>
-            </div>
         </div>
     </section>
 
-    <!-- Section 2: [ Chapter ] Distance -->
+    <!-- Section 2: Distance -->
     <section id="journey" class="nova-section">
         <div class="glow-orb orb-plasma" style="top: 20%; right: 10%; width: 500px; height: 500px;"></div>
         <div class="nova-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
             <div class="reveal-text">
-                <span class="chapter-label">[ Chapter ] Distance</span>
+                <span class="chapter-label">[ Chapter 01 ] Distance</span>
                 <h2 class="clamp-large">The L1 Vantage Point</h2>
                 <p class="narrative-text">
-                    Stationed at the first Lagrange point (L1), Aditya-L1 maintains a gravitational balance between the Earth and the Sun. From this vantage point, 1.5 million kilometres away, the spacecraft has an uninterrupted view of the Sun, free from eclipses or occultation.
+                    Stationed at the first Lagrange point (L1), Aditya-L1 maintains a gravitational balance between the Earth and the Sun. 1.5 million kilometres away, it has an uninterrupted view of the Sun.
                 </p>
+                <a href="explorer.html" class="nova-btn btn-ghost" style="margin-top: 2rem; padding: 0.6rem 1.2rem; font-size: 0.7rem;">Reference: L1 Physics</a>
             </div>
             <div class="reveal-text" style="text-align: right;">
                 <div style="font-family: 'JetBrains Mono'; font-size: 5rem; color: var(--accent-solar); font-weight: 700;">1,500,000</div>
@@ -89,13 +91,16 @@
         </div>
     </section>
 
-    <!-- Section 3: [ Chapter ] Solar Wind — Live HUD -->
+    <!-- Section 3: Live HUD -->
     <section class="nova-section" style="background: var(--bg-secondary);">
         <div class="nova-container">
             <div class="reveal-text" style="text-align: center; margin-bottom: 4rem;">
-                <span class="chapter-label">[ Chapter ] Solar Wind</span>
-                <h2 class="clamp-large">Live Plasma Conditions</h2>
-                <p class="narrative-text" style="margin: 0 auto;">Current space weather environment at the L1 Point derived from Level-2 telemetry.</p>
+                <span class="chapter-label">[ Chapter 02 ] Live Telemetry</span>
+                <h2 class="clamp-large">Plasma Conditions</h2>
+                <p class="narrative-text" style="margin: 0 auto;">Real-time measurements from the ASPEX payload.</p>
+                <div style="margin-top: 2rem;">
+                    <a href="dashboard.html" class="nova-btn btn-plasma" style="padding: 0.6rem 1.2rem; font-size: 0.7rem;">Enter Mission Control →</a>
+                </div>
             </div>
             
             <div class="hud-grid reveal-text">
@@ -123,61 +128,37 @@
         </div>
     </section>
 
-    <!-- Section 4: [ Chapter ] The Sun — Corona -->
+    <!-- Section 4: The Corona -->
     <section class="nova-section">
         <div class="vignette"></div>
         <img src="assets/cme.png" alt="Solar Coronal Anatomy" class="sun-bg sun-parallax" style="opacity: 0.4;">
         <div class="nova-container">
             <div class="reveal-text">
-                <span class="chapter-label">[ Chapter ] The Sun</span>
+                <span class="chapter-label">[ Chapter 03 ] Dynamics</span>
                 <h2 class="clamp-huge">THE SOLAR<br>CORONA</h2>
                 <p class="narrative-text" style="margin-top: 2rem;">
-                    The Sun's outer atmosphere, or corona, is a region of million-degree plasma that extends millions of kilometres into space. It is here that the solar wind is born and accelerated to supersonic speeds.
+                    The Sun's outer atmosphere is a region of million-degree plasma. It is here that the solar wind is accelerated to supersonic speeds.
                 </p>
+                <a href="visualizer.html" class="nova-btn btn-ghost" style="margin-top: 2rem; padding: 0.6rem 1.2rem; font-size: 0.7rem;">Visualize Temporal Flux</a>
             </div>
         </div>
     </section>
 
-    <!-- Section 6: [ Chapter ] Instruments -->
-    <section class="nova-section" style="background: var(--bg-secondary);">
-        <div class="nova-container">
-            <div class="reveal-text" style="margin-bottom: 4rem;">
-                <span class="chapter-label">[ Chapter ] Instruments</span>
-                <h2 class="clamp-large">Scientific Payloads</h2>
-            </div>
-            
-            <div class="reveal-text" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem;">
-                <div class="instrument-box" style="padding: 2rem; border-left: 2px solid var(--accent-plasma); background: rgba(255,255,255,0.02);">
-                    <h3 style="margin-bottom: 1rem; color: var(--accent-solar);">ASPEX Suite</h3>
-                    <p class="narrative-text">
-                        The Aditya Solar wind Particle Experiment consists of two sensors: SWIS (Solar Wind Ion Spectrometer) for low-energy ions and STEPS (Supra-Thermal and Energetic Particle Spectrometer) for high-energy populations.
-                    </p>
-                </div>
-                <div class="instrument-box" style="padding: 2rem; border-left: 2px solid var(--accent-corona); background: rgba(255,255,255,0.02);">
-                    <h3 style="margin-bottom: 1rem; color: var(--accent-corona);">MAG & PAPA</h3>
-                    <p class="narrative-text">
-                        The Tri-axial High Resolution Digital Magnetometer measures the IMF, while PAPA (Plasma Analyser Package for Aditya) analyzes the composition and distribution of solar wind plasma.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Section 8: [ Chapter ] Ask SURYA -->
+    <!-- Section 5: Ask SURYA -->
     <section class="nova-section">
         <div class="glow-orb orb-solar" style="bottom: 10%; left: 50%; transform: translateX(-50%); width: 600px; height: 600px;"></div>
         <div class="nova-container" style="text-align: center;">
             <div class="reveal-text">
                 <span class="chapter-label">SURYA • AI</span>
-                <h2 class="clamp-large">Ask Anything About Solar Science</h2>
-                <p class="narrative-text" style="margin: 0 auto 3rem;">Inquire about coronal mass ejections, solar flares, or L1 physics.</p>
+                <h2 class="clamp-large">Mission Intelligence</h2>
+                <p class="narrative-text" style="margin: 0 auto 3rem;">Inquire about coronal mass ejections or L1 physics.</p>
                 
                 <div style="max-width: 600px; margin: 0 auto;">
                     <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
-                        <input type="text" id="surya-input" placeholder="What is the solar wind doing right now?" style="flex: 1; background: var(--bg-secondary); border: 1px solid rgba(255,107,26,0.3); padding: 1rem; color: #fff; font-family: 'Inter'; border-radius: 4px;">
-                        <button id="surya-submit" class="nova-btn btn-plasma" style="padding: 0 2rem;">Inquire</button>
+                        <input type="text" id="surya-input" placeholder="What is the current solar wind velocity?" class="terminal-input" style="flex: 1; margin: 0;">
+                        <button id="surya-submit" class="nova-btn btn-plasma" style="padding: 0 2rem;">Query</button>
                     </div>
-                    <div id="surya-output" style="text-align: left; padding: 2rem; background: rgba(0,0,0,0.4); border: 1px dashed rgba(255,107,26,0.2); min-height: 100px; font-style: italic; color: var(--text-muted);">
+                    <div id="surya-output" class="hologram-panel" style="text-align: left; min-height: 100px; font-style: italic; color: var(--text-muted);">
                         Waiting for inquiry...
                     </div>
                 </div>
@@ -185,20 +166,18 @@
         </div>
     </section>
 
-    <!-- Section 9: Footer -->
-    <footer class="nova-section" style="min-height: auto; padding: 10vh 5vw; border-top: 1px solid rgba(255,255,255,0.05);">
+    <!-- Footer -->
+    <footer class="nova-section" style="min-height: auto; padding: 10vh 5vw; border-top: 1px solid rgba(255,107,26,0.1);">
         <div class="nova-container" style="text-align: center;">
             <div style="font-family: var(--font-display); font-size: 1.5rem; letter-spacing: 0.1em; color: var(--accent-plasma); margin-bottom: 2rem;">ADITYA-L1 // PLASMA LAB</div>
-            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 3rem;">
-                As data streams from 1.5 million kilometres away, the Sun's mysteries unfold —<br>one solar wind measurement at a time.
-            </p>
-            <div style="display: flex; gap: 2rem; justify-content: center; font-family: 'JetBrains Mono'; font-size: 0.8rem;">
-                <a href="dashboard.html" style="color: #fff; text-decoration: none;">TECHNICAL DASHBOARD</a>
-                <a href="lab.html" style="color: #fff; text-decoration: none;">ANALYSIS LAB</a>
-                <a href="visualizer.html" style="color: #fff; text-decoration: none;">VISUALIZER</a>
+            <div style="display: flex; gap: 2rem; justify-content: center; font-family: 'JetBrains Mono'; font-size: 0.8rem; margin-bottom: 3rem;">
+                <a href="dashboard.html" class="nav-link">DASHBOARD</a>
+                <a href="lab.html" class="nav-link">ANALYSIS LAB</a>
+                <a href="visualizer.html" class="nav-link">VISUALIZER</a>
+                <a href="explorer.html" class="nav-link">EXPLORER</a>
             </div>
-            <div style="margin-top: 4rem; font-size: 0.75rem; color: var(--text-dim); font-family: 'JetBrains Mono';">
-                © 2024 • BUILT WITH DATA FROM ISRO PRADAN PIPELINE • ADITYA-L1 MISSION SCIENCE
+            <div style="font-size: 0.7rem; color: var(--text-muted); font-family: 'JetBrains Mono';">
+                © 2024 • DATA FROM ISRO PRADAN PIPELINE • ADITYA-L1 MISSION SCIENCE
             </div>
         </div>
     </footer>

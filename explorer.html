@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="css/nova.css">
     <style>
         .explorer-main {
-            padding-top: 100px;
+            padding-top: 130px;
             background: url('assets/explorer_bg.png') no-repeat center center fixed;
             background-size: cover;
         }
@@ -23,24 +23,37 @@
             background: linear-gradient(rgba(3,2,10,0.8) 0%, rgba(3,2,10,0.98) 100%);
             z-index: 1; pointer-events: none;
         }
-        .chapter-box {
-            margin-bottom: 10vh;
-            padding: 4rem;
-            background: rgba(255,107,26,0.02);
-            border-left: 2px solid var(--accent-plasma);
-        }
     </style>
 </head>
 <body>
 
-    <!-- Navigation -->
+    <!-- Navigation HUD -->
     <nav class="nova-nav">
-        <a href="index.html" class="nav-brand">ADITYA-L1 // PLASMA LAB</a>
+        <div class="nav-brand-group">
+            <a href="index.html" class="nav-brand" style="color: var(--accent-plasma); text-decoration: none; font-family: var(--font-display); font-weight: 700;">ADITYA-L1</a>
+            <div id="mission-timer">MET: ---D --:--:--</div>
+        </div>
+        
+        <div class="mini-hud-strip">
+            <div class="hud-metric">
+                <span class="hud-metric-label">Density</span>
+                <span class="hud-metric-value" id="hud-density">--.-<span>cm⁻³</span></span>
+            </div>
+            <div class="hud-metric">
+                <span class="hud-metric-label">Velocity</span>
+                <span class="hud-metric-value" id="hud-speed">---<span>km/s</span></span>
+            </div>
+            <div class="hud-metric">
+                <span class="hud-metric-label">B-Field</span>
+                <span class="hud-metric-value" id="hud-mag">--.-<span>nT</span></span>
+            </div>
+        </div>
+
         <div class="nav-links">
             <a href="index.html" class="nav-link">SCIENCE</a>
             <a href="dashboard.html" class="nav-link">DASHBOARD</a>
             <a href="visualizer.html" class="nav-link">VISUALIZER</a>
-            <a href="explorer.html" class="nav-link">EXPLORER</a>
+            <a href="explorer.html" class="nav-link active">EXPLORER</a>
             <a href="lab.html" class="nav-link">LAB</a>
         </div>
     </nav>
@@ -53,48 +66,21 @@
             <header class="page-header reveal-text">
                 <span class="chapter-label">[ CHAPTER 00 • REFERENCE ]</span>
                 <h1>MISSION LOG</h1>
-                <p>A technical compendium of the Aditya-L1 instruments, scientific methodology, and the physics of the Lagrange point.</p>
+                <p>A technical compendium of the Aditya-L1 instruments and the physics of the L1 Lagrange point.</p>
             </header>
 
-            <!-- Chapter 1: Instruments -->
-            <section class="chapter-box reveal-text">
+            <section class="hologram-panel reveal-text" style="margin-bottom: 4rem;">
                 <span class="chapter-label">[ CHAPTER 01 • INSTRUMENTS ]</span>
                 <h2 class="clamp-large">The ASPEX Payload</h2>
                 <p class="narrative-text" style="margin-bottom: 2rem;">
-                    The Aditya Solar wind Particle EXperiment (ASPEX) suite is the heart of our plasma analysis. Specialized sensors track the energy distribution of ions from low-energy solar wind populations to supra-thermal flares.
+                    The Aditya Solar wind Particle EXperiment (ASPEX) suite consists of SWIS for low-energy ions and STEPS for supra-thermal populations.
                 </p>
-                <div class="hud-grid">
+                <div class="hud-grid" style="margin-top: 2rem;">
                     <div class="hud-card">
                         <span class="hud-label">SWIS RANGE</span>
                         <span style="font-family: var(--font-display); font-size: 1.5rem;">100 eV - 20 keV</span>
                     </div>
-                    <div class="hud-card">
-                        <span class="hud-label">STEPS RANGE</span>
-                        <span style="font-family: var(--font-display); font-size: 1.5rem;">20 keV - 5 MeV</span>
-                    </div>
                 </div>
-            </section>
-
-            <!-- Chapter 2: Methodology -->
-            <section class="chapter-box reveal-text" style="border-left-color: var(--accent-solar);">
-                <span class="chapter-label">[ CHAPTER 02 • ANALYSIS ]</span>
-                <h2 class="clamp-large">Plasma Moments</h2>
-                <p class="narrative-text" style="margin-bottom: 2rem;">
-                    Deriving physical constants from raw counts requires high-precision numerical integration over the Velocity Distribution Function (VDF). Our pipeline computes zeroth (Density), first (Velocity), and second (Temperature) moments with a 6-hour sync cadence.
-                </p>
-                <div style="font-family: var(--font-mono); color: var(--accent-solar); font-size: 0.8rem; border: 1px dashed var(--border-glow); padding: 1.5rem;">
-                    MODE // DECOMMUTATION_ACTIVE // CALIBRATION_GEO_FACTOR: 0.023
-                </div>
-            </section>
-
-            <!-- Chapter 3: L1 Physics -->
-            <section class="chapter-box reveal-text" style="border-left-color: var(--accent-corona);">
-                <span class="chapter-label">[ CHAPTER 03 • SPACE ]</span>
-                <h2 class="clamp-large">Lagrange Precision</h2>
-                <p class="narrative-text">
-                    Located 1.5 million kilometres from Earth, the L1 point provides the ultimate vantage point. A stable orbit allows for 24/7 solar monitoring, giving us a "30-minute warning" system for oncoming coronal mass ejections.
-                </p>
-                <img src="assets/explorer_bg.png" style="width: 100%; height: 300px; object-fit: cover; margin-top: 2rem; opacity: 0.7; filter: grayscale(50%) sepia(30%) hue-rotate(-20deg);">
             </section>
 
             <footer style="margin-top: 5rem; text-align: center; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; padding-bottom: 50px;">

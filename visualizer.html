@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="css/nova.css">
     <style>
         .visualizer-main {
-            padding-top: 100px;
+            padding-top: 130px;
             background: url('assets/visualizer_bg.png') no-repeat center center fixed;
             background-size: cover;
             min-height: 100vh;
@@ -32,13 +32,32 @@
 </head>
 <body>
 
-    <!-- Navigation -->
+    <!-- Navigation HUD -->
     <nav class="nova-nav">
-        <a href="index.html" class="nav-brand">ADITYA-L1 // PLASMA LAB</a>
+        <div class="nav-brand-group">
+            <a href="index.html" class="nav-brand" style="color: var(--accent-plasma); text-decoration: none; font-family: var(--font-display); font-weight: 700;">ADITYA-L1</a>
+            <div id="mission-timer">MET: ---D --:--:--</div>
+        </div>
+        
+        <div class="mini-hud-strip">
+            <div class="hud-metric">
+                <span class="hud-metric-label">Density</span>
+                <span class="hud-metric-value" id="hud-density">--.-<span>cm⁻³</span></span>
+            </div>
+            <div class="hud-metric">
+                <span class="hud-metric-label">Velocity</span>
+                <span class="hud-metric-value" id="hud-speed">---<span>km/s</span></span>
+            </div>
+            <div class="hud-metric">
+                <span class="hud-metric-label">B-Field</span>
+                <span class="hud-metric-value" id="hud-mag">--.-<span>nT</span></span>
+            </div>
+        </div>
+
         <div class="nav-links">
             <a href="index.html" class="nav-link">SCIENCE</a>
             <a href="dashboard.html" class="nav-link">DASHBOARD</a>
-            <a href="visualizer.html" class="nav-link">VISUALIZER</a>
+            <a href="visualizer.html" class="nav-link active">VISUALIZER</a>
             <a href="explorer.html" class="nav-link">EXPLORER</a>
             <a href="lab.html" class="nav-link">LAB</a>
         </div>
@@ -52,26 +71,11 @@
             <header class="page-header reveal-text">
                 <span class="chapter-label">[ DATA VISION • INTERACTIVE ]</span>
                 <h1>PLASMA EXPLORER</h1>
-                <p>High-resolution temporal analysis of solar wind populations. Zoom and pan to explore micro-structures in the L1 telemetry.</p>
+                <p>High-resolution temporal analysis of solar wind populations.</p>
             </header>
 
-            <div class="hologram-panel reveal-text" style="height: 600px; margin-bottom: 3rem;">
+            <div class="hologram-panel reveal-text" style="height: 500px; margin-bottom: 3rem;">
                 <div id="chart-overview" style="height: 100%; width: 100%;"></div>
-            </div>
-
-            <div class="hud-grid reveal-text">
-                <div class="hud-card">
-                    <span class="hud-label">ANALYSIS MODE</span>
-                    <span style="font-family: var(--font-display); font-size: 1.2rem; color: var(--accent-solar);">TIME SERIES</span>
-                </div>
-                <div class="hud-card">
-                    <span class="hud-label">TIME WINDOW</span>
-                    <span style="font-family: var(--font-display); font-size: 1.2rem;">LATEST 24H</span>
-                </div>
-                <div class="hud-card">
-                    <span class="hud-label">SENSORS</span>
-                    <span style="font-family: var(--font-display); font-size: 1.2rem;">SWIS + MAG</span>
-                </div>
             </div>
 
             <footer style="margin-top: 5rem; text-align: center; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; padding-bottom: 50px;">

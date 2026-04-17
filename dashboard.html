@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="css/nova.css">
     <style>
         .dashboard-main {
-            padding-top: 100px;
+            padding-top: 130px;
             padding-bottom: 50px;
             min-height: 100vh;
             background: url('assets/dashboard_bg.png') no-repeat center center fixed;
@@ -33,12 +33,31 @@
 </head>
 <body>
 
-    <!-- Navigation -->
+    <!-- Navigation HUD -->
     <nav class="nova-nav">
-        <a href="index.html" class="nav-brand">ADITYA-L1 // PLASMA LAB</a>
+        <div class="nav-brand-group">
+            <a href="index.html" class="nav-brand" style="color: var(--accent-plasma); text-decoration: none; font-family: var(--font-display); font-weight: 700;">ADITYA-L1</a>
+            <div id="mission-timer">MET: ---D --:--:--</div>
+        </div>
+        
+        <div class="mini-hud-strip">
+            <div class="hud-metric">
+                <span class="hud-metric-label">Density</span>
+                <span class="hud-metric-value" id="hud-density">--.-<span>cm⁻³</span></span>
+            </div>
+            <div class="hud-metric">
+                <span class="hud-metric-label">Velocity</span>
+                <span class="hud-metric-value" id="hud-speed">---<span>km/s</span></span>
+            </div>
+            <div class="hud-metric">
+                <span class="hud-metric-label">B-Field</span>
+                <span class="hud-metric-value" id="hud-mag">--.-<span>nT</span></span>
+            </div>
+        </div>
+
         <div class="nav-links">
             <a href="index.html" class="nav-link">SCIENCE</a>
-            <a href="dashboard.html" class="nav-link">DASHBOARD</a>
+            <a href="dashboard.html" class="nav-link active">DASHBOARD</a>
             <a href="visualizer.html" class="nav-link">VISUALIZER</a>
             <a href="explorer.html" class="nav-link">EXPLORER</a>
             <a href="lab.html" class="nav-link">LAB</a>
@@ -54,9 +73,6 @@
                 <span class="chapter-label">[ L1 TELEMETRY • MISSION CONTROL ]</span>
                 <h1>MISSION MONITORING</h1>
                 <p>Real-time plasma parameters and magnetic field vectors streamed from the Sun-Earth L1 point.</p>
-                <div style="margin-top: 1.5rem;">
-                    <button id="sync-btn" class="nova-btn btn-ghost" style="padding: 0.6rem 1.2rem; font-size: 0.7rem;">⟳ SYNCING...</button>
-                </div>
             </header>
 
             <!-- Metrics HUD -->
@@ -83,14 +99,7 @@
                 </div>
             </div>
 
-            <!-- Visualization Tabs -->
             <div class="hologram-panel reveal-text">
-                <div style="display: flex; gap: 1rem; border-bottom: 1px solid var(--border-glow); margin-bottom: 2rem;">
-                    <a href="#" class="nav-link active" style="padding: 1rem 0;">OVERVIEW MONITOR</a>
-                    <a href="#" class="nav-link" style="padding: 1rem 0; opacity: 0.5;">MAG-FIELD VECTORS</a>
-                    <a href="#" class="nav-link" style="padding: 1rem 0; opacity: 0.5;">SPECTRAL FLUX</a>
-                </div>
-                
                 <div id="chart-overview" style="height: 450px; width: 100%;"></div>
             </div>
 

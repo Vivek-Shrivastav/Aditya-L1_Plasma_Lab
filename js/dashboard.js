@@ -1,8 +1,5 @@
 // --- NOVA Dashboard Controller ---
 
-const LATEST_URL = 'data/latest.json';
-const HISTORY_URL = 'data/history.json';
-
 const LAYOUT_BASE = {
     paper_bgcolor: 'transparent',
     plot_bgcolor: 'rgba(5,10,20,0.6)',
@@ -22,28 +19,7 @@ const LAYOUT_BASE = {
     legend: { x: 0, y: 1.1, orientation: 'h', font: { size: 9 } }
 };
 
-let latestData = null;
-
-async function syncData() {
-    const btn = document.getElementById('sync-btn');
-    if (btn) btn.innerText = 'SYNCING...';
-
-    try {
-        const res = await fetch(LATEST_URL + '?t=' + Date.now());
-        latestData = await res.json();
-        
-        updateHUD(latestData);
-        renderCharts(latestData);
-        
-        if (btn) btn.innerText = 'SYNC COMPLETE';
-        setTimeout(() => { if (btn) btn.innerText = 'SYNC NOMINAL'; }, 2000);
-    } catch (e) {
-        console.error("Sync failed", e);
-        if (btn) btn.innerText = 'SYNC FAILED';
-    }
-}
-
-function updateHUD(data) {
+function updateDashboardUI(data) {
     const s = data.scalars;
     if (!s) return;
 
@@ -61,15 +37,16 @@ function updateHUD(data) {
             el.setAttribute('data-value', val);
         }
     }
+
+    renderCharts(data);
 }
 
 function renderCharts(data) {
     const mom = data.moments;
-    if (!mom) return;
+    if (!mom || !document.getElementById('chart-overview')) return;
 
     const times = mom.times.map(t => new Date(t));
 
-    // Overview Chart
     const traces = [
         {
             x: times, y: mom.density,
@@ -85,10 +62,15 @@ function renderCharts(data) {
     const layout = { ...LAYOUT_BASE };
     layout.yaxis2 = { overlaying: 'y', side: 'right', showgrid: false };
     
-    Plotly.newPlot('chart-overview', traces, layout, { responsive: true, displayModeBar: false });
+    Plotly.react('chart-overview', traces, layout, { responsive: true, displayModeBar: false });
 }
 
+// Listen for global telemetry updates from nova.js
+document.addEventListener('adityaDataUpdate', (e) => {
+    updateDashboardUI(e.detail);
+});
+
 document.addEventListener('DOMContentLoaded', () => {
-    syncData();
-    setInterval(syncData, 600000); // 10 min refresh
+    // Initial UI check if data already exists
+    if (window.adityaTelemetry) updateDashboardUI(window.adityaTelemetry);
 });
