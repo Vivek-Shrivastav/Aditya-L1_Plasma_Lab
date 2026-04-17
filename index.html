@@ -358,6 +358,38 @@
             transform: translateY(0);
         }
 
+        /* --- L1 Geometry Diagram --- */
+        .l1-diagram-container {
+            margin: 4rem 0;
+            padding: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+        }
+        .l1-diagram {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            display: block;
+        }
+        .l1-label {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            fill: var(--text-secondary);
+        }
+        .l1-arrow {
+            stroke: var(--primary);
+            stroke-width: 2;
+            fill: none;
+            marker-end: url(#arrowhead);
+        }
+        .l1-solar-wind {
+            stroke: var(--secondary);
+            stroke-width: 1.5;
+            stroke-dasharray: 5,5;
+            opacity: 0.6;
+        }
+
         @media (max-width: 768px) {
             .hero h1 { font-size: 3rem; }
             .stats-container { flex-direction: column; gap: 2rem; }

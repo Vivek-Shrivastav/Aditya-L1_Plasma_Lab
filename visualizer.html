@@ -3,548 +3,482 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aditya-L1 • Data Visualizer</title>
-    <!-- Fonts -->
+    <title>Aditya-L1 Data Visualizer</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Plotly.js -->
-    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
     <style>
         :root {
-            --bg-deep: #05070a;
-            --bg-sidebar: #0a0d14;
-            --bg-card: rgba(13, 17, 23, 0.7);
-            --bg-nav: rgba(5, 7, 10, 0.85);
-            --border: rgba(255, 255, 255, 0.08);
-            --border-hover: rgba(255, 255, 255, 0.15);
-            --primary: #00d4ff;
-            --primary-glow: rgba(0, 212, 255, 0.3);
-            --secondary: #ff7a00;
-            --text-main: #e6edf3;
-            --text-muted: #8b949e;
-            --text-dim: #484f58;
-            --font-sans: 'Inter', system-ui, sans-serif;
-            --font-mono: 'JetBrains+Mono', monospace;
-            --blur: 12px;
-            --transition: all 0.2s ease;
+            --bg-base: #050a14;
+            --bg-panel: rgba(255,255,255,0.04);
+            --bg-panel-hover: rgba(255,255,255,0.07);
+            --accent-blue: #00d4ff;
+            --accent-orange: #ff8c42;
+            --accent-green: #39ff14;
+            --text-primary: #e0f0ff;
+            --text-secondary: #8ba3c4;
+            --text-dim: #4a6080;
+            --border-glow: rgba(0,212,255,0.15);
+            --font-ui: 'Inter', sans-serif;
+            --font-data: 'JetBrains Mono', monospace;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            background-color: var(--bg-deep);
-            color: var(--text-main);
-            font-family: var(--font-sans);
-            overflow: hidden;
+            background: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            font-size: 14px;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background: radial-gradient(ellipse at 20% 30%, rgba(0,100,200,0.06) 0%, transparent 60%);
+            pointer-events: none; z-index: 0;
+        }
+
+        .nav-bar {
+            position: sticky; top: 0; z-index: 100;
+            display: flex; align-items: center; gap: 24px;
+            padding: 0 24px; height: 58px;
+            background: rgba(5,10,20,0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glow);
+        }
+        .nav-brand { display: flex; align-items: baseline; gap: 8px; text-decoration: none; }
+        .nav-logo { font-size: 22px; }
+        .nav-title { font-size: 14px; letter-spacing: 0.12em; color: var(--accent-blue); font-weight: 700; }
+        .nav-sub { font-size: 10px; color: var(--text-secondary); letter-spacing: 0.08em; }
+        .nav-links { display: flex; gap: 4px; margin-left: auto; }
+        .nav-links a {
+            padding: 6px 14px; border-radius: var(--radius-sm);
+            color: var(--text-secondary); text-decoration: none;
+            font-size: 13px; font-weight: 500; transition: 0.2s;
+        }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent-blue); background: rgba(0,212,255,0.08); }
+        .nav-links a.active { border-bottom: 2px solid var(--accent-blue); }
+
+        main { display: flex; max-width: 1600px; margin: 0 auto; padding: 20px; gap: 20px; }
+
+        .sidebar {
+            width: 320px;
+            flex-shrink: 0;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            height: fit-content;
+        }
+
+        .content {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            gap: 16px;
         }
 
-        /* --- Navigation --- */
-        nav {
-            height: 64px;
-            background: var(--bg-nav);
-            backdrop-filter: blur(var(--blur));
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 1.5rem;
-            flex-shrink: 0;
-            z-index: 100;
+        .section {
+            margin-bottom: 20px;
         }
-
-        .nav-brand {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            font-weight: 800;
-            font-size: 1rem;
-            color: var(--text-main);
-            text-decoration: none;
-        }
-
-        .nav-brand i { color: var(--secondary); }
-
-        .nav-links { display: flex; gap: 0.75rem; }
-
-        .nav-link {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            font-weight: 500;
-            padding: 0.4rem 0.6rem;
-            border-radius: 6px;
-            text-decoration: none;
-            transition: var(--transition);
-        }
-
-        .nav-link:hover, .nav-link.active {
-            color: var(--text-main);
-            background: rgba(255,255,255,0.05);
-        }
-        .nav-link.active { color: var(--primary); }
-
-        /* --- Layout --- */
-        main {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        #sidebar {
-            width: 320px;
-            background: var(--bg-sidebar);
-            border-right: 1px solid var(--border);
-            padding: 1.5rem;
-            overflow-y: auto;
-            flex-shrink: 0;
-        }
-
-        #content {
-            flex: 1;
-            padding: 1.5rem;
-            overflow-y: auto;
-            background-image: 
-                radial-gradient(circle at 50% 50%, rgba(0, 212, 255, 0.02) 0%, transparent 70%);
-        }
-
-        /* --- Sidebar Helpers --- */
-        .sidebar-section { margin-bottom: 2rem; }
-        .sidebar-title {
-            font-size: 0.75rem;
+        .section h3 {
+            font-size: 11px;
+            color: var(--text-secondary);
             text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: var(--text-dim);
-            font-weight: 700;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .sidebar-title i { font-size: 0.9rem; }
-
-        /* Tabs in Sidebar */
-        .mode-tabs {
-            display: flex;
-            background: rgba(255,255,255,0.03);
-            padding: 0.3rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-        .mtab {
-            flex: 1;
-            padding: 0.5rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-align: center;
-            cursor: pointer;
-            border-radius: 6px;
-            color: var(--text-muted);
-            transition: var(--transition);
-        }
-        .mtab.active {
-            background: var(--primary);
-            color: #000;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
         }
 
-        /* Forms */
-        .form-group { margin-bottom: 1rem; }
-        label {
+        .form-group {
+            margin-bottom: 12px;
+        }
+        .form-group label {
             display: block;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-bottom: 0.4rem;
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 6px;
         }
-        input, select {
+        .form-group input, .form-group select {
             width: 100%;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 0.6rem 0.8rem;
-            color: var(--text-main);
-            font-family: var(--font-sans);
-            font-size: 0.85rem;
-            outline: none;
+            background: rgba(5,10,20,0.6);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            color: var(--text-primary);
+            font-family: var(--font-data);
+            font-size: 13px;
         }
-        input:focus { border-color: var(--primary); }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-glow);
+            background: rgba(0,212,255,0.06);
+            color: var(--accent-blue);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: var(--font-data);
+            margin-bottom: 8px;
+        }
+        .btn:hover { background: rgba(0,212,255,0.14); }
+        .btn-primary { background: var(--accent-blue); color: #000; border: none; }
+        .btn-primary:hover { background: #4de5ff; }
+        .btn-group { display: flex; gap: 8px; }
+        .btn-group .btn { flex: 1; }
 
         .checkbox-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.6rem;
-        }
-        .cbx {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            cursor: pointer;
-            user-select: none;
-        }
-        .cbx input { width: 14px; height: 14px; cursor: pointer; }
-
-        /* Buttons */
-        .btn-action {
-            width: 100%;
-            background: var(--primary);
-            color: #000;
-            border: none;
-            padding: 0.8rem;
-            border-radius: 10px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            transition: var(--transition);
-            margin-top: 1rem;
-        }
-        .btn-action:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px var(--primary-glow);
-        }
-
-        /* --- Content Layout --- */
-        .timestamp-strip {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            margin-bottom: 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            backdrop-filter: blur(var(--blur));
-        }
-        .ts-item { display: flex; flex-direction: column; gap: 0.2rem; }
-        .ts-lbl { font-size: 0.65rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700; }
-        .ts-val { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-main); }
-
-        .plot-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-            gap: 1.5rem;
-        }
-        .plot-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.25rem;
-            backdrop-filter: blur(var(--blur));
-        }
-        .plot-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-        }
-        .plot-title { font-size: 0.9rem; font-weight: 700; color: var(--text-main); }
-        .chart-div { width: 100%; height: 320px; }
-
-        /* --- Empty State --- */
-        #empty-state {
             display: flex;
             flex-direction: column;
+            gap: 8px;
+        }
+        .checkbox-group label {
+            display: flex;
             align-items: center;
-            justify-content: center;
-            height: 60vh;
-            color: var(--text-dim);
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 16px; height: 16px;
+            accent-color: var(--accent-blue);
+        }
+
+        .chart-container {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            min-height: 350px;
+        }
+
+        .file-drop {
+            border: 2px dashed var(--border-glow);
+            border-radius: var(--radius-md);
+            padding: 24px;
             text-align: center;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: 0.2s;
         }
-        #empty-state i { font-size: 4rem; margin-bottom: 2rem; opacity: 0.3; }
-        #empty-state h2 { font-weight: 700; margin-bottom: 1rem; color: var(--text-muted); }
-
-        /* Loading Overlay */
-        #loading-overlay {
-            position: fixed; inset: 0; background: rgba(5,7,10,0.8);
-            z-index: 1000; display: none; align-items: center; justify-content: center;
-            flex-direction: column; gap: 1rem; backdrop-filter: blur(4px);
+        .file-drop:hover {
+            border-color: var(--accent-blue);
+            background: rgba(0,212,255,0.04);
         }
-        .loader { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .file-drop input { display: none; }
 
-        @media (max-width: 900px) {
-            main { flex-direction: column; }
-            #sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
-            #content { overflow-y: visible; }
-            .plot-grid { grid-template-columns: 1fr; }
+        .data-info {
+            font-family: var(--font-data);
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 8px;
         }
     </style>
 </head>
 <body>
-
-    <div id="loading-overlay">
-        <div class="loader"></div>
-        <div id="loading-msg" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--primary);">PROCESSING DATA...</div>
-    </div>
-
-    <nav>
-        <a href="index.html" class="nav-brand">
-            <i class="fas fa-satellite-dish"></i>
-            <span>ADITYA-L1 <span style="font-weight: 300; opacity: 0.6; margin-left: 0.2rem;">PLASMA LAB</span></span>
-        </a>
-        <div class="nav-links">
-            <a href="index.html" class="nav-link">Science</a>
-            <a href="dashboard.html" class="nav-link">Dashboard</a>
-            <a href="visualizer.html" class="nav-link active">Visualizer</a>
-            <a href="explorer.html" class="nav-link">Explorer</a>
+    <nav class="nav-bar">
+        <div class="nav-brand">
+            <span class="nav-logo">☀</span>
+            <span class="nav-title">ADITYA-L1</span>
+            <span class="nav-sub">DATA VISUALIZER</span>
         </div>
-        <div class="nav-right" style="display: flex; align-items: center; gap: 1rem;">
-             <span id="sync-status" style="font-size: 0.7rem; color: var(--text-muted); font-family: var(--font-mono);">SYNC: OK</span>
+        <div class="nav-links">
+            <a href="index.html">Learn</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="visualizer.html" class="active">Visualizer</a>
+            <a href="explorer.html">Explorer</a>
+            <a href="lab.html">Lab</a>
         </div>
     </nav>
 
     <main>
-        <aside id="sidebar">
-            <div class="sidebar-section">
-                <div class="sidebar-title"><i class="fas fa-database"></i> Data Source</div>
-                <div class="mode-tabs">
-                    <div class="mtab active" onclick="setMode('live')" id="tab-live">Live Cache</div>
-                    <div class="mtab" onclick="setMode('date')" id="tab-date">By Date</div>
-                    <div class="mtab" onclick="setMode('upload')" id="tab-upload">Upload</div>
+        <!-- Sidebar Controls -->
+        <aside class="sidebar">
+            <div class="section">
+                <h3>Date Range Selection</h3>
+                <div class="form-group">
+                    <label>Start Date/Time</label>
+                    <input type="datetime-local" id="date-start">
                 </div>
-
-                <div id="mode-live" class="mode-panel">
-                    <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">Loads the latest processed data from the GitHub pipeline (updated every 6h).</p>
+                <div class="form-group">
+                    <label>End Date/Time</label>
+                    <input type="datetime-local" id="date-end">
                 </div>
-
-                <div id="mode-date" class="mode-panel" style="display: none;">
-                    <div class="form-group">
-                        <label>Date (UTC)</label>
-                        <input type="date" id="start-date" value="2024-01-15">
-                    </div>
-                    <div class="form-group">
-                        <label>Start Time (UTC)</label>
-                        <input type="time" id="start-time" value="00:00">
-                    </div>
-                    <div class="form-group">
-                        <label>End Time (UTC)</label>
-                        <input type="time" id="end-time" value="06:00">
-                    </div>
-                </div>
-
-                <div id="mode-upload" class="mode-panel" style="display: none;">
-                    <div style="border: 2px dashed var(--border); padding: 1.5rem; border-radius: 12px; text-align: center; cursor: pointer;" onclick="document.getElementById('file-input').click()">
-                        <i class="fas fa-file-upload" style="font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--text-dim);"></i>
-                        <p style="font-size: 0.7rem; color: var(--text-muted);">Drop CDF/JSON here</p>
-                    </div>
-                    <input type="file" id="file-input" style="display: none;" onchange="handleFileUpload(this)">
-                </div>
+                <button class="btn btn-primary" onclick="loadDateRange()">Load Selected Range</button>
             </div>
 
-            <div class="sidebar-section">
-                <div class="sidebar-title"><i class="fas fa-microchip"></i> Instruments</div>
+            <div class="section">
+                <h3>Upload CDF File</h3>
+                <div class="file-drop" onclick="document.getElementById('cdf-input').click()">
+                    <div style="font-size: 24px; margin-bottom: 8px;">📁</div>
+                    <div>Click to upload or drag CDF file</div>
+                    <div class="data-info">Supports Level-2 CDF files from PRADAN</div>
+                    <input type="file" id="cdf-input" accept=".cdf" onchange="handleCdfUpload(event)">
+                </div>
+                <div id="file-info" class="data-info"></div>
+            </div>
+
+            <div class="section">
+                <h3>Visible Variables</h3>
                 <div class="checkbox-group">
-                    <label class="cbx"><input type="checkbox" id="cb-swis" checked> SWIS</label>
-                    <label class="cbx"><input type="checkbox" id="cb-papa" checked> PAPA</label>
-                    <label class="cbx"><input type="checkbox" id="cb-mag" checked> MAG</label>
-                    <label class="cbx"><input type="checkbox" id="cb-steps" checked> STEPS</label>
+                    <label><input type="checkbox" checked onchange="toggleVariable('density')"> Proton Density</label>
+                    <label><input type="checkbox" checked onchange="toggleVariable('velocity')"> Bulk Speed</label>
+                    <label><input type="checkbox" checked onchange="toggleVariable('temperature')"> Temperature</label>
+                    <label><input type="checkbox" checked onchange="toggleVariable('Bx')"> Bx (GSE)</label>
+                    <label><input type="checkbox" checked onchange="toggleVariable('By')"> By (GSE)</label>
+                    <label><input type="checkbox" checked onchange="toggleVariable('Bz')"> Bz (GSE)</label>
+                    <label><input type="checkbox" checked onchange="toggleVariable('B_mag')"> |B| Total</label>
                 </div>
             </div>
 
-            <div class="sidebar-section">
-                <div class="sidebar-title"><i class="fas fa-chart-area"></i> Plots</div>
-                <div class="checkbox-group">
-                    <label class="cbx"><input type="checkbox" id="cb-n" checked> Density</label>
-                    <label class="cbx"><input type="checkbox" id="cb-v" checked> Speed</label>
-                    <label class="cbx"><input type="checkbox" id="cb-t" checked> Temp</label>
-                    <label class="cbx"><input type="checkbox" id="cb-bmag" checked> |B|</label>
-                    <label class="cbx"><input type="checkbox" id="cb-bcomps" checked> B Comp</label>
-                    <label class="cbx"><input type="checkbox" id="cb-spec" checked> Spectro</label>
+            <div class="section">
+                <h3>Export</h3>
+                <div class="btn-group">
+                    <button class="btn" onclick="exportCSV()">Download CSV</button>
+                    <button class="btn" onclick="exportPNG()">Export PNG</button>
                 </div>
             </div>
-
-            <button class="btn-action" onclick="runVisualization()">
-                <i class="fas fa-play"></i> Run Visualization
-            </button>
         </aside>
 
-        <section id="content">
-            <div id="empty-state">
-                <i class="fas fa-satellite"></i>
-                <h2>Ready for Analysis</h2>
-                <p>Select a data source and instruments to begin visual calibration.</p>
+        <!-- Main Content -->
+        <div class="content">
+            <div class="chart-container">
+                <div id="chart-plasma" style="height: 350px;"></div>
             </div>
-
-            <div id="main-view" style="display: none;">
-                <div class="timestamp-strip">
-                    <div class="ts-item">
-                        <div class="ts-lbl">Data Source</div>
-                        <div class="ts-val" id="ts-source">PRADAN Pipeline</div>
-                    </div>
-                    <div class="ts-item">
-                        <div class="ts-lbl">Window Start</div>
-                        <div class="ts-val" id="ts-start">--:--:--</div>
-                    </div>
-                    <div class="ts-item">
-                        <div class="ts-lbl">Window End</div>
-                        <div class="ts-val" id="ts-end">--:--:--</div>
-                    </div>
-                </div>
-
-                <div class="plot-grid" id="plot-grid"></div>
+            <div class="chart-container">
+                <div id="chart-magnetic" style="height: 350px;"></div>
             </div>
-        </section>
+        </div>
     </main>
 
     <script>
-        let currentMode = 'live';
-        let latestData = null;
-        let uploadedData = null;
-
-        const COLORS = {
-            primary: '#00d4ff',
-            secondary: '#ff7a00',
-            grid: 'rgba(255, 255, 255, 0.05)',
-            text: '#8b949e'
+        // --- State ---
+        let historyData = null;
+        let filteredData = null;
+        let visibleVars = {
+            density: true,
+            velocity: true,
+            temperature: true,
+            Bx: true,
+            By: true,
+            Bz: true,
+            B_mag: true
         };
 
-        const PLOTLY_LAYOUT = {
-            paper_bgcolor: 'rgba(0,0,0,0)',
-            plot_bgcolor: 'rgba(0,0,0,0)',
-            font: { family: 'Inter, sans-serif', color: COLORS.text, size: 10 },
-            margin: { t: 20, r: 20, l: 40, b: 30 },
-            xaxis: { gridcolor: COLORS.grid, linecolor: COLORS.grid, tickfont: { size: 9 } },
-            yaxis: { gridcolor: COLORS.grid, linecolor: COLORS.grid, tickfont: { size: 9 } },
-            legend: { font: { size: 9 }, bgcolor: 'rgba(0,0,0,0)' }
-        };
+        // --- Initialize ---
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadHistoryData();
+            setupDatePickers();
+        });
 
-        function setMode(m) {
-            currentMode = m;
-            document.querySelectorAll('.mtab').forEach(t => t.classList.remove('active'));
-            document.getElementById('tab-' + m).classList.add('active');
-            document.querySelectorAll('.mode-panel').forEach(p => p.style.display = 'none');
-            document.getElementById('mode-' + m).style.display = 'block';
-        }
-
-        function setLoading(isLoading) {
-            document.getElementById('loading-overlay').style.display = isLoading ? 'flex' : 'none';
-        }
-
-        async function runVisualization() {
-            setLoading(true);
+        // --- Load History Data ---
+        async function loadHistoryData() {
             try {
-                let data;
-                if (currentMode === 'live') {
-                    const res = await fetch('data/latest.json?t=' + Date.now());
-                    data = await res.json();
-                } else if (currentMode === 'upload' && uploadedData) {
-                    data = uploadedData;
-                } else {
-                    // Date mode: fetch latest as demo (in real app would fetch specific date)
-                    const res = await fetch('data/latest.json?t=' + Date.now());
-                    data = await res.json();
-                }
+                const res = await fetch('data/history.json?t=' + Date.now());
+                historyData = await res.json();
 
-                renderData(data);
-                document.getElementById('empty-state').style.display = 'none';
-                document.getElementById('main-view').style.display = 'block';
-            } catch (err) {
-                console.error(err);
-                alert('Error processing data stream.');
-            } finally {
-                setLoading(false);
+                // Set date picker bounds
+                if (historyData.records && historyData.records.length > 0) {
+                    const firstTime = new Date(historyData.records[0].time);
+                    const lastTime = new Date(historyData.records[historyData.records.length - 1].time);
+
+                    document.getElementById('date-start').value = toLocalISOString(firstTime);
+                    document.getElementById('date-end').value = toLocalISOString(lastTime);
+
+                    filteredData = historyData.records;
+                    renderCharts();
+                }
+            } catch (e) {
+                console.error('Failed to load history:', e);
             }
         }
 
-        function renderData(data) {
-            const grid = document.getElementById('plot-grid');
-            grid.innerHTML = '';
-            
-            const times = data.moments?.times.map(t => new Date(t)) || [];
-            document.getElementById('ts-start').textContent = times[0]?.toLocaleString() || '--';
-            document.getElementById('ts-end').textContent = times[times.length-1]?.toLocaleString() || '--';
-            document.getElementById('ts-source').textContent = data.simulated ? 'SIMULATED' : 'LIVE TELEMETRY';
+        // --- Date Pickers ---
+        function setupDatePickers() {
+            // Auto-set end date to now
+            document.getElementById('date-end').value = toLocalISOString(new Date());
+        }
 
-            // Factory for cards
-            const createCard = (title) => {
-                const card = document.createElement('div');
-                card.className = 'plot-card';
-                card.innerHTML = `<div class="plot-header"><div class="plot-title">${title}</div></div><div class="chart-div"></div>`;
-                grid.appendChild(card);
-                return card.querySelector('.chart-div');
+        function toLocalISOString(date) {
+            const pad = n => n.toString().padStart(2, '0');
+            return date.getFullYear() + '-' +
+                pad(date.getMonth() + 1) + '-' +
+                pad(date.getDate()) + 'T' +
+                pad(date.getHours()) + ':' +
+                pad(date.getMinutes());
+        }
+
+        // --- Load Date Range ---
+        function loadDateRange() {
+            const startStr = document.getElementById('date-start').value;
+            const endStr = document.getElementById('date-end').value;
+
+            if (!startStr || !endStr) {
+                alert('Please select both start and end dates');
+                return;
+            }
+
+            const startDate = new Date(startStr);
+            const endDate = new Date(endStr);
+
+            if (startDate > endDate) {
+                alert('Start date must be before end date');
+                return;
+            }
+
+            filteredData = historyData.records.filter(r => {
+                const t = new Date(r.time);
+                return t >= startDate && t <= endDate;
+            });
+
+            renderCharts();
+        }
+
+        // --- Toggle Variables ---
+        function toggleVariable(name) {
+            visibleVars[name] = !visibleVars[name];
+            renderCharts();
+        }
+
+        // --- Render Charts ---
+        function renderCharts() {
+            if (!filteredData || filteredData.length === 0) return;
+
+            const times = filteredData.map(r => new Date(r.time));
+
+            // Plasma Chart
+            const plasmaTraces = [];
+
+            if (visibleVars.density) {
+                plasmaTraces.push({
+                    x: times, y: filteredData.map(r => r.density),
+                    name: 'Density', type: 'scatter', mode: 'lines',
+                    line: { color: '#00d4ff', width: 2 }
+                });
+            }
+
+            if (visibleVars.velocity) {
+                plasmaTraces.push({
+                    x: times, y: filteredData.map(r => r.velocity),
+                    name: 'Speed', type: 'scatter', mode: 'lines',
+                    line: { color: '#ff8c42', width: 2 },
+                    yaxis: 'y2'
+                });
+            }
+
+            if (visibleVars.temperature) {
+                plasmaTraces.push({
+                    x: times, y: filteredData.map(r => r.temperature),
+                    name: 'Temperature', type: 'scatter', mode: 'lines',
+                    line: { color: '#39ff14', width: 2 },
+                    yaxis: 'y2'
+                });
+            }
+
+            const plasmaLayout = {
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'rgba(5,10,20,0.6)',
+                font: { family: 'JetBrains Mono', color: '#a8b4c8', size: 11 },
+                xaxis: { gridcolor: 'rgba(0,212,255,0.08)', title: 'Time' },
+                yaxis: { title: 'Density [cm⁻³]', side: 'left' },
+                yaxis2: { title: 'Speed [km/s], Temp [eV]', overlaying: 'y', side: 'right', gridcolor: 'transparent' },
+                margin: { l: 55, r: 55, t: 20, b: 40 },
+                showlegend: true,
+                legend: { x: 0, y: 1 }
             };
 
-            const show = (id) => document.getElementById('cb-' + id).checked;
+            Plotly.newPlot('chart-plasma', plasmaTraces, plasmaLayout, { responsive: true, displaylogo: false });
 
-            if (data.moments) {
-                if (show('n')) renderLine(createCard('Ion Density [cm⁻³]'), times, data.moments.density, '#00d4ff');
-                if (show('v')) renderLine(createCard('Bulk Speed [km/s]'), times, data.moments.velocity, '#ff7a00');
-                if (show('t')) renderLine(createCard('Temperature [eV]'), times, data.moments.temperature, '#00e676');
+            // Magnetic Chart
+            const magTraces = [];
+
+            if (visibleVars.Bx) {
+                magTraces.push({
+                    x: times, y: filteredData.map(r => r.B_mag),
+                    name: '|B|', type: 'scatter', mode: 'lines',
+                    line: { color: '#ffffff', width: 2 }
+                });
             }
 
-            if (data.mag) {
-                const magTimes = data.mag.times.map(t => new Date(t));
-                if (show('bmag')) renderLine(createCard('|B| Magnitude [nT]'), magTimes, data.mag.B_mag, '#ffffff');
-                if (show('bcomps')) {
-                    const div = createCard('IMF Components [GSE]');
-                    const traces = [
-                        { x: magTimes, y: data.mag.Bx, name: 'Bx', line: { color: '#ff5252' } },
-                        { x: magTimes, y: data.mag.By, name: 'By', line: { color: '#ffd600' } },
-                        { x: magTimes, y: data.mag.Bz, name: 'Bz', line: { color: '#e040fb' } }
-                    ].map(t => ({ ...t, type: 'scatter', mode: 'lines' }));
-                    Plotly.newPlot(div, traces, PLOTLY_LAYOUT, { responsive: true, displayModeBar: false });
-                }
+            if (visibleVars.Bz) {
+                magTraces.push({
+                    x: times, y: filteredData.map(r => r.Bz),
+                    name: 'Bz', type: 'scatter', mode: 'lines',
+                    line: { color: '#ff5252', width: 1.5, dash: 'dot' }
+                });
             }
 
-            if (data.steps && show('spec')) {
-                renderSpectrogram(createCard('STEPS Spectrogram'), data.steps);
-            }
-        }
-
-        function renderLine(div, x, y, color) {
-            const trace = {
-                x: x, y: y,
-                type: 'scatter', mode: 'lines',
-                line: { color: color, width: 2, shape: 'spline' },
-                fill: 'tozeroy', fillcolor: color + '10'
-            };
-            Plotly.newPlot(div, [trace], PLOTLY_LAYOUT, { responsive: true, displayModeBar: false });
-        }
-
-        function renderSpectrogram(div, steps) {
-            const z = [];
-            for (let i = 0; i < steps.flux[0].length; i++) {
-                const row = [];
-                for (let j = 0; j < steps.flux.length; j++) {
-                    row.push(Math.log10(Math.max(steps.flux[j][i], 1e-30)));
-                }
-                z.push(row);
-            }
-
-            const trace = {
-                z: z,
-                x: steps.times.map(t => new Date(t)),
-                y: Array.from({length: z.length}, (_, i) => i),
-                type: 'heatmap',
-                colorscale: 'Plasma',
-                showscale: false
+            const magLayout = {
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'rgba(5,10,20,0.6)',
+                font: { family: 'JetBrains Mono', color: '#a8b4c8', size: 11 },
+                xaxis: { gridcolor: 'rgba(0,212,255,0.08)', title: 'Time' },
+                yaxis: { gridcolor: 'rgba(0,212,255,0.08)', title: 'B [nT]' },
+                margin: { l: 55, r: 20, t: 20, b: 40 },
+                showlegend: true
             };
 
-            const layout = JSON.parse(JSON.stringify(PLOTLY_LAYOUT));
-            layout.yaxis.title = 'Energy Channel';
-            
-            Plotly.newPlot(div, [trace], layout, { responsive: true, displayModeBar: false });
+            Plotly.newPlot('chart-magnetic', magTraces, magLayout, { responsive: true, displaylogo: false });
         }
 
-        function handleFileUpload(input) {
-            const file = input.files[0];
+        // --- CDF Upload Handler ---
+        function handleCdfUpload(event) {
+            const file = event.target.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    uploadedData = JSON.parse(e.target.result);
-                    alert('File loaded: ' + file.name);
-                } catch { alert('Error parsing JSON. For CDF/FITS, use the Python pipeline.'); }
-            };
-            if (file.name.endsWith('.json')) reader.readAsText(file);
+
+            document.getElementById('file-info').textContent = `Loaded: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+
+            // Note: Actual CDF parsing would require cdflib-wasm or a backend
+            // For now, we show a message about the limitation
+            alert('CDF file uploaded. Note: Browser-based CDF parsing requires cdflib-wasm. For full analysis, please use the Python pipeline.');
+        }
+
+        // --- Export CSV ---
+        function exportCSV() {
+            if (!filteredData || filteredData.length === 0) {
+                alert('No data to export');
+                return;
+            }
+
+            const headers = ['time', 'density', 'velocity', 'temperature', 'B_mag', 'Bz', 'beta', 'va_kms'];
+            const rows = filteredData.map(r =>
+                headers.map(h => r[h] || '').join(',')
+            );
+
+            const csv = [headers.join(','), ...rows].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'aditya-l1_data_' + new Date().toISOString().slice(0,10) + '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // --- Export PNG ---
+        function exportPNG() {
+            Plotly.downloadImage('chart-plasma', {
+                format: 'png',
+                width: 1200,
+                height: 600,
+                filename: 'aditya-l1_plasma_plot'
+            });
         }
     </script>
 </body>

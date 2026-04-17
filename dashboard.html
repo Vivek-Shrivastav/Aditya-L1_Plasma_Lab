@@ -3,652 +3,548 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aditya-L1 • Plasma Analysis Dashboard</title>
+    <title>Aditya-L1 Plasma Dashboard</title>
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+
     <!-- Plotly.js -->
-    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
     <style>
+        /* --- Design tokens --- */
         :root {
-            /* Color Palette - Space Science Theme */
-            --bg-deep: #05070a;
-            --bg-card: rgba(13, 17, 23, 0.7);
-            --bg-nav: rgba(5, 7, 10, 0.85);
-            --border: rgba(255, 255, 255, 0.08);
-            --border-hover: rgba(255, 255, 255, 0.15);
-            
-            --primary: #00d4ff; /* Plasma Blue */
-            --primary-glow: rgba(0, 212, 255, 0.3);
-            --secondary: #ff7a00; /* Solar Orange */
-            --secondary-glow: rgba(255, 122, 0, 0.3);
-            
-            --success: #00e676;
-            --warning: #ffd600;
-            --danger: #ff5252;
-            
-            --text-main: #e6edf3;
-            --text-muted: #8b949e;
-            --text-dim: #484f58;
-            
-            --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-            --font-mono: 'JetBrains+Mono', 'Fira Code', monospace;
-            
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            --blur: 12px;
+            --bg-base: #050a14;
+            --bg-panel: rgba(255,255,255,0.04);
+            --bg-panel-hover: rgba(255,255,255,0.07);
+            --accent-blue: #00d4ff;
+            --accent-orange: #ff8c42;
+            --accent-green: #39ff14;
+            --accent-red: #ff3366;
+            --text-primary: #e0f0ff;
+            --text-secondary: #8ba3c4;
+            --text-dim: #4a6080;
+            --border-glow: rgba(0,212,255,0.15);
+            --border-strong: rgba(0,212,255,0.30);
+            --font-ui: 'Inter', sans-serif;
+            --font-data: 'JetBrains Mono', monospace;
+            --font-title: 'Orbitron', sans-serif;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
+        /* --- Reset --- */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
         body {
-            background-color: var(--bg-deep);
-            background-image: 
-                radial-gradient(circle at 20% 30%, rgba(0, 212, 255, 0.03) 0%, transparent 40%),
-                radial-gradient(circle at 80% 70%, rgba(255, 122, 0, 0.03) 0%, transparent 40%);
-            color: var(--text-main);
-            font-family: var(--font-sans);
+            background: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            font-size: 14px;
             line-height: 1.6;
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
         }
 
-        /* --- Custom Scrollbar --- */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-deep); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+        /* Subtle starfield background */
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 30%, rgba(0,100,200,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 70%, rgba(0,180,100,0.04) 0%, transparent 50%);
+            pointer-events: none; z-index: 0;
+        }
 
         /* --- Navigation --- */
-        nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 64px;
-            background: var(--bg-nav);
-            backdrop-filter: blur(var(--blur));
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 2rem;
-            z-index: 1000;
+        .nav-bar {
+            position: sticky; top: 0; z-index: 100;
+            display: flex; align-items: center; gap: 24px;
+            padding: 0 24px; height: 58px;
+            background: rgba(5,10,20,0.85);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid var(--border-glow);
         }
-
         .nav-brand {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            font-size: 1.1rem;
-            color: var(--text-main);
-        }
-
-        .nav-brand i { color: var(--secondary); font-size: 1.4rem; }
-
-        .nav-links { display: flex; gap: 1rem; }
-
-        .nav-link {
-            transition: var(--transition);
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            font-weight: 500;
-            padding: 0.5rem 0.75rem;
-            border-radius: 6px;
+            display: flex; align-items: baseline; gap: 8px;
             text-decoration: none;
         }
-
-        .nav-link:hover, .nav-link.active {
-            color: var(--text-main);
-            background: rgba(255, 255, 255, 0.05);
-        }
-        
-        .nav-link.active { color: var(--primary); }
-
-        .status-badge {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-family: var(--font-mono);
-            font-size: 0.75rem;
-            padding: 0.25rem 0.75rem;
-            background: rgba(13, 17, 23, 0.5);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-        }
-
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--success);
-            box-shadow: 0 0 8px var(--success);
-        }
-        
-        .dot.pulse { animation: pulse 2s infinite; }
-        
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(0, 230, 118, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
-        }
-
-        /* --- Main Content --- */
-        main {
-            padding-top: 84px;
-            padding-bottom: 4rem;
-            max-width: 1600px;
-            margin: 0 auto;
-            padding-left: 2rem;
-            padding-right: 2rem;
-        }
-
-        .header-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            gap: 1.5rem;
-        }
-
-        .page-title h1 {
-            font-size: 2rem;
-            font-weight: 800;
-            letter-spacing: -0.04em;
-            margin-bottom: 0.25rem;
-            background: linear-gradient(to right, #fff, var(--primary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .page-title p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-
-        .controls {
-            display: flex;
-            gap: 0.75rem;
-            align-items: center;
-        }
-
-        .btn {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 0.6rem 1.2rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
+        .nav-logo { font-size: 22px; }
+        .nav-title { font-family: var(--font-title); font-size: 14px;
+                    letter-spacing: 0.12em; color: var(--accent-blue); }
+        .nav-sub { font-size: 10px; color: var(--text-secondary);
+                  letter-spacing: 0.08em; }
+        .nav-links { display: flex; gap: 4px; margin-left: auto; }
+        .nav-links a {
+            padding: 6px 14px; border-radius: var(--radius-sm);
+            color: var(--text-secondary); text-decoration: none;
+            font-size: 13px; font-weight: 500;
             transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            backdrop-filter: blur(var(--blur));
+        }
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--accent-blue);
+            background: rgba(0,212,255,0.08);
+        }
+        .nav-links a.active {
+            border-bottom: 2px solid var(--accent-blue);
+        }
+        .nav-status {
+            display: flex; align-items: center; gap: 10px;
+            font-family: var(--font-data); font-size: 12px;
+            color: var(--text-secondary);
+        }
+        #sync-btn {
+            padding: 5px 12px; border-radius: var(--radius-sm);
+            border: 1px solid var(--border-glow);
+            background: rgba(0,212,255,0.06);
+            color: var(--accent-blue); font-size: 12px;
+            cursor: pointer; transition: var(--transition);
+            font-family: var(--font-data);
+        }
+        #sync-btn:hover { background: rgba(0,212,255,0.14); }
+        #sync-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* --- Glass panels --- */
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            transition: border-color var(--transition), background var(--transition);
+        }
+        .panel:hover {
+            background: var(--bg-panel-hover);
+            border-color: var(--border-strong);
         }
 
-        .btn:hover {
-            border-color: var(--primary);
-            background: rgba(0, 212, 255, 0.1);
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: #000;
-            border: none;
-        }
-
-        .btn-primary:hover {
-            background: #4de5ff;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px var(--primary-glow);
-        }
-
-        /* --- Tabs --- */
-        .tabs {
-            display: flex;
-            gap: 0.5rem;
-            background: rgba(255, 255, 255, 0.03);
-            padding: 0.4rem;
-            border-radius: 12px;
-            margin-bottom: 2rem;
-            border: 1px solid var(--border);
-            overflow-x: auto;
-            scrollbar-width: none;
-        }
-        .tabs::-webkit-scrollbar { display: none; }
-
-        .tab {
-            padding: 0.6rem 1.25rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            transition: var(--transition);
-            white-space: nowrap;
-        }
-
-        .tab:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.05); }
-
-        .tab.active {
-            background: var(--bg-card);
-            color: var(--primary);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--border);
-        }
-
-        /* --- Grid Layout --- */
-        .dashboard-grid {
+        /* --- Metric cards --- */
+        .metric-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            padding: 16px 24px;
         }
-
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.5rem;
-            transition: var(--transition);
+        .metric-card {
             position: relative;
-            overflow: hidden;
-            backdrop-filter: blur(var(--blur));
-        }
-
-        .card:hover {
-            border-color: var(--border-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-        }
-
-        .card-title {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-muted);
-            font-weight: 700;
-        }
-
-        .card-icon {
-            font-size: 1.1rem;
-            color: var(--text-dim);
-        }
-
-        .metric-value {
-            font-family: var(--font-mono);
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-main);
-            margin-bottom: 0.25rem;
-        }
-
-        .metric-unit {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .metric-trend {
-            font-size: 0.75rem;
-            margin-top: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        .trend-up { color: var(--success); }
-        .trend-down { color: var(--danger); }
-
-        /* --- Full Width Cards --- */
-        .col-span-2 { grid-column: span 2; }
-        .col-span-4 { grid-column: span 4; }
-        .row-span-2 { grid-row: span 2; }
-
-        .chart-container {
-            width: 100%;
-            height: 300px;
-            margin-top: 1rem;
-        }
-        
-        .chart-container.large { height: 450px; }
-
-        /* --- Event Items --- */
-        .event-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .event-item {
-            display: flex;
-            gap: 1rem;
-            padding: 1.25rem;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border);
-            border-radius: 12px;
+            padding: 18px 20px 16px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius-lg);
+            cursor: default;
             transition: var(--transition);
+            overflow: hidden;
+        }
+        .metric-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
+            opacity: 0; transition: opacity var(--transition);
+        }
+        .metric-card:hover { border-color: var(--border-strong); }
+        .metric-card:hover::before { opacity: 1; }
+
+        .metric-source {
+            font-family: var(--font-data); font-size: 10px;
+            color: var(--accent-blue); letter-spacing: 0.06em;
+            text-transform: uppercase; margin-bottom: 4px;
+        }
+        .metric-label {
+            font-size: 11px; color: var(--text-secondary);
+            letter-spacing: 0.05em; text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .metric-value {
+            font-family: var(--font-data); font-size: 32px; font-weight: 500;
+            color: var(--text-primary); line-height: 1;
+            margin-bottom: 4px;
+        }
+        .metric-unit {
+            font-family: var(--font-data); font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .metric-range-bar {
+            height: 4px; border-radius: 2px;
+            background: rgba(255,255,255,0.08);
+            margin: 10px 0 8px;
+            overflow: hidden;
+        }
+        .metric-range-fill {
+            height: 100%; border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+        .metric-context {
+            font-size: 11px; color: var(--text-dim);
         }
 
-        .event-item:hover {
-            background: rgba(255, 255, 255, 0.04);
-            border-color: var(--border-hover);
+        /* Tooltip panel */
+        .metric-tooltip {
+            position: absolute; bottom: calc(100% + 8px); left: 0; right: 0;
+            background: rgba(5,10,20,0.97);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            z-index: 50; pointer-events: none;
+            opacity: 0; transform: translateY(6px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            font-size: 12px; line-height: 1.7;
+        }
+        .metric-card:hover .metric-tooltip {
+            opacity: 1; transform: translateY(0);
+        }
+        .tooltip-formula {
+            font-family: var(--font-data); font-size: 11px;
+            color: var(--accent-blue);
+            background: rgba(0,212,255,0.06);
+            padding: 4px 8px; border-radius: 4px;
+            margin-bottom: 8px; display: block;
         }
 
-        .event-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            background: rgba(255, 122, 0, 0.1);
-            color: var(--secondary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            flex-shrink: 0;
+        /* --- Tab navigation --- */
+        .tab-bar {
+            display: flex; gap: 2px; padding: 8px 24px 0;
+            border-bottom: 1px solid var(--border-glow);
+            overflow-x: auto; scrollbar-width: none;
+        }
+        .tab-bar::-webkit-scrollbar { display: none; }
+        .tab-btn {
+            padding: 8px 18px; border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+            background: none; border: none;
+            color: var(--text-secondary); font-size: 13px; font-weight: 500;
+            cursor: pointer; white-space: nowrap;
+            transition: var(--transition); position: relative;
+        }
+        .tab-btn::after {
+            content: '';
+            position: absolute; bottom: -1px; left: 0; right: 0; height: 2px;
+            background: var(--accent-blue); opacity: 0; transition: opacity var(--transition);
+        }
+        .tab-btn:hover { color: var(--text-primary); background: rgba(0,212,255,0.04); }
+        .tab-btn.active { color: var(--accent-blue); }
+        .tab-btn.active::after { opacity: 1; }
+
+        /* --- Charts --- */
+        .chart-container { padding: 16px 24px; }
+        .chart-panel { height: 320px; }
+        .spectrogram-panel { height: 400px; }
+        .history-panel { height: 180px; margin-bottom: 8px; }
+
+        /* --- Events log --- */
+        .event-card {
+            display: grid; grid-template-columns: 40px 1fr auto;
+            gap: 12px; align-items: start;
+            padding: 14px 18px; margin-bottom: 10px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-glow);
+            border-left: 3px solid var(--accent-orange);
+            border-radius: var(--radius-md);
+            cursor: pointer; transition: var(--transition);
+        }
+        .event-card:hover { background: var(--bg-panel-hover); }
+        .event-icon { font-size: 22px; text-align: center; }
+        .event-type { font-size: 12px; font-weight: 600;
+                      color: var(--text-primary); margin-bottom: 3px;
+                      letter-spacing: 0.04em; text-transform: uppercase; }
+        .event-desc { font-size: 12px; color: var(--text-secondary); }
+        .event-time { font-family: var(--font-data); font-size: 10px;
+                      color: var(--text-dim); white-space: nowrap; }
+        .badge {
+            display: inline-block; padding: 2px 8px;
+            border-radius: 4px; font-size: 10px; font-weight: 600;
+            letter-spacing: 0.06em; text-transform: uppercase;
+        }
+        .badge-warn  { background: rgba(255,140,66,0.15); color: var(--accent-orange);
+                       border: 1px solid rgba(255,140,66,0.3); }
+        .badge-danger{ background: rgba(255,51,102,0.15); color: var(--accent-red);
+                       border: 1px solid rgba(255,51,102,0.3); }
+        .badge-ok    { background: rgba(57,255,20,0.10); color: var(--accent-green);
+                       border: 1px solid rgba(57,255,20,0.25); }
+        .hidden { display: none !important; }
+
+        /* --- Toast notifications --- */
+        #toast-container {
+            position: fixed; bottom: 24px; right: 24px;
+            z-index: 9999; display: flex; flex-direction: column; gap: 8px;
+        }
+        .toast {
+            padding: 10px 16px; border-radius: var(--radius-md);
+            font-size: 13px; font-family: var(--font-data);
+            backdrop-filter: blur(16px);
+            animation: slide-in 0.25s ease;
+        }
+        .toast-success { background: rgba(57,255,20,0.12);
+                         border: 1px solid rgba(57,255,20,0.25); color: var(--accent-green); }
+        .toast-warn    { background: rgba(255,140,66,0.12);
+                         border: 1px solid rgba(255,140,66,0.25); color: var(--accent-orange); }
+        .toast-error   { background: rgba(255,51,102,0.12);
+                         border: 1px solid rgba(255,51,102,0.25); color: var(--accent-red); }
+        @keyframes slide-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; } }
+
+        /* --- Live indicator --- */
+        .live-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            display: inline-block;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--accent-green); }
+            50%       { opacity: 0.3; box-shadow: none; }
         }
 
-        .event-content { flex: 1; }
-        
-        .event-meta {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.4rem;
+        /* --- MVA Table --- */
+        .mva-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-data);
+            font-size: 12px;
         }
-        
-        .event-name { font-weight: 700; font-size: 0.95rem; color: var(--text-main); }
-        .event-time { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-dim); }
-        .event-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
+        .mva-table th, .mva-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-glow);
+        }
+        .mva-table th {
+            color: var(--accent-blue);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 0.05em;
+        }
+        .mva-table td { color: var(--text-secondary); }
 
         /* --- Responsive --- */
-        @media (max-width: 1200px) {
-            .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
-            .col-span-4 { grid-column: span 2; }
-        }
-
         @media (max-width: 768px) {
-            .dashboard-grid { grid-template-columns: 1fr; }
-            .col-span-2, .col-span-4 { grid-column: span 1; }
-            nav { padding: 0 1rem; }
-            .nav-brand span { display: none; }
-            main { padding-left: 1rem; padding-right: 1rem; }
-            .header-section { flex-direction: column; align-items: flex-start; }
+            .nav-links { display: none; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute;
+                            top: 58px; left: 0; right: 0;
+                            background: rgba(5,10,20,0.97); padding: 12px;
+                            border-bottom: 1px solid var(--border-glow); }
+            .hamburger { display: flex; }
+            .metric-grid { grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 16px; }
+            .metric-value { font-size: 24px; }
+            .chart-panel { height: 240px; }
+            .tab-bar { padding: 6px 12px 0; }
+            .tab-btn { padding: 6px 12px; font-size: 12px; }
+        }
+        @media (max-width: 480px) {
+            .metric-grid { grid-template-columns: 1fr; }
+            .nav-status #last-sync-time { display: none; }
         }
 
-        /* --- Skeleton Loading --- */
-        .skeleton {
-            background: linear-gradient(90deg, var(--bg-card) 25%, var(--border) 50%, var(--bg-card) 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-            border-radius: 4px;
+        /* --- Main content area --- */
+        main {
+            padding: 20px 24px;
+            max-width: 1600px;
+            margin: 0 auto;
         }
-        
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
+        .content-section {
+            display: none;
         }
-        
-        .page-content { display: none; }
-        .page-content.active { display: block; }
-        
-        /* Tooltip */
-        .tooltip {
-            position: absolute;
-            background: #1c2128;
-            border: 1px solid var(--border);
-            padding: 0.5rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            z-index: 100;
-            max-width: 250px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s;
+        .content-section.active {
+            display: block;
         }
     </style>
 </head>
 <body>
-
-    <nav>
+    <!-- Navigation -->
+    <nav class="nav-bar">
         <div class="nav-brand">
-            <i class="fas fa-satellite-dish"></i>
-            <span>ADITYA-L1 <span style="font-weight: 300; opacity: 0.6; margin-left: 0.2rem;">PLASMA LAB</span></span>
+            <span class="nav-logo">☀</span>
+            <span class="nav-title">ADITYA-L1</span>
+            <span class="nav-sub">PLASMA LAB</span>
         </div>
         <div class="nav-links">
-            <a href="index.html" class="nav-link"><i class="fas fa-home"></i></a>
-            <a href="dashboard.html" class="nav-link active">Dashboard</a>
-            <a href="visualizer.html" class="nav-link">Visualizer</a>
-            <a href="explorer.html" class="nav-link">Explorer</a>
+            <a href="index.html">Learn</a>
+            <a href="dashboard.html" class="active">Dashboard</a>
+            <a href="visualizer.html">Visualizer</a>
+            <a href="explorer.html">Explorer</a>
+            <a href="lab.html">Lab</a>
         </div>
-        <div class="status-badge" id="status-container">
-            <div class="dot pulse" id="status-dot"></div>
-            <span id="status-text">INITIALIZING</span>
+        <div class="nav-status">
+            <span class="live-dot" id="live-indicator"></span>
+            <span id="last-sync-time">--:--:--</span>
+            <button id="sync-btn" onclick="syncData()">⟳ Live Sync</button>
+            <span id="simulated-badge" class="badge badge-warn hidden">SIMULATED</span>
         </div>
     </nav>
 
     <main>
-        <div class="header-section">
-            <div class="page-title">
-                <h1 id="mission-time">Real-time Solar Wind</h1>
-                <p id="data-source">Fetching data from ISRO PRADAN Pipeline...</p>
-                <div id="data-window-badge" style="display: inline-block; margin-top: 0.5rem; padding: 0.2rem 0.6rem; background: rgba(0, 212, 255, 0.1); border: 1px solid var(--primary); border-radius: 4px; font-size: 0.7rem; font-family: var(--font-mono); color: var(--primary); visibility: hidden;">
-                    INTERVAL: <span id="window-start">...</span> → <span id="window-end">...</span>
+        <!-- Metric Cards -->
+        <div class="metric-grid">
+            <!-- Proton Density -->
+            <div class="metric-card" id="card-density">
+                <div class="metric-source">SWIS/PAPA <span style="float:right" id="density-live">[●LIVE]</span></div>
+                <div class="metric-label">Proton Density</div>
+                <div class="metric-value" id="val-density">--.-</div>
+                <div class="metric-unit">cm⁻³</div>
+                <div class="metric-range-bar">
+                    <div class="metric-range-fill" id="fill-density" style="width: 0%; background: var(--accent-blue);"></div>
+                </div>
+                <div class="metric-context">Quiet wind: 3-10 cm⁻³</div>
+                <div class="metric-tooltip">
+                    <span class="tooltip-formula">n = N_p / V (cm⁻³)</span>
+                    <strong>Physical meaning:</strong> Number of protons per cubic centimeter.<br>
+                    <strong>Typical range:</strong> 3-10 cm⁻³ (slow wind), 10-30 cm⁻³ (CME sheath)<br>
+                    <strong>Anomaly:</strong> Values &gt;20 may indicate shock compression.
                 </div>
             </div>
-            <div class="controls">
-                <div class="last-updated" style="text-align: right; margin-right: 1rem;">
-                    <div style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase;">Last Sync</div>
-                    <div id="sync-time" style="font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600;">--:--:--</div>
+
+            <!-- Bulk Speed -->
+            <div class="metric-card" id="card-speed">
+                <div class="metric-source">SWIS <span style="float:right" id="speed-live">[●LIVE]</span></div>
+                <div class="metric-label">Bulk Speed</div>
+                <div class="metric-value" id="val-speed">---</div>
+                <div class="metric-unit">km/s</div>
+                <div class="metric-range-bar">
+                    <div class="metric-range-fill" id="fill-speed" style="width: 0%; background: var(--accent-orange);"></div>
                 </div>
-                <button class="btn btn-primary" id="refresh-btn">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                </button>
+                <div class="metric-context" id="speed-regime">Slow wind — coronal streamer belt</div>
+                <div class="metric-tooltip">
+                    <span class="tooltip-formula">V = |v_p| (km/s)</span>
+                    <strong>Physical meaning:</strong> Velocity of proton bulk flow.<br>
+                    <strong>Typical range:</strong> 300-450 km/s (slow), 550-800 km/s (fast)<br>
+                    <strong>Anomaly:</strong> Jumps &gt;100 km/s may indicate shocks.
+                </div>
             </div>
-        </div>
 
-        <div class="tabs">
-            <div class="tab active" data-tab="overview">Overview</div>
-            <div class="tab" data-tab="magnetic">Magnetic Field</div>
-            <div class="tab" data-tab="particles">Particles</div>
-            <div class="tab" data-tab="physics">Physics</div>
-            <div class="tab" data-tab="history">6-Month History</div>
-            <div class="tab" data-tab="events">Events</div>
-        </div>
+            <!-- Temperature -->
+            <div class="metric-card" id="card-temp">
+                <div class="metric-source">SWIS <span style="float:right" id="temp-live">[●LIVE]</span></div>
+                <div class="metric-label">Temperature</div>
+                <div class="metric-value" id="val-temp">--.-</div>
+                <div class="metric-unit">eV</div>
+                <div class="metric-range-bar">
+                    <div class="metric-range-fill" id="fill-temp" style="width: 0%; background: var(--accent-green);"></div>
+                </div>
+                <div class="metric-context">1 eV ≈ 11,604 K</div>
+                <div class="metric-tooltip">
+                    <span class="tooltip-formula">T_p = (m_p v_th²) / (2k_B)</span>
+                    <strong>Physical meaning:</strong> Proton thermal energy.<br>
+                    <strong>Typical range:</strong> 5-20 eV (nominal)<br>
+                    <strong>Anomaly:</strong> Low T with high V suggests CME ejecta.
+                </div>
+            </div>
 
-        <!-- --- OVERVIEW PAGE --- -->
-        <div id="overview" class="page-content active">
-            <div class="dashboard-grid">
-                <!-- Metrics -->
-                <div class="card" data-tip="Number of protons per cubic centimeter. Nominal solar wind: 3-10 cm⁻³. Higher values (>15) may indicate CME compression or stream interfaces.">
-                    <div class="card-header">
-                        <span class="card-title">Proton Density</span>
-                        <i class="fas fa-atom card-icon"></i>
-                    </div>
-                    <div class="metric-value" id="val-density">--.-</div>
-                    <div class="metric-unit">cm⁻³ • SWIS/PAPA</div>
-                    <div class="metric-trend"><i class="fas fa-info-circle"></i> Quiet wind: 3-10 cm⁻³</div>
+            <!-- Magnetic Field -->
+            <div class="metric-card" id="card-mag">
+                <div class="metric-source">MAG <span style="float:right" id="mag-live">[●LIVE]</span></div>
+                <div class="metric-label">IMF |B|</div>
+                <div class="metric-value" id="val-mag">--.-</div>
+                <div class="metric-unit" id="val-bz">Bz: -.-- nT</div>
+                <div class="metric-range-bar">
+                    <div class="metric-range-fill" id="fill-mag" style="width: 0%; background: #ffffff;"></div>
                 </div>
-                <div class="card" data-tip="The bulk velocity of the proton flow from the Sun. Slow wind: 300-450 km/s. Fast wind (from coronal holes): >600 km/s. Significant jumps indicate shocks.">
-                    <div class="card-header">
-                        <span class="card-title">Bulk Speed</span>
-                        <i class="fas fa-wind card-icon"></i>
-                    </div>
-                    <div class="metric-value" id="val-speed">---</div>
-                    <div class="metric-unit">km/s • SWIS</div>
-                    <div class="metric-trend" id="trend-speed">---</div>
-                </div>
-                <div class="card" data-tip="Proton kinetic temperature in eV. 1 eV corresponds to approximately 11,604 Kelvin. Useful for identifying different solar wind plasma regimes.">
-                    <div class="card-header">
-                        <span class="card-title">Temperature</span>
-                        <i class="fas fa-thermometer-half card-icon"></i>
-                    </div>
-                    <div class="metric-value" id="val-temp">--.-</div>
-                    <div class="metric-unit">eV • 1 eV ≈ 11.6k K</div>
-                    <div class="metric-trend"><i class="fas fa-info-circle"></i> CME Signature: low T</div>
-                </div>
-                <div class="card" data-tip="Total Interplanetary Magnetic Field magnitude. Bz is the North-South component; sustained Southward Bz (< -5 nT) drives geomagnetic activity (reconnection).">
-                    <div class="card-header">
-                        <span class="card-title">Magnetic IMF</span>
-                        <i class="fas fa-magnet card-icon"></i>
-                    </div>
-                    <div class="metric-value" id="val-imf">--.-</div>
-                    <div class="metric-unit">nT • MAG GSE</div>
-                    <div class="metric-trend" id="val-bz">Bz: -.-- nT</div>
-                </div>
-
-                <!-- Main Charts -->
-                <div class="card col-span-2 row-span-2">
-                    <div class="card-header">
-                        <span class="card-title">Proton Density & Speed</span>
-                        <i class="fas fa-chart-line card-icon"></i>
-                    </div>
-                    <div id="chart-density-speed" class="chart-container large"></div>
-                </div>
-
-                <div class="card col-span-2">
-                    <div class="card-header">
-                        <span class="card-title">Magnetic Field Components</span>
-                        <i class="fas fa-wave-square card-icon"></i>
-                    </div>
-                    <div id="chart-mag-overview" class="chart-container"></div>
-                </div>
-
-                <!-- Spectrogram -->
-                <div class="card col-span-4">
-                    <div class="card-header">
-                        <span class="card-title">STEPS Energy-Time Spectrogram</span>
-                        <i class="fas fa-layer-group card-icon"></i>
-                    </div>
-                    <div id="chart-spectrogram" class="chart-container large"></div>
+                <div class="metric-context" id="bz-status">Northward — minimal coupling</div>
+                <div class="metric-tooltip">
+                    <span class="tooltip-formula">|B| = √(Bx² + By² + Bz²)</span>
+                    <strong>Physical meaning:</strong> Total interplanetary magnetic field.<br>
+                    <strong>Typical range:</strong> 3-10 nT at L1<br>
+                    <strong>Anomaly:</strong> Bz &lt; -5 nT drives geomagnetic activity.
                 </div>
             </div>
         </div>
 
-        <!-- --- MAGNETIC FIELD PAGE --- -->
-        <div id="magnetic" class="page-content">
-            <div class="dashboard-grid">
-                <div class="card col-span-2">
-                    <div class="card-header">
-                        <span class="card-title">IMF Vector Components (GSE)</span>
-                    </div>
-                    <div id="chart-mag-components" class="chart-container large"></div>
-                </div>
-                <div class="card col-span-2">
-                    <div class="card-header">
-                        <span class="card-title">Magnetic Hodograms</span>
-                    </div>
-                    <div style="display: flex; gap: 1rem;">
-                        <div id="chart-hodo-yz" style="flex: 1; height: 350px;"></div>
-                        <div id="chart-hodo-xz" style="flex: 1; height: 350px;"></div>
-                    </div>
-                </div>
-                <div class="card col-span-4">
-                    <div class="card-header">
-                        <span class="card-title">Minimum Variance Analysis (MVA)</span>
-                    </div>
-                    <div id="mva-report" style="margin-top: 1rem; font-family: var(--font-mono); font-size: 0.9rem;">
-                        <!-- MVA Content -->
-                    </div>
-                </div>
-            </div>
+        <!-- Tab Navigation -->
+        <div class="tab-bar">
+            <button class="tab-btn active" data-tab="overview">Overview</button>
+            <button class="tab-btn" data-tab="magnetic">Magnetic Field</button>
+            <button class="tab-btn" data-tab="particles">Particles</button>
+            <button class="tab-btn" data-tab="physics">Physics</button>
+            <button class="tab-btn" data-tab="history">6-Month History</button>
+            <button class="tab-btn" data-tab="events">Events</button>
         </div>
 
-        <!-- --- PARTICLES PAGE --- -->
-        <div id="particles" class="page-content">
-             <div class="dashboard-grid">
-                <div class="card col-span-4">
-                    <div class="card-header">
-                        <span class="card-title">Full Energy Spectrogram (20 keV - 6 MeV/n)</span>
-                    </div>
-                    <div id="chart-spec-full" class="chart-container large"></div>
-                </div>
-                <div class="card col-span-2">
-                    <div class="card-header">
-                        <span class="card-title">Proton Flux Distributions</span>
-                    </div>
-                    <div id="chart-proton-flux" class="chart-container"></div>
-                </div>
-                <div class="card col-span-2">
-                    <div class="card-header">
-                        <span class="card-title">Temperature Evolution</span>
-                    </div>
-                    <div id="chart-temp-history" class="chart-container"></div>
-                </div>
-             </div>
-        </div>
-
-        <!-- --- PHYSICS PAGE --- -->
-        <div id="physics" class="page-content">
-            <div class="dashboard-grid" id="physics-grid">
-                <!-- Physics metrics will be injected here -->
+        <!-- Chart Panels -->
+        <div class="chart-container">
+            <!-- Overview Tab -->
+            <div id="overview-section" class="content-section active">
+                <div id="chart-overview" class="chart-panel"></div>
             </div>
-            <div class="card col-span-4" style="margin-top: 1.5rem;">
-                <div class="card-header">
-                    <span class="card-title">Magnetic Power Spectral Density (PSD)</span>
-                </div>
-                <div id="chart-psd" class="chart-container large"></div>
-            </div>
-        </div>
 
-        <!-- --- HISTORY PAGE --- -->
-        <div id="history" class="page-content">
-            <div class="dashboard-grid">
-                <div class="card col-span-4">
-                    <div class="card-header">
-                        <span class="card-title">6-Month Solar Wind Parameters</span>
-                    </div>
-                    <div id="chart-history-combined" class="chart-container large" style="height: 600px;"></div>
+            <!-- Magnetic Field Tab -->
+            <div id="magnetic-section" class="content-section">
+                <div id="chart-magnetic" class="chart-panel"></div>
+            </div>
+
+            <!-- Particles Tab -->
+            <div id="particles-section" class="content-section">
+                <div id="chart-spectrogram" class="spectrogram-panel"></div>
+            </div>
+
+            <!-- Physics Tab -->
+            <div id="physics-section" class="content-section">
+                <div id="chart-physics" class="chart-panel"></div>
+                <div style="margin-top: 16px;">
+                    <h3 style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">MVA Results</h3>
+                    <table class="mva-table" id="mva-table">
+                        <thead>
+                            <tr>
+                                <th>λ_min</th>
+                                <th>λ_int</th>
+                                <th>λ_max</th>
+                                <th>Ratio</th>
+                                <th>Quality</th>
+                                <th>Normal (GSE)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mva-body">
+                            <tr><td colspan="6">Loading...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
 
-        <!-- --- EVENTS PAGE --- -->
-        <div id="events" class="page-content">
-            <div id="event-container" class="event-list">
-                <!-- Events will be injected here -->
-                <div class="card">
-                    <p style="text-align: center; color: var(--text-muted);">Fetching events from pipeline...</p>
-                </div>
+            <!-- History Tab -->
+            <div id="history-section" class="content-section">
+                <div id="chart-history-density" class="history-panel"></div>
+                <div id="chart-history-speed" class="history-panel"></div>
+                <div id="chart-history-bz" class="history-panel"></div>
+                <div id="chart-history-beta" class="history-panel"></div>
+            </div>
+
+            <!-- Events Tab -->
+            <div id="events-section" class="content-section">
+                <div id="events-container"></div>
             </div>
         </div>
     </main>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
 
     <script>
         // --- Configuration ---
         const LATEST_URL = 'data/latest.json';
         const HISTORY_URL = 'data/history.json';
-        
-        const COLORS = {
-            density: '#00d4ff',
-            speed: '#ff7a00',
-            temp: '#00e676',
-            bx: '#ff5252',
-            by: '#ffd600',
-            bz: '#e040fb',
-            bmag: '#ffffff',
-            grid: 'rgba(255, 255, 255, 0.05)',
-            text: '#8b949e'
+
+        // --- Plotly Layout Base ---
+        const LAYOUT_BASE = {
+            paper_bgcolor: 'transparent',
+            plot_bgcolor: 'rgba(5,10,20,0.6)',
+            font: { family: 'JetBrains Mono, monospace', color: '#a8b4c8', size: 11 },
+            xaxis: {
+                gridcolor: 'rgba(0,212,255,0.08)',
+                linecolor: 'rgba(0,212,255,0.2)',
+                tickfont: { color: '#6b7d96' },
+                zerolinecolor: 'rgba(0,212,255,0.15)',
+            },
+            yaxis: {
+                gridcolor: 'rgba(0,212,255,0.08)',
+                linecolor: 'rgba(0,212,255,0.2)',
+                tickfont: { color: '#6b7d96' },
+            },
+            legend: { bgcolor: 'rgba(0,0,0,0)', font: { color: '#a8b4c8' } },
+            margin: { l: 55, r: 20, t: 30, b: 45 },
+            modebar: { bgcolor: 'transparent', color: '#00d4ff', activecolor: '#ffffff' },
+            hoverlabel: {
+                bgcolor: 'rgba(5,10,20,0.9)',
+                bordercolor: '#00d4ff',
+                font: { family: 'JetBrains Mono', color: '#e0f0ff' }
+            }
         };
 
         const PLOTLY_CONFIG = {
@@ -657,320 +553,201 @@
             modeBarButtonsToRemove: ['select2d', 'lasso2d']
         };
 
-        const PLOTLY_LAYOUT = {
-            paper_bgcolor: 'rgba(0,0,0,0)',
-            plot_bgcolor: 'rgba(0,0,0,0)',
-            font: { family: 'Inter, sans-serif', color: COLORS.text, size: 11 },
-            margin: { t: 30, r: 20, l: 50, b: 40 },
-            xaxis: {
-                gridcolor: COLORS.grid,
-                linecolor: COLORS.grid,
-                zeroline: false,
-                tickfont: { color: COLORS.text }
-            },
-            yaxis: {
-                gridcolor: COLORS.grid,
-                linecolor: COLORS.grid,
-                zeroline: false,
-                tickfont: { color: COLORS.text }
-            },
-            legend: {
-                font: { color: COLORS.text, size: 10 },
-                bgcolor: 'rgba(0,0,0,0)',
-                orientation: 'h',
-                y: 1.12
-            }
-        };
-
-        // --- Tooltip Logic ---
-        const tooltip = document.getElementById('tooltip');
-        document.addEventListener('mouseover', e => {
-            const card = e.target.closest('[data-tip]');
-            if (card) {
-                tooltip.textContent = card.dataset.tip;
-                tooltip.style.opacity = '1';
-                const rect = card.getBoundingClientRect();
-                tooltip.style.left = rect.left + 'px';
-                tooltip.style.top = (rect.bottom + 10) + 'px';
-            }
-        });
-        document.addEventListener('mouseout', e => {
-            if (e.target.closest('[data-tip]')) tooltip.style.opacity = '0';
-        });
-
-        // --- State Management ---
+        // --- State ---
         let latestData = null;
         let historyData = null;
         let currentTab = 'overview';
 
-        // --- Core Functions ---
-        async function init() {
-            setupEventListeners();
-            await refreshData();
-            startAutoRefresh();
-        }
+        // --- Tab Handling ---
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentTab = btn.dataset.tab;
 
-        async function refreshData() {
-            setLoading(true);
-            try {
-                const [latest, history] = await Promise.all([
-                    fetch(LATEST_URL + '?t=' + Date.now()).then(res => res.json()),
-                    fetch(HISTORY_URL + '?t=' + Date.now()).then(res => res.json())
-                ]);
-                
-                latestData = latest;
-                historyData = history;
-                
-                updateUI();
-                renderAllCharts();
-                
-                document.getElementById('sync-time').textContent = new Date().toLocaleTimeString();
-                document.getElementById('status-dot').className = 'dot pulse';
-                document.getElementById('status-text').textContent = latest.simulated ? 'SIMULATED DATA' : 'LIVE TELEMETRY';
-            } catch (err) {
-                console.error('Data fetch error:', err);
-                document.getElementById('status-dot').className = 'dot';
-                document.getElementById('status-dot').style.background = 'var(--danger)';
-                document.getElementById('status-text').textContent = 'CONNECTION ERROR';
-            } finally {
-                setLoading(false);
-            }
-        }
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                document.getElementById(currentTab + '-section').classList.add('active');
 
-        function setupEventListeners() {
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const tabId = tab.dataset.tab;
-                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    
-                    document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
-                    document.getElementById(tabId).classList.add('active');
-                    
-                    currentTab = tabId;
-                    renderTabCharts(tabId);
-                });
+                renderTabCharts();
             });
+        });
 
-            document.getElementById('refresh-btn').addEventListener('click', refreshData);
-        }
+        // --- Core Sync Function ---
+        async function syncData() {
+            const btn = document.getElementById('sync-btn');
+            btn.textContent = '⟳ Syncing...';
+            btn.disabled = true;
 
-        function setLoading(isLoading) {
-            const btn = document.getElementById('refresh-btn');
-            if (isLoading) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
-            } else {
+            try {
+                const [latestRes, historyRes] = await Promise.all([
+                    fetch(LATEST_URL + '?t=' + Date.now()),
+                    fetch(HISTORY_URL + '?t=' + Date.now())
+                ]);
+
+                if (!latestRes.ok) throw new Error(`HTTP ${latestRes.status}`);
+                if (!historyRes.ok) throw new Error(`HTTP ${historyRes.status}`);
+
+                latestData = await latestRes.json();
+                historyData = await historyRes.json();
+
+                updateMetricCards();
+                renderTabCharts();
+                updateEventsLog();
+
+                const ts = new Date(latestData.run_time);
+                document.getElementById('last-sync-time').textContent =
+                    ts.toLocaleTimeString('en-GB') + ' UTC';
+
+                const badge = document.getElementById('simulated-badge');
+                badge.classList.toggle('hidden', !latestData.simulated);
+
+                showToast(latestData.simulated
+                    ? '⚠ Simulated data (PRADAN credentials not set)'
+                    : '✓ Real Aditya-L1 data loaded', latestData.simulated ? 'warn' : 'success');
+
+            } catch (err) {
+                showToast(`✕ Sync failed: ${err.message}`, 'error');
+            } finally {
+                btn.textContent = '⟳ Live Sync';
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
             }
         }
 
-        function startAutoRefresh() {
-            setInterval(refreshData, 10 * 60 * 1000); // 10 minutes
-        }
-
-        // --- UI Updates ---
-        function updateUI() {
+        // --- Update Metric Cards ---
+        function updateMetricCards() {
             if (!latestData) return;
-            
+
             const s = latestData.scalars;
-            const meta = latestData.metadata || {};
-            
-            // Status Update
-            const statusText = document.getElementById('status-text');
-            const statusDot = document.getElementById('status-dot');
-            if (latestData.simulated) {
-                statusText.textContent = 'SIMULATED';
-                statusDot.className = 'dot'; // no pulse
-                document.getElementById('data-source').textContent = 'Direct pipeline access unavailable — displaying high-fidelity simulation.';
-            } else if (meta.is_historical) {
-                statusText.textContent = 'HISTORICAL ARCHIVE';
-                statusDot.className = 'dot pulse-orange';
-                document.getElementById('data-source').textContent = 'Live data unavailable — displaying latest available mission data from PRADAN.';
-                statusDot.style.background = 'var(--secondary)';
-            } else {
-                statusText.textContent = 'LIVE MISSION STREAM';
-                statusDot.className = 'dot pulse';
-                document.getElementById('data-source').textContent = 'Real-time telemetry from Aditya-L1 Mission Payloads.';
-            }
+            const mom = latestData.moments;
 
-            // Window update
-            if (meta.window_start && meta.window_end) {
-                document.getElementById('data-window-badge').style.visibility = 'visible';
-                document.getElementById('window-start').textContent = meta.window_start.replace('Z', '').replace('T', ' ');
-                document.getElementById('window-end').textContent = meta.window_end.replace('Z', '').replace('T', ' ');
-            }
+            // Density
+            document.getElementById('val-density').textContent = s.density_cm3?.toFixed(2) || '--.-';
+            const densityPct = Math.min(100, (s.density_cm3 / 30) * 100);
+            document.getElementById('fill-density').style.width = densityPct + '%';
 
-            document.getElementById('val-density').textContent = s.density_cm3 || '--.-';
-            document.getElementById('val-speed').textContent = s.velocity_kms || '---';
-            document.getElementById('val-temp').textContent = s.temperature_eV || '--.-';
-            document.getElementById('val-imf').textContent = s.B_mag_nT || '--.-';
-            document.getElementById('val-bz').textContent = `Bz: ${s.Bz_nT || '-.--'} nT`;
-            
-            document.getElementById('trend-speed').textContent = latestData.sw_regime || '---';
-            document.getElementById('data-source').textContent = latestData.simulated 
-                ? 'Displaying Physics-Based Simulated Data (No PRADAN Credentials)'
-                : 'ISRO Level-2 Data Stream • Sun-Earth L1 Lagrange Point';
-            
-            const runDate = new Date(latestData.run_time);
-            document.getElementById('mission-time').textContent = `Observation Window: ${runDate.toLocaleDateString()}`;
+            // Speed
+            document.getElementById('val-speed').textContent = s.velocity_kms?.toFixed(0) || '---';
+            const speedPct = Math.min(100, ((s.velocity_kms - 300) / 500) * 100);
+            document.getElementById('fill-speed').style.width = speedPct + '%';
+            document.getElementById('speed-regime').textContent = latestData.sw_regime || '---';
 
-            // Update Events
-            const eventContainer = document.getElementById('event-container');
-            if (latestData.events && latestData.events.length > 0) {
-                eventContainer.innerHTML = latestData.events.map(ev => `
-                    <div class="event-item">
-                        <div class="event-icon"><i class="${getEventIcon(ev.type)}"></i></div>
-                        <div class="event-content">
-                            <div class="event-meta">
-                                <span class="event-name">${ev.type}</span>
-                                <span class="event-time">${ev.time || 'Ongoing'}</span>
-                            </div>
-                            <div class="event-desc">${ev.explanation}</div>
-                            <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                ${Object.entries(ev.values || {}).map(([k,v]) => `
-                                    <span style="font-family: var(--font-mono); font-size: 0.7rem; background: rgba(255,255,255,0.05); padding: 0.2rem 0.5rem; border-radius: 4px;">${k}: ${v}</span>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
-            } else {
-                eventContainer.innerHTML = '<div class="card"><p style="text-align: center; color: var(--text-muted);">No significant plasma events detected in current window.</p></div>';
-            }
+            // Temperature
+            document.getElementById('val-temp').textContent = s.temperature_eV?.toFixed(1) || '--.-';
+            const tempPct = Math.min(100, (s.temperature_eV / 50) * 100);
+            document.getElementById('fill-temp').style.width = tempPct + '%';
 
-            // Update Physics Grid
-            const physicsGrid = document.getElementById('physics-grid');
-            if (latestData.derived) {
-                const der = latestData.derived;
-                const physicsItems = [
-                    { label: 'Plasma Alpha Beta', val: der.plasma_beta, icon: 'fa-circle-nodes' },
-                    { label: 'Alfvén Speed', val: der.alfven_speed_kms + ' km/s', icon: 'fa-bolt' },
-                    { label: 'Sound Speed', val: der.sound_speed_kms + ' km/s', icon: 'fa-volume-high' },
-                    { label: 'Magnetosonic', val: der.magnetosonic_kms + ' km/s', icon: 'fa-gauge-high' },
-                    { label: 'Alfvénic Mach', val: der.alfvenic_mach, icon: 'fa-tachometer-alt' },
-                    { label: 'Sonic Mach', val: der.sonic_mach, icon: 'fa-shuttle-space' }
-                ];
-                physicsGrid.innerHTML = physicsItems.map(item => `
-                    <div class="card">
-                        <div class="card-header">
-                            <span class="card-title">${item.label}</span>
-                            <i class="fas ${item.icon} card-icon"></i>
-                        </div>
-                        <div class="metric-value" style="font-size: 1.5rem;">${item.val}</div>
-                    </div>
-                `).join('');
-            }
-            
-            // MVA Report
+            // Magnetic
+            document.getElementById('val-mag').textContent = s.B_mag_nT?.toFixed(1) || '--.-';
+            document.getElementById('val-bz').textContent = `Bz: ${s.Bz_nT?.toFixed(1) || '-.--'} nT`;
+            const magPct = Math.min(100, (s.B_mag_nT / 20) * 100);
+            document.getElementById('fill-mag').style.width = magPct + '%';
+            document.getElementById('bz-status').textContent = latestData.bz_status?.label || '---';
+
+            // MVA Table
             const mva = latestData.mva;
-            if (mva) {
-                document.getElementById('mva-report').innerHTML = `
-                    <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
-                        <div style="color: var(--primary); font-weight: 700; margin-bottom: 0.5rem;">STATUS: ${mva.quality}</div>
-                        <p style="margin-bottom: 1rem; color: var(--text-muted);">${mva.explanation}</p>
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
-                            <div><div style="font-size: 0.7rem; color: var(--text-dim);">λ_min (Normal)</div><div>${mva.lambda_min}</div></div>
-                            <div><div style="font-size: 0.7rem; color: var(--text-dim);">λ_int (Tangent)</div><div>${mva.lambda_int}</div></div>
-                            <div><div style="font-size: 0.7rem; color: var(--text-dim);">λ_max</div><div>${mva.lambda_max}</div></div>
-                        </div>
-                        <div style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 0.5rem;">
-                             Ratio: <span style="${mva.lambda_ratio > 2 ? 'color: var(--success)' : 'color: var(--warning)'}">${mva.lambda_ratio}</span> 
-                             ${mva.lambda_ratio > 2 ? ' (Structure Reliable)' : ' (Degenerate/Turbulent)'}
-                        </div>
-                    </div>
+            if (mva && mva.valid !== undefined) {
+                document.getElementById('mva-body').innerHTML = `
+                    <tr>
+                        <td>${mva.lambda_min?.toFixed(4) || '---'}</td>
+                        <td>${mva.lambda_int?.toFixed(4) || '---'}</td>
+                        <td>${mva.lambda_max?.toFixed(4) || '---'}</td>
+                        <td>${mva.lambda_ratio?.toFixed(2) || '---'}</td>
+                        <td>${mva.quality || '---'}</td>
+                        <td>[${mva.normal_dir?.map(x => x.toFixed(2)).join(', ') || '---'}]</td>
+                    </tr>
                 `;
             }
         }
 
-        function getEventIcon(type) {
-            const t = type.toLowerCase();
-            if (t.includes('shock')) return 'fa-bolt-lightning';
-            if (t.includes('southward')) return 'fa-arrow-down';
-            if (t.includes('high-speed')) return 'fa-gauge-fast';
-            if (t.includes('density')) return 'fa-compress-arrows-alt';
-            return 'fa-star-of-life';
-        }
-
-        // --- Chart Rendering ---
-        function renderAllCharts() {
-            renderTabCharts(currentTab);
-        }
-
-        function renderTabCharts(tabId) {
+        // --- Render Charts for Current Tab ---
+        function renderTabCharts() {
             if (!latestData) return;
 
-            if (tabId === 'overview') {
-                renderOverviewCharts();
-            } else if (tabId === 'magnetic') {
-                renderMagneticCharts();
-            } else if (tabId === 'particles') {
-                renderParticleCharts();
-            } else if (tabId === 'physics') {
-                renderPhysicsCharts();
-            } else if (tabId === 'history') {
-                renderHistoryCharts();
-            }
+            if (currentTab === 'overview') renderOverviewChart();
+            else if (currentTab === 'magnetic') renderMagneticChart();
+            else if (currentTab === 'particles') renderSpectrogramChart();
+            else if (currentTab === 'physics') renderPhysicsChart();
+            else if (currentTab === 'history') renderHistoryCharts();
+            else if (currentTab === 'events') renderEventsLog();
         }
 
-        function renderOverviewCharts() {
+        // --- Overview Chart ---
+        function renderOverviewChart() {
             const mom = latestData.moments;
             const times = mom.times.map(t => new Date(t));
 
-            // Density & Speed
             const traceDensity = {
                 x: times, y: mom.density,
                 name: 'Density', type: 'scatter', mode: 'lines',
-                line: { color: COLORS.density, width: 2, shape: 'spline' },
-                fill: 'tozeroy', fillcolor: 'rgba(0, 212, 255, 0.05)'
+                line: { color: '#00d4ff', width: 2 },
+                fill: 'tozeroy', fillcolor: 'rgba(0, 212, 255, 0.15)'
             };
+
             const traceSpeed = {
                 x: times, y: mom.velocity,
                 name: 'Speed', type: 'scatter', mode: 'lines',
-                line: { color: COLORS.speed, width: 2, shape: 'spline' },
+                line: { color: '#ff8c42', width: 2 },
+                fill: 'tozeroy', fillcolor: 'rgba(255, 140, 66, 0.10)',
                 yaxis: 'y2'
             };
 
-            const layoutDS = JSON.parse(JSON.stringify(PLOTLY_LAYOUT));
-            layoutDS.yaxis.title = 'n [cm⁻³]';
-            layoutDS.yaxis2 = {
-                title: 'V [km/s]', overlaying: 'y', side: 'right',
-                gridcolor: 'transparent', zeroline: false
+            const layout = JSON.parse(JSON.stringify(LAYOUT_BASE));
+            layout.yaxis = {
+                ...layout.yaxis,
+                title: 'Density [cm⁻³]',
+                side: 'left'
             };
-            
-            Plotly.newPlot('chart-density-speed', [traceDensity, traceSpeed], layoutDS, PLOTLY_CONFIG);
+            layout.yaxis2 = {
+                title: 'Speed [km/s]',
+                overlaying: 'y',
+                side: 'right',
+                gridcolor: 'transparent',
+                zeroline: false
+            };
+            layout.showlegend = true;
+            layout.legend = { ...layout.legend, y: 1.1 };
 
-            // MAG Overview
-            const mag = latestData.mag;
-            const magTimes = mag.times.map(t => new Date(t));
-            const traceB = {
-                x: magTimes, y: mag.B_mag,
-                name: '|B| Total', type: 'scatter',
-                line: { color: COLORS.bmag, width: 2 }
-            };
-            const traceBz = {
-                x: magTimes, y: mag.Bz,
-                name: 'Bz (N-S)', type: 'scatter',
-                line: { color: COLORS.bz, width: 1.5, dash: 'dot' }
-            };
-            const layoutMag = JSON.parse(JSON.stringify(PLOTLY_LAYOUT));
-            layoutMag.yaxis.title = 'B [nT]';
-            Plotly.newPlot('chart-mag-overview', [traceB, traceBz], layoutMag, PLOTLY_CONFIG);
-
-            // Spectrogram
-            renderSpectrogram('chart-spectrogram', latestData.steps);
+            Plotly.newPlot('chart-overview', [traceDensity, traceSpeed], layout, PLOTLY_CONFIG);
         }
 
-        function renderSpectrogram(divId, steps) {
+        // --- Magnetic Field Chart ---
+        function renderMagneticChart() {
+            const mag = latestData.mag;
+            const times = mag.times.map(t => new Date(t));
+
+            const traceBx = { x: times, y: mag.Bx, name: 'Bx', line: { color: '#4fc3f7', width: 1.5 } };
+            const traceBy = { x: times, y: mag.By, name: 'By', line: { color: '#ffd54f', width: 1.5 } };
+            const traceBz = {
+                x: times, y: mag.Bz, name: 'Bz',
+                line: { color: '#ff5252', width: 1.5, dash: 'dot' }
+            };
+            const traceBmag = { x: times, y: mag.B_mag, name: '|B|', line: { color: '#ffffff', width: 2 } };
+
+            const layout = JSON.parse(JSON.stringify(LAYOUT_BASE));
+            layout.yaxis.title = 'B [nT]';
+            layout.shapes = [{
+                type: 'line', x0: times[0], x1: times[times.length - 1],
+                y0: 0, y1: 0, line: { color: '#666', width: 1, dash: 'dash' }
+            }];
+
+            Plotly.newPlot('chart-magnetic', [traceBx, traceBy, traceBz, traceBmag], layout, PLOTLY_CONFIG);
+        }
+
+        // --- Spectrogram Chart ---
+        function renderSpectrogramChart() {
+            const steps = latestData.steps;
             if (!steps || !steps.flux) return;
 
+            const fluxMatrix = steps.flux;
+            const nTime = fluxMatrix.length;
+            const nEnergy = fluxMatrix[0].length;
+
+            // Transpose for Plotly heatmap (y = energy, x = time)
             const z = [];
-            for (let i = 0; i < steps.flux[0].length; i++) {
+            for (let i = 0; i < nEnergy; i++) {
                 const row = [];
-                for (let j = 0; j < steps.flux.length; j++) {
-                    const val = Math.log10(Math.max(steps.flux[j][i], 1e-30));
-                    row.push(val);
+                for (let j = 0; j < nTime; j++) {
+                    row.push(Math.log10(Math.max(fluxMatrix[j][i], 1e-30)));
                 }
                 z.push(row);
             }
@@ -978,122 +755,160 @@
             const trace = {
                 z: z,
                 x: steps.times.map(t => new Date(t)),
-                y: Array.from({length: z.length}, (_, i) => i), // Placeholder for energies
+                y: steps.energies_keV,
                 type: 'heatmap',
-                colorscale: 'Plasma',
-                showscale: true,
+                colorscale: [
+                    [0, '#050a14'],
+                    [0.2, '#0a2a6e'],
+                    [0.4, '#1565c0'],
+                    [0.6, '#f57f17'],
+                    [0.8, '#e53935'],
+                    [1.0, '#ffffff']
+                ],
+                zsmooth: 'best',
                 colorbar: {
-                    tickfont: { color: COLORS.text, size: 10 },
-                    title: { text: 'log₁₀ Flux', font: { size: 10 } }
+                    title: 'log₁₀ Flux',
+                    tickfont: { color: '#a8b4c8' }
                 }
             };
 
-            const layout = JSON.parse(JSON.stringify(PLOTLY_LAYOUT));
-            layout.yaxis.title = 'Energy Channel (Low → High)';
-            layout.xaxis.title = 'UTC Window';
-            
-            Plotly.newPlot(divId, [trace], layout, PLOTLY_CONFIG);
+            const layout = JSON.parse(JSON.stringify(LAYOUT_BASE));
+            layout.yaxis.type = 'log';
+            layout.yaxis.title = 'Energy [keV]';
+            layout.xaxis.title = 'Time [UTC]';
+            layout.margin.b = 60;
+
+            Plotly.newPlot('chart-spectrogram', [trace], layout, PLOTLY_CONFIG);
         }
 
-        function renderMagneticCharts() {
-            const mag = latestData.mag;
-            const times = mag.times.map(t => new Date(t));
-
-            const traces = [
-                { x: times, y: mag.Bx, name: 'Bx', line: { color: COLORS.bx } },
-                { x: times, y: mag.By, name: 'By', line: { color: COLORS.by } },
-                { x: times, y: mag.Bz, name: 'Bz', line: { color: COLORS.bz, width: 2.5 } }
-            ].map(t => ({ ...t, type: 'scatter', mode: 'lines' }));
-
-            const layout = JSON.parse(JSON.stringify(PLOTLY_LAYOUT));
-            layout.yaxis.title = 'Field Strength [nT]';
-            Plotly.newPlot('chart-mag-components', traces, layout, PLOTLY_CONFIG);
-
-            // Hodograms
-            const hodoYZ = {
-                x: mag.By, y: mag.Bz,
-                mode: 'markers+lines', type: 'scatter',
-                marker: { size: 4, color: mag.times.map((_, i) => i), colorscale: 'Viridis' },
-                line: { width: 1, color: 'rgba(255,255,255,0.1)' }
-            };
-            const layoutYZ = JSON.parse(JSON.stringify(PLOTLY_LAYOUT));
-            layoutYZ.xaxis.title = 'By [nT]'; layoutYZ.yaxis.title = 'Bz [nT]';
-            layoutYZ.margin = { t: 40, r: 20, l: 40, b: 40 };
-            Plotly.newPlot('chart-hodo-yz', [hodoYZ], layoutYZ, PLOTLY_CONFIG);
-
-            const hodoXZ = {
-                x: mag.Bx, y: mag.Bz,
-                mode: 'markers+lines', type: 'scatter',
-                marker: { size: 4, color: mag.times.map((_, i) => i), colorscale: 'Plasma' },
-                line: { width: 1, color: 'rgba(255,255,255,0.1)' }
-            };
-            const layoutXZ = JSON.parse(JSON.stringify(PLOTLY_LAYOUT));
-            layoutXZ.xaxis.title = 'Bx [nT]'; layoutXZ.yaxis.title = 'Bz [nT]';
-            layoutXZ.margin = { t: 40, r: 20, l: 40, b: 40 };
-            Plotly.newPlot('chart-hodo-xz', [hodoXZ], layoutXZ, PLOTLY_CONFIG);
-        }
-
-        function renderParticleCharts() {
-            renderSpectrogram('chart-spec-full', latestData.steps);
-            
+        // --- Physics Chart ---
+        function renderPhysicsChart() {
+            const der = latestData.derived;
             const mom = latestData.moments;
             const times = mom.times.map(t => new Date(t));
-            
-            const traceTemp = {
-                x: times, y: mom.temperature,
-                type: 'scatter', fill: 'tozeroy',
-                line: { color: COLORS.temp }
-            };
-            const layoutTemp = JSON.parse(JSON.stringify(PLOTLY_LAYOUT));
-            layoutTemp.yaxis.title = 'T [eV]';
-            Plotly.newPlot('chart-temp-history', [traceTemp], layoutTemp, PLOTLY_CONFIG);
+
+            // Compute beta, V_A, M_A time series (simplified - using latest values)
+            const beta = mom.density.map((_, i) => der.plasma_beta);
+            const va = mom.density.map((_, i) => der.alfven_speed_kms);
+            const ma = mom.density.map((_, i) => der.alfvenic_mach);
+
+            const traceBeta = { x: times, y: beta, name: 'β', line: { color: '#00d4ff', width: 2 } };
+            const traceVa = { x: times, y: va, name: 'V_A [km/s]', line: { color: '#ff8c42', width: 2 } };
+            const traceMa = { x: times, y: ma, name: 'M_A', line: { color: '#39ff14', width: 2 }, yaxis: 'y2' };
+
+            const layout = JSON.parse(JSON.stringify(LAYOUT_BASE));
+            layout.yaxis = { title: 'β, V_A', side: 'left' };
+            layout.yaxis2 = { title: 'M_A', overlaying: 'y', side: 'right', gridcolor: 'transparent' };
+            layout.showlegend = true;
+
+            Plotly.newPlot('chart-physics', [traceBeta, traceVa, traceMa], layout, PLOTLY_CONFIG);
         }
 
-        function renderPhysicsCharts() {
-            const psd = latestData.psd;
-            if (!psd || !psd.valid) return;
-
-            const trace = {
-                x: psd.freqs, y: psd.psd,
-                type: 'scatter', mode: 'lines',
-                line: { color: COLORS.primary }
-            };
-            
-            // Reference slope 5/3
-            const fref = psd.freqs;
-            const pref = fref.map(f => psd.psd[0] * Math.pow(f / fref[0], -5/3));
-            const traceRef = {
-                x: fref, y: pref,
-                name: 'Kolmogorov -5/3',
-                line: { color: 'rgba(255,255,255,0.3)', dash: 'dash' }
-            };
-
-            const layout = JSON.parse(JSON.stringify(PLOTLY_LAYOUT));
-            layout.xaxis.type = 'log'; layout.yaxis.type = 'log';
-            layout.xaxis.title = 'Frequency [Hz]';
-            layout.yaxis.title = 'PSD [(nT)²/Hz]';
-            Plotly.newPlot('chart-psd', [trace, traceRef], layout, PLOTLY_CONFIG);
-        }
-
+        // --- History Charts ---
         function renderHistoryCharts() {
-            if (!historyData) return;
-            const times = historyData.map(d => new Date(d.time));
-            
-            const traceV = { x: times, y: historyData.map(d => d.velocity), name: 'Speed [km/s]', line: { color: COLORS.speed } };
-            const traceN = { x: times, y: historyData.map(d => d.density), name: 'Density [cm⁻³]', yaxis: 'y2', line: { color: COLORS.density } };
-            const traceB = { x: times, y: historyData.map(d => d.B_mag), name: '|B| [nT]', yaxis: 'y3', line: { color: COLORS.bmag } };
-            
-            const layout = JSON.parse(JSON.stringify(PLOTLY_LAYOUT));
-            layout.grid = { rows: 3, columns: 1, pattern: 'independent' };
-            layout.yaxis = { title: 'V', domain: [0.66, 1] };
-            layout.yaxis2 = { title: 'n', domain: [0.33, 0.63] };
-            layout.yaxis3 = { title: '|B|', domain: [0, 0.3] };
-            
-            Plotly.newPlot('chart-history-combined', [traceV, traceN, traceB], layout, PLOTLY_CONFIG);
+            if (!historyData || !historyData.records) return;
+
+            const records = historyData.records;
+            const times = records.map(r => new Date(r.time));
+
+            const makeTrace = (y, name, color) => ({
+                x: times, y: y, name: name,
+                type: 'scatter', mode: 'lines',
+                line: { color: color, width: 1.5 }
+            });
+
+            const densityTrace = makeTrace(records.map(r => r.density), 'Density', '#00d4ff');
+            const speedTrace = makeTrace(records.map(r => r.velocity), 'Speed', '#ff8c42');
+            const bzTrace = makeTrace(records.map(r => r.Bz), 'Bz', '#ff5252');
+            const betaTrace = makeTrace(records.map(r => r.beta), 'β', '#39ff14');
+
+            const commonLayout = {
+                ...LAYOUT_BASE,
+                xaxis: { ...LAYOUT_BASE.xaxis, title: 'Time' }
+            };
+
+            const layoutDensity = { ...commonLayout, yaxis: { ...commonLayout.yaxis, title: 'n [cm⁻³]' } };
+            const layoutSpeed = { ...commonLayout, yaxis: { ...commonLayout.yaxis, title: 'V [km/s]' } };
+            const layoutBz = { ...commonLayout, yaxis: { ...commonLayout.yaxis, title: 'Bz [nT]' } };
+            const layoutBeta = { ...commonLayout, yaxis: { ...commonLayout.yaxis, title: 'β' } };
+
+            Plotly.newPlot('chart-history-density', [densityTrace], layoutDensity, PLOTLY_CONFIG);
+            Plotly.newPlot('chart-history-speed', [speedTrace], layoutSpeed, PLOTLY_CONFIG);
+            Plotly.newPlot('chart-history-bz', [bzTrace], layoutBz, PLOTLY_CONFIG);
+            Plotly.newPlot('chart-history-beta', [betaTrace], layoutBeta, PLOTLY_CONFIG);
+
+            // Sync x-axis ranges
+            const charts = ['chart-history-density', 'chart-history-speed', 'chart-history-bz', 'chart-history-beta'];
+            charts.forEach((id, idx) => {
+                document.getElementById(id).on('plotly_relayout', (e) => {
+                    if (e['xaxis.range[0]']) {
+                        const range = [e['xaxis.range[0]'], e['xaxis.range[1]']];
+                        charts.forEach((otherId, otherIdx) => {
+                            if (otherIdx !== idx) {
+                                Plotly.relayout(otherId, { 'xaxis.range': range });
+                            }
+                        });
+                    }
+                });
+            });
         }
 
-        // --- Start Mission ---
-        init();
+        // --- Events Log ---
+        function updateEventsLog() {
+            const container = document.getElementById('events-container');
+            const events = latestData.events || [];
+
+            if (events.length === 0) {
+                container.innerHTML = '<div class="panel" style="text-align:center;color:var(--text-secondary);">No significant plasma events detected in current window.</div>';
+                return;
+            }
+
+            container.innerHTML = events.map(ev => `
+                <div class="event-card" onclick="highlightEvent('${ev.time}')">
+                    <div class="event-icon">${ev.icon || '⚡'}</div>
+                    <div>
+                        <div class="event-type">${ev.type}</div>
+                        <div class="event-desc">${ev.explanation || 'No description'}</div>
+                        <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">
+                            ${Object.entries(ev.values || {}).map(([k,v]) => `
+                                <span class="badge badge-ok" style="font-size:9px;">${k}: ${v}</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="event-time">${ev.time ? new Date(ev.time).toLocaleString() : 'Ongoing'}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderEventsLog() {
+            updateEventsLog();
+        }
+
+        function highlightEvent(time) {
+            if (!time) return;
+            // Could implement chart highlighting here
+            showToast('Event time: ' + time, 'success');
+        }
+
+        // --- Toast Notifications ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // --- Initialize ---
+        window.addEventListener('DOMContentLoaded', () => {
+            syncData();
+            setInterval(syncData, 6 * 60 * 1000); // Auto-sync every 6 minutes
+        });
     </script>
 </body>
 </html>
