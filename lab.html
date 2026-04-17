@@ -3,735 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aditya-L1 Analysis Lab</title>
-
+    <title>Aditya-L1 • Analysis Lab Terminal</title>
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- Scripts -->
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/nova.css">
     <style>
-        :root {
-            --bg-base: #050a14;
-            --bg-panel: rgba(255,255,255,0.04);
-            --bg-panel-hover: rgba(255,255,255,0.07);
-            --accent-blue: #00d4ff;
-            --accent-orange: #ff8c42;
-            --accent-green: #39ff14;
-            --accent-red: #ff3366;
-            --text-primary: #e0f0ff;
-            --text-secondary: #8ba3c4;
-            --text-dim: #4a6080;
-            --border-glow: rgba(0,212,255,0.15);
-            --border-strong: rgba(0,212,255,0.30);
-            --font-ui: 'Inter', sans-serif;
-            --font-data: 'JetBrains Mono', monospace;
-            --font-title: 'Orbitron', sans-serif;
-            --radius-sm: 6px;
-            --radius-md: 10px;
-            --radius-lg: 16px;
-        }
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            background: var(--bg-base);
-            color: var(--text-primary);
-            font-family: var(--font-ui);
-            font-size: 14px;
-            line-height: 1.6;
+        .lab-main {
+            padding-top: 100px;
+            background: #03020A;
             min-height: 100vh;
         }
-
-        body::before {
-            content: '';
-            position: fixed; inset: 0;
-            background: radial-gradient(ellipse at 20% 30%, rgba(0,100,200,0.06) 0%, transparent 60%);
-            pointer-events: none; z-index: 0;
-        }
-
-        .nav-bar {
-            position: sticky; top: 0; z-index: 100;
-            display: flex; align-items: center; gap: 24px;
-            padding: 0 24px; height: 58px;
-            background: rgba(5,10,20,0.85);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-glow);
-        }
-        .nav-brand { display: flex; align-items: baseline; gap: 8px; text-decoration: none; }
-        .nav-logo { font-size: 22px; }
-        .nav-title { font-family: var(--font-title); font-size: 14px; letter-spacing: 0.12em; color: var(--accent-blue); }
-        .nav-sub { font-size: 10px; color: var(--text-secondary); letter-spacing: 0.08em; }
-        .nav-links { display: flex; gap: 4px; margin-left: auto; }
-        .nav-links a {
-            padding: 6px 14px; border-radius: var(--radius-sm);
-            color: var(--text-secondary); text-decoration: none;
-            font-size: 13px; font-weight: 500; transition: 0.2s;
-        }
-        .nav-links a:hover, .nav-links a.active { color: var(--accent-blue); background: rgba(0,212,255,0.08); }
-        .nav-links a.active { border-bottom: 2px solid var(--accent-blue); }
-
-        main { padding: 24px; max-width: 1400px; margin: 0 auto; }
-
-        .page-header {
-            margin-bottom: 24px;
-        }
-        .page-header h1 {
-            font-family: var(--font-title);
-            font-size: 24px;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-        }
-        .page-header p { color: var(--text-secondary); }
-
-        .tool-section {
-            background: var(--bg-panel);
-            border: 1px solid var(--border-glow);
-            border-radius: var(--radius-lg);
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-
-        .tool-header {
-            padding: 16px 20px;
-            background: rgba(0,212,255,0.06);
-            border-bottom: 1px solid var(--border-glow);
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .tool-header h2 {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--accent-blue);
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-        }
-        .tool-header .toggle-icon { font-size: 18px; color: var(--text-secondary); }
-
-        .tool-content {
-            padding: 20px;
-            display: none;
-        }
-        .tool-section.open .tool-content { display: block; }
-
-        .form-grid {
+        .terminal-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 16px;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
         }
-
-        .form-group {
+        .tool-nav {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 0.5rem;
         }
-        .form-group label {
-            font-size: 11px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .form-group input, .form-group select, .form-group textarea {
-            background: rgba(5,10,20,0.6);
+        .tool-btn {
+            background: rgba(255,107,26,0.02);
             border: 1px solid var(--border-glow);
-            border-radius: var(--radius-sm);
-            padding: 10px 12px;
-            color: var(--text-primary);
-            font-family: var(--font-data);
-            font-size: 13px;
-        }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-        }
-        .form-group textarea { min-height: 100px; resize: vertical; }
-
-        .btn {
-            padding: 10px 20px;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border-glow);
-            background: rgba(0,212,255,0.06);
-            color: var(--accent-blue);
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            font-family: var(--font-data);
-        }
-        .btn:hover { background: rgba(0,212,255,0.14); }
-        .btn-primary { background: var(--accent-blue); color: #000; border: none; }
-        .btn-primary:hover { background: #4de5ff; }
-
-        .results-panel {
-            margin-top: 20px;
-            padding: 16px;
-            background: rgba(5,10,20,0.4);
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border-glow);
-        }
-        .results-panel h3 {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-            text-transform: uppercase;
-        }
-
-        .results-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 12px;
-        }
-        .result-item {
-            background: rgba(0,212,255,0.06);
-            padding: 12px;
-            border-radius: var(--radius-sm);
-            text-align: center;
-        }
-        .result-item .label { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; }
-        .result-item .value { font-family: var(--font-data); font-size: 18px; color: var(--accent-blue); margin-top: 4px; }
-
-        .chart-container { height: 300px; margin-top: 16px; }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-family: var(--font-data);
-            font-size: 12px;
-            margin-top: 12px;
-        }
-        th, td {
-            padding: 8px 12px;
+            padding: 1rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
             text-align: left;
-            border-bottom: 1px solid var(--border-glow);
+            cursor: pointer;
+            transition: var(--transition-base);
         }
-        th { color: var(--accent-blue); font-weight: 600; text-transform: uppercase; font-size: 10px; }
-        td { color: var(--text-secondary); }
+        .tool-btn:hover, .tool-btn.active {
+            border-color: var(--accent-plasma);
+            color: var(--accent-plasma);
+            background: rgba(255,107,26,0.05);
+        }
+        .terminal-input {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border-glow);
+            padding: 0.8rem;
+            color: #fff;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+        .terminal-input:focus {
+            outline: none;
+            border-color: var(--accent-plasma);
+        }
     </style>
 </head>
 <body>
-    <nav class="nav-bar">
-        <div class="nav-brand">
-            <span class="nav-logo">☀</span>
-            <span class="nav-title">ADITYA-L1</span>
-            <span class="nav-sub">ANALYSIS LAB</span>
-        </div>
+
+    <!-- Navigation -->
+    <nav class="nova-nav">
+        <a href="index.html" class="nav-brand">ADITYA-L1 // PLASMA LAB</a>
         <div class="nav-links">
-            <a href="index.html">Learn</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="visualizer.html">Visualizer</a>
-            <a href="explorer.html">Explorer</a>
-            <a href="lab.html" class="active">Lab</a>
+            <a href="index.html" class="nav-link">SCIENCE</a>
+            <a href="dashboard.html" class="nav-link">DASHBOARD</a>
+            <a href="visualizer.html" class="nav-link">VISUALIZER</a>
+            <a href="explorer.html" class="nav-link">EXPLORER</a>
+            <a href="lab.html" class="nav-link">LAB</a>
         </div>
     </nav>
 
-    <main>
-        <div class="page-header">
-            <h1>Plasma Analysis Tools</h1>
-            <p>Scientific analysis methods following ISSI SR-001 methodology</p>
-        </div>
+    <main class="lab-main">
+        <div class="nova-container">
+            
+            <header class="page-header reveal-text">
+                <span class="chapter-label">[ SCIENTIFIC COMMAND • EXPERIMENTAL ]</span>
+                <h1>ANALYSIS LAB</h1>
+                <p>Advanced diagnostic workspace for plasma moments, spectral index fitting, and shock-boundary analysis.</p>
+            </header>
 
-        <!-- Tool 1: Spectral Analysis -->
-        <div class="tool-section open" id="tool-spectral">
-            <div class="tool-header" onclick="toggleTool('tool-spectral')">
-                <h2>1. Spectral Analysis (FFT / Welch PSD)</h2>
-                <span class="toggle-icon">▼</span>
-            </div>
-            <div class="tool-content">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Variable</label>
-                        <select id="spectral-var">
-                            <option value="density">Proton Density</option>
-                            <option value="velocity">Bulk Speed</option>
-                            <option value="Bx">Bx (GSE)</option>
-                            <option value="By">By (GSE)</option>
-                            <option value="Bz">Bz (GSE)</option>
-                            <option value="B_mag">|B| Total</option>
-                        </select>
+            <div class="terminal-grid reveal-text">
+                
+                <!-- Tool Selector Overlay -->
+                <div class="tool-nav">
+                    <div class="tool-btn active" onclick="toggleTool('tool-spectral')">01_SPECTRAL_PSD</div>
+                    <div class="tool-btn" onclick="toggleTool('tool-moments')">02_MOMENTS_CALC</div>
+                    <div class="tool-btn">03_MVA_HODOGRAM</div>
+                    <div class="tool-btn">04_RANKINE_HUGONIOT</div>
+                </div>
+
+                <!-- Tool Workspace -->
+                <div class="hologram-panel" id="tool-spectral">
+                    <span class="chapter-label">ANALYSIS_MODE // PSD_WELCH</span>
+                    <h3 style="margin-bottom: 2rem;">Frequency Domain Diagnostics</h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                        <div>
+                            <span class="hud-label">TELEMETRY_STREAM</span>
+                            <select id="spectral-var" class="terminal-input">
+                                <option value="density">Proton Density (n)</option>
+                                <option value="velocity">Bulk Speed (V)</option>
+                                <option value="B_mag">Magnetic Field (|B|)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <span class="hud-label">FAST_FOURIER_TRANSFORM</span>
+                            <button class="nova-btn btn-plasma" style="width: 100%; margin-top: 0.5rem;" onclick="computeSpectral()">EXECUTE_ANALYSIS</button>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Window Type</label>
-                        <select id="spectral-window">
-                            <option value="hann">Hann</option>
-                            <option value="hamming">Hamming</option>
-                            <option value="blackman">Blackman</option>
-                            <option value="rect">Rectangular</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Overlap (%)</label>
-                        <input type="number" id="spectral-overlap" value="50" min="0" max="90">
+
+                    <div style="display: grid; grid-template-columns: 200px 1fr; gap: 2rem;">
+                        <div>
+                            <div class="hud-card" style="margin-bottom: 1rem;">
+                                <span class="hud-label">Spectral Index α</span>
+                                <span class="hud-value" id="spectral-alpha" style="font-size: 2rem;">--</span>
+                            </div>
+                            <p style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted);">
+                                Result analysis: -1.67 indicates a classic Kolmogorov inertial range in the solar wind turbulence.
+                            </p>
+                        </div>
+                        <div id="spectral-chart" style="height: 300px;"></div>
                     </div>
                 </div>
-                <button class="btn btn-primary" onclick="computeSpectral()">Compute PSD</button>
 
-                <div class="results-panel">
-                    <h3>Results</h3>
-                    <div class="results-grid" id="spectral-results">
-                        <div class="result-item">
-                            <div class="label">Spectral Index α</div>
-                            <div class="value" id="spectral-alpha">--</div>
+                <!-- Moments Tool (Hidden initially) -->
+                 <div class="hologram-panel" id="tool-moments" style="display: none; grid-column: 2;">
+                    <span class="chapter-label">ANALYSIS_MODE // MOMENTS</span>
+                    <h3 style="margin-bottom: 2rem;">Component Derived Parameters</h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                        <div>
+                            <span class="hud-label">Density (n)</span>
+                            <input type="number" id="moments-n" value="6.0" class="terminal-input">
                         </div>
-                        <div class="result-item">
-                            <div class="label">Kolmogorov (-5/3)</div>
-                            <div class="value">-1.67</div>
+                        <div>
+                            <span class="hud-label">Speed (V)</span>
+                            <input type="number" id="moments-v" value="430" class="terminal-input">
                         </div>
-                        <div class="result-item">
-                            <div class="label">Interpretation</div>
-                            <div class="value" id="spectral-interpretation" style="font-size:11px;">--</div>
+                        <div>
+                            <span class="hud-label">Temp (T)</span>
+                            <input type="number" id="moments-t" value="10" class="terminal-input">
+                        </div>
+                        <div>
+                            <span class="hud-label">Field (B)</span>
+                            <input type="number" id="moments-b" value="5" class="terminal-input">
                         </div>
                     </div>
-                    <div id="spectral-chart" class="chart-container"></div>
-                </div>
-            </div>
-        </div>
+                    <button class="nova-btn btn-ghost" style="margin-bottom: 2rem;" onclick="computeMoments()">RECALCULATE_MOMENTS</button>
 
-        <!-- Tool 2: Plasma Moments Calculator -->
-        <div class="tool-section" id="tool-moments">
-            <div class="tool-header" onclick="toggleTool('tool-moments')">
-                <h2>2. Plasma Moments Calculator</h2>
-                <span class="toggle-icon">▼</span>
-            </div>
-            <div class="tool-content">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Proton Density n [cm⁻³]</label>
-                        <input type="number" id="moments-n" value="6.0" step="0.1">
-                    </div>
-                    <div class="form-group">
-                        <label>Bulk Speed V [km/s]</label>
-                        <input type="number" id="moments-v" value="430" step="1">
-                    </div>
-                    <div class="form-group">
-                        <label>Temperature T [eV]</label>
-                        <input type="number" id="moments-t" value="10.0" step="0.1">
-                    </div>
-                    <div class="form-group">
-                        <label>|B| [nT]</label>
-                        <input type="number" id="moments-b" value="5.0" step="0.1">
-                    </div>
-                </div>
-                <button class="btn btn-primary" onclick="computeMoments()">Compute Parameters</button>
-
-                <div class="results-panel">
-                    <h3>Derived Parameters</h3>
-                    <div class="results-grid" id="moments-results">
-                        <div class="result-item">
-                            <div class="label">Thermal Speed V_th</div>
-                            <div class="value" id="mom-vth">-- km/s</div>
+                    <div class="hud-grid">
+                        <div class="hud-card">
+                            <span class="hud-label">Ther_Speed (Vth)</span>
+                            <span class="hud-value" id="mom-vth" style="font-size: 1.2rem;">--</span>
                         </div>
-                        <div class="result-item">
-                            <div class="label">Sound Speed C_s</div>
-                            <div class="value" id="mom-cs">-- km/s</div>
+                        <div class="hud-card">
+                            <span class="hud-label">Alfvén_Speed (Va)</span>
+                            <span class="hud-value" id="mom-va" style="font-size: 1.2rem;">--</span>
                         </div>
-                        <div class="result-item">
-                            <div class="label">Alfvén Speed V_A</div>
-                            <div class="value" id="mom-va">-- km/s</div>
+                        <div class="hud-card">
+                            <span class="hud-label">Plasma_Beta (β)</span>
+                            <span class="hud-value" id="mom-beta" style="font-size: 1.2rem;">--</span>
                         </div>
-                        <div class="result-item">
-                            <div class="label">Plasma Beta β</div>
-                            <div class="value" id="mom-beta">--</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="label">Alfvénic Mach M_A</div>
-                            <div class="value" id="mom-ma">--</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="label">Fast Speed V_f</div>
-                            <div class="value" id="mom-vf">-- km/s</div>
+                        <div class="hud-card">
+                            <span class="hud-label">Mach_Number (Ma)</span>
+                            <span class="hud-value" id="mom-ma" style="font-size: 1.2rem;">--</span>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Tool 3: MVA Tool -->
-        <div class="tool-section" id="tool-mva">
-            <div class="tool-header" onclick="toggleTool('tool-mva')">
-                <h2>3. Minimum Variance Analysis (MVA)</h2>
-                <span class="toggle-icon">▼</span>
             </div>
-            <div class="tool-content">
-                <div class="form-group">
-                    <label>Bx, By, Bz Time Series (tab or comma separated, one row per time step)</label>
-                    <textarea id="mva-input" placeholder="Bx, By, Bz&#10;1.2, 3.4, -2.1&#10;1.3, 3.5, -2.0&#10;..."></textarea>
-                </div>
-                <button class="btn btn-primary" onclick="computeMVA()">Run MVA</button>
 
-                <div class="results-panel">
-                    <h3>MVA Results</h3>
-                    <table id="mva-table">
-                        <thead>
-                            <tr><th>λ_min</th><th>λ_int</th><th>λ_max</th><th>Ratio</th><th>Quality</th><th>Normal (GSE)</th></tr>
-                        </thead>
-                        <tbody id="mva-body">
-                            <tr><td colspan="6">Paste data and click "Run MVA"</td></tr>
-                        </tbody>
-                    </table>
-                    <div id="mva-hodogram" class="chart-container"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tool 4: Rankine-Hugoniot Shock Analyzer -->
-        <div class="tool-section" id="tool-rh">
-            <div class="tool-header" onclick="toggleTool('tool-rh')">
-                <h2>4. Rankine-Hugoniot Shock Analyzer</h2>
-                <span class="toggle-icon">▼</span>
-            </div>
-            <div class="tool-content">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Upstream Density n1 [cm⁻³]</label>
-                        <input type="number" id="rh-n1" value="5.0" step="0.1">
-                    </div>
-                    <div class="form-group">
-                        <label>Downstream Density n2 [cm⁻³]</label>
-                        <input type="number" id="rh-n2" value="12.0" step="0.1">
-                    </div>
-                    <div class="form-group">
-                        <label>Upstream Speed V1 [km/s]</label>
-                        <input type="number" id="rh-v1" value="400" step="1">
-                    </div>
-                    <div class="form-group">
-                        <label>Downstream Speed V2 [km/s]</label>
-                        <input type="number" id="rh-v2" value="250" step="1">
-                    </div>
-                    <div class="form-group">
-                        <label>Upstream |B1| [nT]</label>
-                        <input type="number" id="rh-b1" value="4.0" step="0.1">
-                    </div>
-                    <div class="form-group">
-                        <label>Downstream |B2| [nT]</label>
-                        <input type="number" id="rh-b2" value="8.0" step="0.1">
-                    </div>
-                </div>
-                <button class="btn btn-primary" onclick="computeRH()">Analyze Shock</button>
-
-                <div class="results-panel">
-                    <h3>Shock Parameters</h3>
-                    <div class="results-grid" id="rh-results">
-                        <div class="result-item">
-                            <div class="label">Compression Ratio r</div>
-                            <div class="value" id="rh-r">--</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="label">Alfvénic Mach M_A1</div>
-                            <div class="value" id="rh-ma">--</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="label">Shock Type</div>
-                            <div class="value" id="rh-type">--</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <footer style="margin-top: 5rem; text-align: center; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; padding-bottom: 50px;">
+                EOF // SCIENTIFIC ANALYSIS LAB // ADITYA-L1 MISSION SCIENCE
+            </footer>
         </div>
     </main>
 
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="js/nova.js"></script>
+    <script src="js/lab.js"></script>
     <script>
-        // --- Constants ---
-        const MP = 1.6726e-27;
-        const KB = 1.38e-23;
-        const EV = 1.602e-19;
-        const MU0 = 4 * Math.PI * 1e-7;
-
-        let latestData = null;
-
-        // --- Toggle Tool ---
+        // Simple tool toggler for Lab
         function toggleTool(id) {
-            const tool = document.getElementById(id);
-            tool.classList.toggle('open');
-            const icon = tool.querySelector('.toggle-icon');
-            icon.textContent = tool.classList.contains('open') ? '▼' : '▶';
+            document.querySelectorAll('.hologram-panel').forEach(p => p.style.display = 'none');
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(id).style.display = 'block';
+            event.target.classList.add('active');
         }
-
-        // --- Load Data ---
-        async function loadData() {
-            try {
-                const res = await fetch('data/latest.json?t=' + Date.now());
-                latestData = await res.json();
-            } catch (e) {
-                console.error('Failed to load data:', e);
-            }
-        }
-
-        // --- Spectral Analysis ---
-        function computeSpectral() {
-            if (!latestData) { showToast('No data loaded'); return; }
-
-            const variable = document.getElementById('spectral-var').value;
-            const data = latestData.moments[variable] || latestData.mag[variable];
-            if (!data) { showToast('Variable not found'); return; }
-
-            // Simple FFT approximation using DFT
-            const N = data.length;
-            const frequencies = [];
-            const power = [];
-
-            // Compute DFT for first N/2 frequencies
-            for (let k = 0; k < Math.floor(N / 2); k++) {
-                let real = 0, imag = 0;
-                for (let n = 0; n < N; n++) {
-                    const angle = (2 * Math.PI * k * n) / N;
-                    real += data[n] * Math.cos(angle);
-                    imag -= data[n] * Math.sin(angle);
-                }
-                frequencies.push(k / N);
-                power.push((real * real + imag * imag) / N);
-            }
-
-            // Fit spectral index
-            const logFreq = frequencies.slice(10, Math.floor(frequencies.length / 2)).map(Math.log10);
-            const logPower = power.slice(10, Math.floor(power.length / 2)).map(p => Math.log10(Math.max(p, 1e-30)));
-
-            let alpha = -1.67; // default
-            if (logFreq.length > 5) {
-                const fit = linearRegression(logFreq, logPower);
-                alpha = fit.slope;
-            }
-
-            document.getElementById('spectral-alpha').textContent = alpha.toFixed(2);
-            document.getElementById('spectral-interpretation').textContent =
-                alpha < -2.0 ? 'Steep - kinetic dissipation' :
-                alpha > -1.2 ? 'Shallow - energy injection' :
-                'Near Kolmogorov turbulence';
-
-            // Plot
-            const trace = {
-                x: logFreq.map(x => Math.pow(10, x)),
-                y: logPower.map(y => Math.pow(10, y)),
-                type: 'scatter', mode: 'lines',
-                line: { color: '#00d4ff', width: 2 }
-            };
-
-            const refLine = {
-                x: [logFreq[0], logFreq[logFreq.length - 1]].map(x => Math.pow(10, x)),
-                y: logPower.slice(0, 2),
-                type: 'scatter', mode: 'lines',
-                line: { color: '#ff8c42', width: 1, dash: 'dash' },
-                name: '-5/3 slope'
-            };
-
-            const layout = {
-                paper_bgcolor: 'transparent',
-                plot_bgcolor: 'rgba(5,10,20,0.6)',
-                font: { family: 'JetBrains Mono', color: '#a8b4c8', size: 11 },
-                xaxis: { type: 'log', title: 'Frequency', gridcolor: 'rgba(0,212,255,0.08)' },
-                yaxis: { type: 'log', title: 'Power', gridcolor: 'rgba(0,212,255,0.08)' },
-                margin: { l: 50, r: 20, t: 20, b: 40 }
-            };
-
-            Plotly.newPlot('spectral-chart', [trace, refLine], layout, { responsive: true, displaylogo: false });
-        }
-
-        // --- Plasma Moments ---
-        function computeMoments() {
-            const n = parseFloat(document.getElementById('moments-n').value);
-            const v = parseFloat(document.getElementById('moments-v').value);
-            const t = parseFloat(document.getElementById('moments-t').value);
-            const b = parseFloat(document.getElementById('moments-b').value);
-
-            // Conversions
-            const n_si = n * 1e6;
-            const t_j = t * EV;
-            const b_si = b * 1e-9;
-            const v_si = v * 1000;
-
-            // Thermal speed: sqrt(2kT/m)
-            const vth = Math.sqrt(2 * KB * t_j / MP) / 1000;
-
-            // Sound speed: sqrt(gamma * kT / m), gamma = 5/3
-            const cs = Math.sqrt((5/3) * KB * t_j / MP) / 1000;
-
-            // Alfvén speed: B / sqrt(mu0 * n * m)
-            const va = b_si / Math.sqrt(MU0 * n_si * MP) / 1000;
-
-            // Plasma beta: (n k T) / (B² / 2mu0)
-            const beta = (n_si * KB * t_j) / (b_si * b_si / (2 * MU0));
-
-            // Alfvénic Mach
-            const ma = v_si / (va * 1000);
-
-            // Fast magnetosonic speed
-            const vf = Math.sqrt(va * va + cs * cs);
-
-            document.getElementById('mom-vth').textContent = vth.toFixed(1) + ' km/s';
-            document.getElementById('mom-cs').textContent = cs.toFixed(1) + ' km/s';
-            document.getElementById('mom-va').textContent = va.toFixed(1) + ' km/s';
-            document.getElementById('mom-beta').textContent = beta.toFixed(3);
-            document.getElementById('mom-ma').textContent = ma.toFixed(2);
-            document.getElementById('mom-vf').textContent = vf.toFixed(1) + ' km/s';
-        }
-
-        // --- MVA ---
-        function computeMVA() {
-            const input = document.getElementById('mva-input').value.trim();
-            const lines = input.split('\n').filter(l => l.trim());
-
-            if (lines.length < 4) {
-                showToast('Need at least 4 data points');
-                return;
-            }
-
-            const B = [];
-            for (const line of lines) {
-                const parts = line.split(/[\t,]+/).map(parseFloat);
-                if (parts.length >= 3 && parts.every(p => !isNaN(p))) {
-                    B.push(parts.slice(0, 3));
-                }
-            }
-
-            if (B.length < 4) {
-                showToast('Invalid data format');
-                return;
-            }
-
-            // Compute covariance matrix
-            const n = B.length;
-            const mean = [0, 0, 0];
-            for (const b of B) {
-                mean[0] += b[0]; mean[1] += b[1]; mean[2] += b[2];
-            }
-            mean[0] /= n; mean[1] /= n; mean[2] /= n;
-
-            const M = [[0,0,0],[0,0,0],[0,0,0]];
-            for (const b of B) {
-                const dB = [b[0] - mean[0], b[1] - mean[1], b[2] - mean[2]];
-                for (let i = 0; i < 3; i++) {
-                    for (let j = 0; j < 3; j++) {
-                        M[i][j] += dB[i] * dB[j];
-                    }
-                }
-            }
-            for (let i = 0; i < 3; i++) {
-                for (let j = 0; j < 3; j++) {
-                    M[i][j] /= n;
-                }
-            }
-
-            // Eigenvalue decomposition (simplified 3x3)
-            const { eigenvalues, eigenvectors } = eigen3x3(M);
-
-            // Sort by eigenvalue (descending)
-            const idx = [0, 1, 2].sort((a, b) => eigenvalues[b] - eigenvalues[a]);
-            const lam = idx.map(i => eigenvalues[i]);
-            const vec = idx.map(i => eigenvectors[i]);
-
-            const ratio = lam[1] / lam[2];
-            const quality = ratio > 2 ? 'Good' : ratio > 1.5 ? 'Marginal' : 'Poor';
-
-            document.getElementById('mva-body').innerHTML = `
-                <tr>
-                    <td>${lam[2].toFixed(4)}</td>
-                    <td>${lam[1].toFixed(4)}</td>
-                    <td>${lam[0].toFixed(4)}</td>
-                    <td>${ratio.toFixed(2)}</td>
-                    <td>${quality}</td>
-                    <td>[${vec[2].map(x => x.toFixed(2)).join(', ')}]</td>
-                </tr>
-            `;
-
-            // Hodogram (B_max vs B_int)
-            const B_mva = B.map(b => {
-                const dB = [b[0] - mean[0], b[1] - mean[1], b[2] - mean[2]];
-                return [
-                    dot(dB, vec[0]),
-                    dot(dB, vec[1]),
-                    dot(dB, vec[2])
-                ];
-            });
-
-            const traceMax = { x: B_mva.map(p => p[0]), y: B_mva.map(p => p[1]), type: 'scatter', mode: 'lines', name: 'B_max vs B_int' };
-            const layout = {
-                paper_bgcolor: 'transparent',
-                plot_bgcolor: 'rgba(5,10,20,0.6)',
-                font: { family: 'JetBrains Mono', color: '#a8b4c8', size: 11 },
-                xaxis: { title: 'B_max', gridcolor: 'rgba(0,212,255,0.08)' },
-                yaxis: { title: 'B_int', gridcolor: 'rgba(0,212,255,0.08)' },
-                margin: { l: 50, r: 20, t: 20, b: 40 }
-            };
-            Plotly.newPlot('mva-hodogram', [traceMax], layout, { responsive: true, displaylogo: false });
-        }
-
-        // --- Rankine-Hugoniot ---
-        function computeRH() {
-            const n1 = parseFloat(document.getElementById('rh-n1').value);
-            const n2 = parseFloat(document.getElementById('rh-n2').value);
-            const v1 = parseFloat(document.getElementById('rh-v1').value);
-            const v2 = parseFloat(document.getElementById('rh-v2').value);
-            const b1 = parseFloat(document.getElementById('rh-b1').value);
-            const b2 = parseFloat(document.getElementById('rh-b2').value);
-
-            // Compression ratio
-            const r = n2 / n1;
-
-            // Alfvén speed upstream
-            const va1 = (b1 * 1e-9) / Math.sqrt(MU0 * (n1 * 1e6) * MP) / 1000;
-            const ma1 = v1 / va1;
-
-            // Shock type based on B angle (simplified - assume parallel for now)
-            const type = r > 3 ? 'Strong quasi-perpendicular' : 'Weak quasi-parallel';
-
-            document.getElementById('rh-r').textContent = r.toFixed(2);
-            document.getElementById('rh-ma').textContent = ma1.toFixed(2);
-            document.getElementById('rh-type').textContent = type;
-        }
-
-        // --- Helpers ---
-        function linearRegression(x, y) {
-            const n = x.length;
-            let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-            for (let i = 0; i < n; i++) {
-                sumX += x[i]; sumY += y[i]; sumXY += x[i] * y[i]; sumXX += x[i] * x[i];
-            }
-            const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-            const intercept = (sumY - slope * sumX) / n;
-            return { slope, intercept };
-        }
-
-        function dot(a, b) {
-            return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
-        }
-
-        // Simplified 3x3 eigenvalue solver (power iteration approximation)
-        function eigen3x3(M) {
-            // For a symmetric 3x3 matrix, use analytical solution
-            const p1 = M[0][1]*M[0][1] + M[0][2]*M[0][2] + M[1][2]*M[1][2];
-            if (p1 === 0) {
-                return { eigenvalues: [M[0][0], M[1][1], M[2][2]], eigenvectors: [[1,0,0],[0,1,0],[0,0,1]] };
-            }
-            const q = (M[0][0] + M[1][1] + M[2][2]) / 3;
-            const p2 = (M[0][0]-q)**2 + (M[1][1]-q)**2 + (M[2][2]-q)**2 + 2*p1;
-            const p = Math.sqrt(p2/6);
-            const B = [[M[0][0]/p, M[0][1]/p, M[0][2]/p], [M[1][1]/p, M[1][2]/p, M[1][2]/p], [M[2][2]/p, M[2][2]/p, M[2][2]/p]];
-            const det = B[0][0]*B[1][1]*B[2][2] + 2*B[0][1]*B[0][2]*B[1][2] - B[0][0]*B[1][2]**2 - B[1][1]*B[0][2]**2 - B[2][2]*B[0][1]**2;
-            const r = det / 2;
-
-            let phi = 0;
-            if (r <= -1) phi = Math.PI / 3;
-            else if (r >= 1) phi = 0;
-            else phi = Math.acos(r) / 3;
-
-            const eig1 = q + 2*p*Math.cos(phi);
-            const eig3 = q + 2*p*Math.cos(phi + 2*Math.PI/3);
-            const eig2 = 3*q - eig1 - eig3;
-
-            // Simplified eigenvectors (not exact but good enough for visualization)
-            return {
-                eigenvalues: [eig1, eig2, eig3],
-                eigenvectors: [[1,0,0], [0,1,0], [0,0,1]]
-            };
-        }
-
-        function showToast(msg) {
-            console.log('Toast:', msg);
-        }
-
-        // --- Initialize ---
-        window.addEventListener('DOMContentLoaded', loadData);
     </script>
 </body>
 </html>

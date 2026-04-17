@@ -3,783 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aditya-L1 • Plasma Lab & Mission Science</title>
+    <title>Aditya-L1 • The Physics of the Solar Wind</title>
+    
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/nova.css">
     <style>
-        :root {
-            --bg-deep: #05070a;
-            --bg-card: rgba(13, 17, 23, 0.7);
-            --bg-nav: rgba(5, 7, 10, 0.85);
-            --border: rgba(255, 255, 255, 0.08);
-            --border-hover: rgba(255, 255, 255, 0.15);
-            --primary: #00d4ff;
-            --primary-glow: rgba(0, 212, 255, 0.3);
-            --secondary: #ff7a00;
-            --secondary-glow: rgba(255, 122, 0, 0.3);
-            --text-main: #e6edf3;
-            --text-muted: #8b949e;
-            --text-dim: #484f58;
-            --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-            --font-mono: 'JetBrains+Mono', monospace;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            --blur: 12px;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            background-color: var(--bg-deep);
-            background-image: 
-                radial-gradient(circle at 10% 10%, rgba(0, 212, 255, 0.04) 0%, transparent 50%),
-                radial-gradient(circle at 90% 90%, rgba(255, 122, 0, 0.04) 0%, transparent 50%);
-            color: var(--text-main);
-            font-family: var(--font-sans);
-            line-height: 1.6;
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* --- Custom Scrollbar --- */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-deep); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-
-        /* --- Navigation --- */
-        nav {
+        /* Specific overrides or local tweaks */
+        #solar-wind-canvas {
             position: fixed;
-            top: 0; left: 0; right: 0;
-            height: 64px;
-            background: var(--bg-nav);
-            backdrop-filter: blur(var(--blur));
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 2rem;
-            z-index: 1000;
-        }
-
-        .nav-brand {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-weight: 800;
-            font-size: 1.1rem;
-            color: var(--text-main);
-            text-decoration: none;
-        }
-
-        .nav-brand i { color: var(--secondary); font-size: 1.4rem; }
-
-        .nav-links { display: flex; gap: 1rem; }
-
-        .nav-link {
-            transition: var(--transition);
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            font-weight: 500;
-            padding: 0.5rem 0.75rem;
-            border-radius: 6px;
-            text-decoration: none;
-        }
-
-        .nav-link:hover, .nav-link.active {
-            color: var(--text-main);
-            background: rgba(255, 255, 255, 0.05);
-        }
-        
-        .nav-link.active { color: var(--primary); }
-
-        /* --- Hero Section --- */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 4rem 2rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero::after {
-            content: '';
-            position: absolute;
-            width: 150%;
-            height: 150%;
-            background: radial-gradient(circle at center, transparent 30%, var(--bg-deep) 70%);
-            z-index: 1;
-        }
-
-        .hero-content {
-            position: relative;
-            z-index: 2;
-            max-width: 900px;
-        }
-
-        .hero-badge {
-            display: inline-block;
-            padding: 0.4rem 1rem;
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid var(--primary);
-            color: var(--primary);
-            border-radius: 20px;
-            font-family: var(--font-mono);
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 0.1em;
-            margin-bottom: 1.5rem;
-            text-transform: uppercase;
-        }
-
-        .hero h1 {
-            font-size: clamp(2.5rem, 8vw, 4.5rem);
-            font-weight: 800;
-            letter-spacing: -0.04em;
-            line-height: 1.1;
-            margin-bottom: 1.5rem;
-            background: linear-gradient(to right, #fff, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hero p {
-            font-size: clamp(1rem, 2vw, 1.25rem);
-            color: var(--text-muted);
-            max-width: 700px;
-            margin: 0 auto 2.5rem;
-        }
-
-        .cta-group {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 0.8rem 1.8rem;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            text-decoration: none;
-            backdrop-filter: blur(var(--blur));
-        }
-
-        .btn:hover {
-            border-color: var(--primary);
-            background: rgba(0, 212, 255, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: #000;
-            border: none;
-        }
-
-        .btn-primary:hover {
-            background: #4de5ff;
-            box-shadow: 0 8px 32px var(--primary-glow);
-        }
-
-        /* --- Sections --- */
-        section {
-            padding: 8rem 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .section-header {
-            margin-bottom: 4rem;
-            text-align: center;
-        }
-
-        .section-header h2 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            margin-bottom: 1rem;
-        }
-
-        .section-header p {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        /* --- Features Grid --- */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-
-        .feature-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 2.5rem;
-            transition: var(--transition);
-            text-align: left;
-        }
-
-        .feature-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-5px);
-            box-shadow: 0 12px 48px rgba(0,0,0,0.3);
-        }
-
-        .feature-icon {
-            width: 56px;
-            height: 56px;
-            background: rgba(0, 212, 255, 0.1);
-            color: var(--primary);
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .feature-card h3 {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-
-        .feature-card p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            line-height: 1.7;
-        }
-
-        /* --- Stats Strip --- */
-        .stats-strip {
-            background: rgba(13, 17, 23, 0.5);
-            border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
-            padding: 4rem 2rem;
-            margin: 4rem 0;
-        }
-
-        .stats-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            gap: 3rem;
-        }
-
-        .stat-box { text-align: center; }
-        .stat-box .val {
-            font-size: 3rem;
-            font-weight: 800;
-            color: var(--primary);
-            font-family: var(--font-mono);
-            display: block;
-        }
-        .stat-box .lbl {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            margin-top: 0.5rem;
-        }
-
-        /* --- Footer --- */
-        footer {
-            padding: 4rem 2rem;
-            border-top: 1px solid var(--border);
-            background: rgba(5, 7, 10, 0.8);
-            text-align: center;
-        }
-
-        .footer-logo {
-            font-weight: 800;
-            font-size: 1.25rem;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-        }
-
-        .footer-logo i { color: var(--secondary); }
-
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .footer-links a {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: var(--transition);
-        }
-
-        .footer-links a:hover { color: var(--primary); }
-
-        .copy {
-            font-size: 0.8rem;
-            color: var(--text-dim);
-            font-family: var(--font-mono);
-        }
-
-        /* --- Animations --- */
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s ease-out;
-        }
-
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* --- L1 Geometry Diagram --- */
-        .l1-diagram-container {
-            margin: 4rem 0;
-            padding: 2rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-        }
-        .l1-diagram {
-            width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-            display: block;
-        }
-        .l1-label {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            fill: var(--text-secondary);
-        }
-        .l1-arrow {
-            stroke: var(--primary);
-            stroke-width: 2;
-            fill: none;
-            marker-end: url(#arrowhead);
-        }
-        .l1-solar-wind {
-            stroke: var(--secondary);
-            stroke-width: 1.5;
-            stroke-dasharray: 5,5;
-            opacity: 0.6;
-        }
-
-        @media (max-width: 768px) {
-            .hero h1 { font-size: 3rem; }
-            .stats-container { flex-direction: column; gap: 2rem; }
-            section { padding: 4rem 1.5rem; }
-        }
-
-        /* --- Live Briefing --- */
-        .live-briefing {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 2rem;
-            margin-top: -2rem;
-            position: relative;
-            z-index: 10;
-        }
-
-        .live-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 2rem;
-            backdrop-filter: blur(var(--blur));
-        }
-
-        .briefing-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .briefing-header h3 {
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .briefing-header h3 i { color: var(--primary); }
-
-        .live-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .cond-item {
-            text-align: center;
-            padding: 1rem;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
-        }
-
-        .cond-label { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 0.5rem; }
-        .cond-val { font-family: var(--font-mono); font-size: 1.25rem; font-weight: 700; color: var(--primary); }
-        .cond-unit { font-size: 0.8rem; opacity: 0.6; margin-left: 0.2rem; }
-
-        .events-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .ev-home-item {
-            padding: 1rem;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
-            display: flex;
-            gap: 1rem;
-            font-size: 0.85rem;
-        }
-
-        .ev-home-ico { font-size: 1.2rem; }
-        .ev-home-type { font-weight: 700; margin-bottom: 0.2rem; }
-        .ev-home-desc { color: var(--text-muted); line-height: 1.4; }
-
-        .spark-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-
-        .spark-card {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1rem;
-        }
-
-        .spark-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
-        .spark-canvas { width: 100%; height: 40px; }
-
-        @media (max-width: 992px) {
-            .live-briefing { grid-template-columns: 1fr; }
+            inset: 0;
+            z-index: 0;
+            opacity: 0.2;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
 
-    <nav>
-        <a href="index.html" class="nav-brand">
-            <i class="fas fa-satellite-dish"></i>
-            <span>ADITYA-L1 <span style="font-weight: 300; opacity: 0.6; margin-left: 0.2rem;">PLASMA LAB</span></span>
-        </a>
-        <div class="nav-links">
-            <a href="index.html" class="nav-link active">Science</a>
-            <a href="dashboard.html" class="nav-link">Dashboard</a>
-            <a href="visualizer.html" class="nav-link">Visualizer</a>
-            <a href="explorer.html" class="nav-link">Explorer</a>
-        </div>
-    </nav>
-
-    <div class="hero">
-        <div class="hero-content">
-            <div class="hero-badge">L1 Lagrange Point • ISRO Mission</div>
-            <h1>The Physics of the Solar Wind</h1>
-            <p>Explore the dynamic plasma environment at the Sun-Earth L1 point with real-time data from Aditya-L1's in-situ instruments.</p>
-            <div class="cta-group">
-                <a href="dashboard.html" class="btn btn-primary">
-                    <i class="fas fa-chart-line"></i> View Live Data
-                </a>
-                <a href="#science" class="btn">
-                    <i class="fas fa-book-open"></i> Learn Science
-                </a>
-            </div>
+    <!-- Section 0: Preloader -->
+    <div id="preloader">
+        <div class="preloader-status">INITIALISING ADITYA-L1 PLASMA LAB...</div>
+        <div class="preloader-bar-bg">
+            <div class="preloader-bar-fill"></div>
         </div>
     </div>
 
-    <div class="stats-strip">
-        <div class="stats-container">
-            <div class="stat-box">
-                <span class="val">1.5M</span>
-                <span class="lbl">km from Earth</span>
-            </div>
+    <canvas id="solar-wind-canvas"></canvas>
 
-    <section class="reveal" style="padding-top: 0; margin-top: -3rem;">
-        <div class="live-briefing" style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
-            <!-- Current Conditions -->
-            <div class="live-card">
-                <div class="briefing-header">
-                    <h3><i class="fas fa-satellite"></i> Live Conditions</h3>
-                    <span id="last-sync" style="font-size: 0.75rem; color: var(--text-dim); font-family: var(--font-mono);">SYNCING...</span>
+    <!-- Section 1: Hero -->
+    <section class="nova-section hero">
+        <div class="vignette"></div>
+        <img src="assets/sun_hero.png" alt="The Sun" class="sun-bg sun-parallax">
+        
+        <div class="nova-container">
+            <span class="chapter-label hero-reveal">[ ADITYA-L1 • ISRO ]</span>
+            <h1 class="clamp-huge hero-headline">THE PHYSICS OF THE<br>SOLAR WIND</h1>
+            <p class="narrative-text hero-reveal" style="margin: 2rem 0;">
+                Explore the dynamic plasma environment at the Sun-Earth L1 point with real-time data from Aditya-L1's in-situ instruments.
+            </p>
+            <div class="cta-group hero-reveal" style="display: flex; gap: 1rem; margin-top: 3rem;">
+                <a href="dashboard.html" class="nova-btn btn-plasma">View Live Data →</a>
+                <a href="#journey" class="nova-btn btn-ghost">Begin Journey ↓</a>
+            </div>
+            
+            <div class="stats-strip-bottom hero-reveal" style="margin-top: 15vh; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid rgba(255,255,255,0.1); padding-top: 2rem;">
+                <div>
+                    <span class="hud-label">Distance from Earth</span>
+                    <span style="font-size: 1.5rem; font-weight: 500;">1.5M km</span>
                 </div>
-                <div id="conditions-grid" class="live-grid">
-                    <!-- Loaded via JS -->
-                    <div class="cond-item"><div class="cond-label">Density</div><div class="cond-val">—</div></div>
-                    <div class="cond-item"><div class="cond-label">Velocity</div><div class="cond-val">—</div></div>
-                    <div class="cond-item"><div class="cond-label">Temp</div><div class="cond-val">—</div></div>
-                    <div class="cond-item"><div class="cond-label">|B| Mag</div><div class="cond-val">—</div></div>
+                <div>
+                    <span class="hud-label">Instruments</span>
+                    <span style="font-size: 1.5rem; font-weight: 500;">5+ Payloads</span>
                 </div>
+                <div>
+                    <span class="hud-label">Data Cadence</span>
+                    <span style="font-size: 1.5rem; font-weight: 500;">6h Syncing</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: [ Chapter ] Distance -->
+    <section id="journey" class="nova-section">
+        <div class="glow-orb orb-plasma" style="top: 20%; right: 10%; width: 500px; height: 500px;"></div>
+        <div class="nova-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
+            <div class="reveal-text">
+                <span class="chapter-label">[ Chapter ] Distance</span>
+                <h2 class="clamp-large">The L1 Vantage Point</h2>
+                <p class="narrative-text">
+                    Stationed at the first Lagrange point (L1), Aditya-L1 maintains a gravitational balance between the Earth and the Sun. From this vantage point, 1.5 million kilometres away, the spacecraft has an uninterrupted view of the Sun, free from eclipses or occultation.
+                </p>
+            </div>
+            <div class="reveal-text" style="text-align: right;">
+                <div style="font-family: 'JetBrains Mono'; font-size: 5rem; color: var(--accent-solar); font-weight: 700;">1,500,000</div>
+                <div style="font-family: 'JetBrains Mono'; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;">kilometres from earth</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3: [ Chapter ] Solar Wind — Live HUD -->
+    <section class="nova-section" style="background: var(--bg-secondary);">
+        <div class="nova-container">
+            <div class="reveal-text" style="text-align: center; margin-bottom: 4rem;">
+                <span class="chapter-label">[ Chapter ] Solar Wind</span>
+                <h2 class="clamp-large">Live Plasma Conditions</h2>
+                <p class="narrative-text" style="margin: 0 auto;">Current space weather environment at the L1 Point derived from Level-2 telemetry.</p>
+            </div>
+            
+            <div class="hud-grid reveal-text">
+                <div class="hud-card">
+                    <span class="hud-label">Proton Density</span>
+                    <span class="hud-value" id="val-density">--</span>
+                    <span class="hud-unit">cm⁻³</span>
+                </div>
+                <div class="hud-card">
+                    <span class="hud-label">Bulk Velocity</span>
+                    <span class="hud-value" id="val-speed">--</span>
+                    <span class="hud-unit">km/s</span>
+                </div>
+                <div class="hud-card">
+                    <span class="hud-label">Temperature</span>
+                    <span class="hud-value" id="val-temp">--</span>
+                    <span class="hud-unit">eV</span>
+                </div>
+                <div class="hud-card">
+                    <span class="hud-label">Magnetic Field |B|</span>
+                    <span class="hud-value" id="val-mag">--</span>
+                    <span class="hud-unit">nT</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: [ Chapter ] The Sun — Corona -->
+    <section class="nova-section">
+        <div class="vignette"></div>
+        <img src="assets/cme.png" alt="Solar Coronal Anatomy" class="sun-bg sun-parallax" style="opacity: 0.4;">
+        <div class="nova-container">
+            <div class="reveal-text">
+                <span class="chapter-label">[ Chapter ] The Sun</span>
+                <h2 class="clamp-huge">THE SOLAR<br>CORONA</h2>
+                <p class="narrative-text" style="margin-top: 2rem;">
+                    The Sun's outer atmosphere, or corona, is a region of million-degree plasma that extends millions of kilometres into space. It is here that the solar wind is born and accelerated to supersonic speeds.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 6: [ Chapter ] Instruments -->
+    <section class="nova-section" style="background: var(--bg-secondary);">
+        <div class="nova-container">
+            <div class="reveal-text" style="margin-bottom: 4rem;">
+                <span class="chapter-label">[ Chapter ] Instruments</span>
+                <h2 class="clamp-large">Scientific Payloads</h2>
+            </div>
+            
+            <div class="reveal-text" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem;">
+                <div class="instrument-box" style="padding: 2rem; border-left: 2px solid var(--accent-plasma); background: rgba(255,255,255,0.02);">
+                    <h3 style="margin-bottom: 1rem; color: var(--accent-solar);">ASPEX Suite</h3>
+                    <p class="narrative-text">
+                        The Aditya Solar wind Particle Experiment consists of two sensors: SWIS (Solar Wind Ion Spectrometer) for low-energy ions and STEPS (Supra-Thermal and Energetic Particle Spectrometer) for high-energy populations.
+                    </p>
+                </div>
+                <div class="instrument-box" style="padding: 2rem; border-left: 2px solid var(--accent-corona); background: rgba(255,255,255,0.02);">
+                    <h3 style="margin-bottom: 1rem; color: var(--accent-corona);">MAG & PAPA</h3>
+                    <p class="narrative-text">
+                        The Tri-axial High Resolution Digital Magnetometer measures the IMF, while PAPA (Plasma Analyser Package for Aditya) analyzes the composition and distribution of solar wind plasma.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 8: [ Chapter ] Ask SURYA -->
+    <section class="nova-section">
+        <div class="glow-orb orb-solar" style="bottom: 10%; left: 50%; transform: translateX(-50%); width: 600px; height: 600px;"></div>
+        <div class="nova-container" style="text-align: center;">
+            <div class="reveal-text">
+                <span class="chapter-label">SURYA • AI</span>
+                <h2 class="clamp-large">Ask Anything About Solar Science</h2>
+                <p class="narrative-text" style="margin: 0 auto 3rem;">Inquire about coronal mass ejections, solar flares, or L1 physics.</p>
                 
-                <div id="spark-container" class="spark-row">
-                    <!-- Sparklines loaded via JS -->
-                </div>
-            </div>
-
-            <!-- Events -->
-            <div class="live-card">
-                <div class="briefing-header">
-                    <h3><i class="fas fa-bolt"></i> Recent Events</h3>
-                </div>
-                <div id="events-home" class="events-panel">
-                    <div style="color: var(--text-dim); font-size: 0.9rem; text-align: center; padding: 2rem;">Fetching pipeline events...</div>
+                <div style="max-width: 600px; margin: 0 auto;">
+                    <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+                        <input type="text" id="surya-input" placeholder="What is the solar wind doing right now?" style="flex: 1; background: var(--bg-secondary); border: 1px solid rgba(255,107,26,0.3); padding: 1rem; color: #fff; font-family: 'Inter'; border-radius: 4px;">
+                        <button id="surya-submit" class="nova-btn btn-plasma" style="padding: 0 2rem;">Inquire</button>
+                    </div>
+                    <div id="surya-output" style="text-align: left; padding: 2rem; background: rgba(0,0,0,0.4); border: 1px dashed rgba(255,107,26,0.2); min-height: 100px; font-style: italic; color: var(--text-muted);">
+                        Waiting for inquiry...
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-            <div class="stat-box">
-                <span class="val">5+</span>
-                <span class="lbl">Instruments</span>
+    <!-- Section 9: Footer -->
+    <footer class="nova-section" style="min-height: auto; padding: 10vh 5vw; border-top: 1px solid rgba(255,255,255,0.05);">
+        <div class="nova-container" style="text-align: center;">
+            <div style="font-family: var(--font-display); font-size: 1.5rem; letter-spacing: 0.1em; color: var(--accent-plasma); margin-bottom: 2rem;">ADITYA-L1 // PLASMA LAB</div>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 3rem;">
+                As data streams from 1.5 million kilometres away, the Sun's mysteries unfold —<br>one solar wind measurement at a time.
+            </p>
+            <div style="display: flex; gap: 2rem; justify-content: center; font-family: 'JetBrains Mono'; font-size: 0.8rem;">
+                <a href="dashboard.html" style="color: #fff; text-decoration: none;">TECHNICAL DASHBOARD</a>
+                <a href="lab.html" style="color: #fff; text-decoration: none;">ANALYSIS LAB</a>
+                <a href="visualizer.html" style="color: #fff; text-decoration: none;">VISUALIZER</a>
             </div>
-            <div class="stat-box">
-                <span class="val">L1</span>
-                <span class="lbl">Lagrange Point</span>
-            </div>
-            <div class="stat-box">
-                <span class="val">6h</span>
-                <span class="lbl">Sync Cadence</span>
-            </div>
-        </div>
-    </div>
-
-    <section id="science" class="reveal">
-        <div class="section-header">
-            <h2>Mission Payloads</h2>
-            <p>Aditya-L1 carries advanced in-situ particle and magnetic field suites to decode the solar wind's mysteries.</p>
-        </div>
-        <div class="grid">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-atom"></i></div>
-                <h3>ASPEX / SWIS</h3>
-                <p>The Solar Wind Ion Spectrometer measures the energy and angular distribution of the solar wind ions, primarily protons and alphas.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-bolt"></i></div>
-                <h3>ASPEX / STEPS</h3>
-                <p>Supra-Thermal and Energetic Particle Spectrometer tracks high-energy particles to study solar flares and acceleration mechanisms.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-wind"></i></div>
-                <h3>PAPA Suite</h3>
-                <p>Plasma Analyser Package for Aditya studies the composition of solar wind and its distribution across various energy levels.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fas fa-magnet"></i></div>
-                <h3>Magnetometer</h3>
-                <p>Measures the magnitude and nature of the Interplanetary Magnetic Field (IMF) at the Sun-Earth L1 point.</p>
+            <div style="margin-top: 4rem; font-size: 0.75rem; color: var(--text-dim); font-family: 'JetBrains Mono';">
+                © 2024 • BUILT WITH DATA FROM ISRO PRADAN PIPELINE • ADITYA-L1 MISSION SCIENCE
             </div>
         </div>
-    </section>
-
-    <footer>
-        <div class="footer-logo">
-            <i class="fas fa-satellite-dish"></i>
-            <span>ADITYA-L1 PLASMA LAB</span>
-        </div>
-        <div class="footer-links">
-            <a href="dashboard.html">Dashboard</a>
-            <a href="visualizer.html">Data Visualizer</a>
-            <a href="explorer.html">Mission Explorer</a>
-            <a href="https://www.isro.gov.in/Aditya_L1.html" target="_blank">Official ISRO Site</a>
-        </div>
-        <p class="copy">&copy; 2024 • Built with Data from ISRO PRADAN Pipeline</p>
     </footer>
 
-    <canvas id="particle-canvas" style="position:fixed; top:0; left:0; z-index:-1; opacity:0.3;"></canvas>
-    <script>
-        // Scroll Disclosure
-        const observerOptions = {
-            threshold: 0.1
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('active');
-                }
-            });
-        }, observerOptions);
-
-        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-
-        // --- Live Data Integration ---
-        async function fetchLive() {
-            try {
-                const r = await fetch('data/latest.json?t=' + Date.now());
-                const data = await r.json();
-                const s = data.scalars || {}; // updated from 'summary' to 'scalars' to match current latest.json
-                const meta = data.metadata || {};
-                
-                let syncText = 'SYNCED ' + new Date().toLocaleTimeString();
-                if (meta.window_end) {
-                    syncText += ' — Data until: ' + meta.window_end.replace('Z', '').replace('T', ' ');
-                }
-                document.getElementById('last-sync').textContent = syncText;
-                
-                const grid = document.getElementById('conditions-grid');
-                grid.innerHTML = `
-                    <div class="cond-item">
-                        <div class="cond-label">Density</div>
-                        <div class="cond-val">${s.density_n_cc || '—'}<span class="cond-unit">cm⁻³</span></div>
-                    </div>
-                    <div class="cond-item">
-                        <div class="cond-label">Velocity</div>
-                        <div class="cond-val">${s.velocity_kms || '—'}<span class="cond-unit">km/s</span></div>
-                    </div>
-                    <div class="cond-item">
-                        <div class="cond-label">Temp</div>
-                        <div class="cond-val">${s.temperature_eV || '—'}<span class="cond-unit">eV</span></div>
-                    </div>
-                    <div class="cond-item">
-                        <div class="cond-label">|B| Mag</div>
-                        <div class="cond-val">${s.B_mag_nT || '—'}<span class="cond-unit">nT</span></div>
-                    </div>
-                `;
-
-                const evCont = document.getElementById('events-home');
-                const evs = data.events || [];
-                if (!evs.length) {
-                    evCont.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;">No major solar events detected in recent window.</div>';
-                } else {
-                    evCont.innerHTML = evs.slice(0, 3).map(ev => `
-                        <div class="ev-home-item">
-                            <div class="ev-home-ico">${ev.icon || '🛸'}</div>
-                            <div>
-                                <div class="ev-home-type">${ev.type}</div>
-                                <div class="ev-home-desc">${ev.explanation || ''}</div>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-            } catch (e) {
-                console.error('Live fetch failed', e);
-            }
-        }
-
-        async function fetchHistory() {
-            try {
-                const r = await fetch('data/history.json?t=' + Date.now());
-                const hist = await r.json();
-                if (!hist.length) return;
-
-                const cont = document.getElementById('spark-container');
-                const metrics = [
-                    { k: 'density', l: '6m Density', c: '#6beec0' },
-                    { k: 'velocity', l: '6m Velocity', c: '#29cbe8' },
-                    { k: 'B_mag', l: '6m |B|', c: '#ffad6b' }
-                ];
-
-                cont.innerHTML = metrics.map(m => `
-                    <div class="spark-card">
-                        <div class="spark-label">${m.l}</div>
-                        <canvas class="spark-canvas" id="spark-${m.k}"></canvas>
-                    </div>
-                `).join('');
-
-                setTimeout(() => {
-                    metrics.forEach(m => {
-                        const cv = document.getElementById('spark-' + m.k);
-                        const vals = hist.map(r => r[m.k]).filter(v => v != null);
-                        drawSpark(cv, vals, m.c);
-                    });
-                }, 100);
-            } catch (e) { console.error('History fetch failed', e); }
-        }
-
-        function drawSpark(canvas, values, color) {
-            const ctx = canvas.getContext('2d');
-            const w = canvas.width = canvas.offsetWidth * 2;
-            const h = canvas.height = canvas.offsetHeight * 2;
-            ctx.scale(2, 2);
-            const cw = w / 2;
-            const ch = h / 2;
-            const min = Math.min(...values);
-            const max = Math.max(...values);
-            const range = max - min || 1;
-            
-            ctx.beginPath();
-            values.forEach((v, i) => {
-                const x = (i / (values.length - 1)) * cw;
-                const y = ch - ((v - min) / range) * ch;
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            });
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-            
-            ctx.lineTo(cw, ch);
-            ctx.lineTo(0, ch);
-            ctx.closePath();
-            ctx.fillStyle = color + '15';
-            ctx.fill();
-        }
-
-        fetchLive();
-        fetchHistory();
-
-        (function() {
-            const cv = document.getElementById('particle-canvas');
-            const ctx = cv.getContext('2d');
-            let W, H, particles;
-            function resize() { W = cv.width = window.innerWidth; H = cv.height = window.innerHeight; }
-            function init() {
-                particles = Array.from({ length: 40 }, () => ({
-                    x: Math.random() * W, y: Math.random() * H,
-                    r: Math.random() * 1.5 + 0.5,
-                    vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2,
-                    alpha: Math.random() * 0.5 + 0.1
-                }));
-            }
-            function draw() {
-                ctx.clearRect(0, 0, W, H);
-                particles.forEach(p => {
-                    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(0, 212, 255, ${p.alpha})`;
-                    ctx.fill();
-                    p.x += p.vx; p.y += p.vy;
-                    if (p.x < 0 || p.x > W) p.vx *= -1;
-                    if (p.y < 0 || p.y > H) p.vy *= -1;
-                });
-                requestAnimationFrame(draw);
-            }
-            resize(); init(); draw();
-            window.addEventListener('resize', () => { resize(); init(); });
-        })();
-    </script>
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
+    <script src="js/nova.js"></script>
 </body>
 </html>

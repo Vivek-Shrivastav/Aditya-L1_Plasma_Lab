@@ -3,483 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aditya-L1 Data Visualizer</title>
-
+    <title>Aditya-L1 • Data Vision Visualizer</title>
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- Scripts -->
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/nova.css">
     <style>
-        :root {
-            --bg-base: #050a14;
-            --bg-panel: rgba(255,255,255,0.04);
-            --bg-panel-hover: rgba(255,255,255,0.07);
-            --accent-blue: #00d4ff;
-            --accent-orange: #ff8c42;
-            --accent-green: #39ff14;
-            --text-primary: #e0f0ff;
-            --text-secondary: #8ba3c4;
-            --text-dim: #4a6080;
-            --border-glow: rgba(0,212,255,0.15);
-            --font-ui: 'Inter', sans-serif;
-            --font-data: 'JetBrains Mono', monospace;
-            --radius-sm: 6px;
-            --radius-md: 10px;
-            --radius-lg: 16px;
-        }
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            background: var(--bg-base);
-            color: var(--text-primary);
-            font-family: var(--font-ui);
-            font-size: 14px;
+        .visualizer-main {
+            padding-top: 100px;
+            background: url('assets/visualizer_bg.png') no-repeat center center fixed;
+            background-size: cover;
             min-height: 100vh;
         }
-
-        body::before {
-            content: '';
+        .visualizer-overlay {
             position: fixed; inset: 0;
-            background: radial-gradient(ellipse at 20% 30%, rgba(0,100,200,0.06) 0%, transparent 60%);
-            pointer-events: none; z-index: 0;
-        }
-
-        .nav-bar {
-            position: sticky; top: 0; z-index: 100;
-            display: flex; align-items: center; gap: 24px;
-            padding: 0 24px; height: 58px;
-            background: rgba(5,10,20,0.85);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-glow);
-        }
-        .nav-brand { display: flex; align-items: baseline; gap: 8px; text-decoration: none; }
-        .nav-logo { font-size: 22px; }
-        .nav-title { font-size: 14px; letter-spacing: 0.12em; color: var(--accent-blue); font-weight: 700; }
-        .nav-sub { font-size: 10px; color: var(--text-secondary); letter-spacing: 0.08em; }
-        .nav-links { display: flex; gap: 4px; margin-left: auto; }
-        .nav-links a {
-            padding: 6px 14px; border-radius: var(--radius-sm);
-            color: var(--text-secondary); text-decoration: none;
-            font-size: 13px; font-weight: 500; transition: 0.2s;
-        }
-        .nav-links a:hover, .nav-links a.active { color: var(--accent-blue); background: rgba(0,212,255,0.08); }
-        .nav-links a.active { border-bottom: 2px solid var(--accent-blue); }
-
-        main { display: flex; max-width: 1600px; margin: 0 auto; padding: 20px; gap: 20px; }
-
-        .sidebar {
-            width: 320px;
-            flex-shrink: 0;
-            background: var(--bg-panel);
-            border: 1px solid var(--border-glow);
-            border-radius: var(--radius-lg);
-            padding: 20px;
-            height: fit-content;
-        }
-
-        .content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .section {
-            margin-bottom: 20px;
-        }
-        .section h3 {
-            font-size: 11px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 12px;
-        }
-
-        .form-group {
-            margin-bottom: 12px;
-        }
-        .form-group label {
-            display: block;
-            font-size: 11px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            margin-bottom: 6px;
-        }
-        .form-group input, .form-group select {
-            width: 100%;
-            background: rgba(5,10,20,0.6);
-            border: 1px solid var(--border-glow);
-            border-radius: var(--radius-sm);
-            padding: 10px 12px;
-            color: var(--text-primary);
-            font-family: var(--font-data);
-            font-size: 13px;
-        }
-        .form-group input:focus, .form-group select:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-        }
-
-        .btn {
-            width: 100%;
-            padding: 10px 16px;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border-glow);
-            background: rgba(0,212,255,0.06);
-            color: var(--accent-blue);
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            font-family: var(--font-data);
-            margin-bottom: 8px;
-        }
-        .btn:hover { background: rgba(0,212,255,0.14); }
-        .btn-primary { background: var(--accent-blue); color: #000; border: none; }
-        .btn-primary:hover { background: #4de5ff; }
-        .btn-group { display: flex; gap: 8px; }
-        .btn-group .btn { flex: 1; }
-
-        .checkbox-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .checkbox-group label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            color: var(--text-secondary);
-            cursor: pointer;
-        }
-        .checkbox-group input[type="checkbox"] {
-            width: 16px; height: 16px;
-            accent-color: var(--accent-blue);
-        }
-
-        .chart-container {
-            background: var(--bg-panel);
-            border: 1px solid var(--border-glow);
-            border-radius: var(--radius-lg);
-            padding: 16px;
-            min-height: 350px;
-        }
-
-        .file-drop {
-            border: 2px dashed var(--border-glow);
-            border-radius: var(--radius-md);
-            padding: 24px;
-            text-align: center;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .file-drop:hover {
-            border-color: var(--accent-blue);
-            background: rgba(0,212,255,0.04);
-        }
-        .file-drop input { display: none; }
-
-        .data-info {
-            font-family: var(--font-data);
-            font-size: 11px;
-            color: var(--text-dim);
-            margin-top: 8px;
+            background: radial-gradient(circle at center, rgba(3,2,10,0.4) 0%, rgba(3,2,10,0.95) 100%);
+            z-index: 1; pointer-events: none;
         }
     </style>
 </head>
 <body>
-    <nav class="nav-bar">
-        <div class="nav-brand">
-            <span class="nav-logo">☀</span>
-            <span class="nav-title">ADITYA-L1</span>
-            <span class="nav-sub">DATA VISUALIZER</span>
-        </div>
+
+    <!-- Navigation -->
+    <nav class="nova-nav">
+        <a href="index.html" class="nav-brand">ADITYA-L1 // PLASMA LAB</a>
         <div class="nav-links">
-            <a href="index.html">Learn</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="visualizer.html" class="active">Visualizer</a>
-            <a href="explorer.html">Explorer</a>
-            <a href="lab.html">Lab</a>
+            <a href="index.html" class="nav-link">SCIENCE</a>
+            <a href="dashboard.html" class="nav-link">DASHBOARD</a>
+            <a href="visualizer.html" class="nav-link">VISUALIZER</a>
+            <a href="explorer.html" class="nav-link">EXPLORER</a>
+            <a href="lab.html" class="nav-link">LAB</a>
         </div>
     </nav>
 
-    <main>
-        <!-- Sidebar Controls -->
-        <aside class="sidebar">
-            <div class="section">
-                <h3>Date Range Selection</h3>
-                <div class="form-group">
-                    <label>Start Date/Time</label>
-                    <input type="datetime-local" id="date-start">
-                </div>
-                <div class="form-group">
-                    <label>End Date/Time</label>
-                    <input type="datetime-local" id="date-end">
-                </div>
-                <button class="btn btn-primary" onclick="loadDateRange()">Load Selected Range</button>
+    <div class="visualizer-overlay"></div>
+
+    <main class="visualizer-main">
+        <div class="nova-container">
+            
+            <header class="page-header reveal-text">
+                <span class="chapter-label">[ DATA VISION • INTERACTIVE ]</span>
+                <h1>PLASMA EXPLORER</h1>
+                <p>High-resolution temporal analysis of solar wind populations. Zoom and pan to explore micro-structures in the L1 telemetry.</p>
+            </header>
+
+            <div class="hologram-panel reveal-text" style="height: 600px; margin-bottom: 3rem;">
+                <div id="chart-overview" style="height: 100%; width: 100%;"></div>
             </div>
 
-            <div class="section">
-                <h3>Upload CDF File</h3>
-                <div class="file-drop" onclick="document.getElementById('cdf-input').click()">
-                    <div style="font-size: 24px; margin-bottom: 8px;">📁</div>
-                    <div>Click to upload or drag CDF file</div>
-                    <div class="data-info">Supports Level-2 CDF files from PRADAN</div>
-                    <input type="file" id="cdf-input" accept=".cdf" onchange="handleCdfUpload(event)">
+            <div class="hud-grid reveal-text">
+                <div class="hud-card">
+                    <span class="hud-label">ANALYSIS MODE</span>
+                    <span style="font-family: var(--font-display); font-size: 1.2rem; color: var(--accent-solar);">TIME SERIES</span>
                 </div>
-                <div id="file-info" class="data-info"></div>
-            </div>
-
-            <div class="section">
-                <h3>Visible Variables</h3>
-                <div class="checkbox-group">
-                    <label><input type="checkbox" checked onchange="toggleVariable('density')"> Proton Density</label>
-                    <label><input type="checkbox" checked onchange="toggleVariable('velocity')"> Bulk Speed</label>
-                    <label><input type="checkbox" checked onchange="toggleVariable('temperature')"> Temperature</label>
-                    <label><input type="checkbox" checked onchange="toggleVariable('Bx')"> Bx (GSE)</label>
-                    <label><input type="checkbox" checked onchange="toggleVariable('By')"> By (GSE)</label>
-                    <label><input type="checkbox" checked onchange="toggleVariable('Bz')"> Bz (GSE)</label>
-                    <label><input type="checkbox" checked onchange="toggleVariable('B_mag')"> |B| Total</label>
+                <div class="hud-card">
+                    <span class="hud-label">TIME WINDOW</span>
+                    <span style="font-family: var(--font-display); font-size: 1.2rem;">LATEST 24H</span>
+                </div>
+                <div class="hud-card">
+                    <span class="hud-label">SENSORS</span>
+                    <span style="font-family: var(--font-display); font-size: 1.2rem;">SWIS + MAG</span>
                 </div>
             </div>
 
-            <div class="section">
-                <h3>Export</h3>
-                <div class="btn-group">
-                    <button class="btn" onclick="exportCSV()">Download CSV</button>
-                    <button class="btn" onclick="exportPNG()">Export PNG</button>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <div class="content">
-            <div class="chart-container">
-                <div id="chart-plasma" style="height: 350px;"></div>
-            </div>
-            <div class="chart-container">
-                <div id="chart-magnetic" style="height: 350px;"></div>
-            </div>
+            <footer style="margin-top: 5rem; text-align: center; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; padding-bottom: 50px;">
+                EOF // DATA VISION SYSTEM // ADITYA-L1 MISSION SCIENCE
+            </footer>
         </div>
     </main>
 
-    <script>
-        // --- State ---
-        let historyData = null;
-        let filteredData = null;
-        let visibleVars = {
-            density: true,
-            velocity: true,
-            temperature: true,
-            Bx: true,
-            By: true,
-            Bz: true,
-            B_mag: true
-        };
-
-        // --- Initialize ---
-        window.addEventListener('DOMContentLoaded', async () => {
-            await loadHistoryData();
-            setupDatePickers();
-        });
-
-        // --- Load History Data ---
-        async function loadHistoryData() {
-            try {
-                const res = await fetch('data/history.json?t=' + Date.now());
-                historyData = await res.json();
-
-                // Set date picker bounds
-                if (historyData.records && historyData.records.length > 0) {
-                    const firstTime = new Date(historyData.records[0].time);
-                    const lastTime = new Date(historyData.records[historyData.records.length - 1].time);
-
-                    document.getElementById('date-start').value = toLocalISOString(firstTime);
-                    document.getElementById('date-end').value = toLocalISOString(lastTime);
-
-                    filteredData = historyData.records;
-                    renderCharts();
-                }
-            } catch (e) {
-                console.error('Failed to load history:', e);
-            }
-        }
-
-        // --- Date Pickers ---
-        function setupDatePickers() {
-            // Auto-set end date to now
-            document.getElementById('date-end').value = toLocalISOString(new Date());
-        }
-
-        function toLocalISOString(date) {
-            const pad = n => n.toString().padStart(2, '0');
-            return date.getFullYear() + '-' +
-                pad(date.getMonth() + 1) + '-' +
-                pad(date.getDate()) + 'T' +
-                pad(date.getHours()) + ':' +
-                pad(date.getMinutes());
-        }
-
-        // --- Load Date Range ---
-        function loadDateRange() {
-            const startStr = document.getElementById('date-start').value;
-            const endStr = document.getElementById('date-end').value;
-
-            if (!startStr || !endStr) {
-                alert('Please select both start and end dates');
-                return;
-            }
-
-            const startDate = new Date(startStr);
-            const endDate = new Date(endStr);
-
-            if (startDate > endDate) {
-                alert('Start date must be before end date');
-                return;
-            }
-
-            filteredData = historyData.records.filter(r => {
-                const t = new Date(r.time);
-                return t >= startDate && t <= endDate;
-            });
-
-            renderCharts();
-        }
-
-        // --- Toggle Variables ---
-        function toggleVariable(name) {
-            visibleVars[name] = !visibleVars[name];
-            renderCharts();
-        }
-
-        // --- Render Charts ---
-        function renderCharts() {
-            if (!filteredData || filteredData.length === 0) return;
-
-            const times = filteredData.map(r => new Date(r.time));
-
-            // Plasma Chart
-            const plasmaTraces = [];
-
-            if (visibleVars.density) {
-                plasmaTraces.push({
-                    x: times, y: filteredData.map(r => r.density),
-                    name: 'Density', type: 'scatter', mode: 'lines',
-                    line: { color: '#00d4ff', width: 2 }
-                });
-            }
-
-            if (visibleVars.velocity) {
-                plasmaTraces.push({
-                    x: times, y: filteredData.map(r => r.velocity),
-                    name: 'Speed', type: 'scatter', mode: 'lines',
-                    line: { color: '#ff8c42', width: 2 },
-                    yaxis: 'y2'
-                });
-            }
-
-            if (visibleVars.temperature) {
-                plasmaTraces.push({
-                    x: times, y: filteredData.map(r => r.temperature),
-                    name: 'Temperature', type: 'scatter', mode: 'lines',
-                    line: { color: '#39ff14', width: 2 },
-                    yaxis: 'y2'
-                });
-            }
-
-            const plasmaLayout = {
-                paper_bgcolor: 'transparent',
-                plot_bgcolor: 'rgba(5,10,20,0.6)',
-                font: { family: 'JetBrains Mono', color: '#a8b4c8', size: 11 },
-                xaxis: { gridcolor: 'rgba(0,212,255,0.08)', title: 'Time' },
-                yaxis: { title: 'Density [cm⁻³]', side: 'left' },
-                yaxis2: { title: 'Speed [km/s], Temp [eV]', overlaying: 'y', side: 'right', gridcolor: 'transparent' },
-                margin: { l: 55, r: 55, t: 20, b: 40 },
-                showlegend: true,
-                legend: { x: 0, y: 1 }
-            };
-
-            Plotly.newPlot('chart-plasma', plasmaTraces, plasmaLayout, { responsive: true, displaylogo: false });
-
-            // Magnetic Chart
-            const magTraces = [];
-
-            if (visibleVars.Bx) {
-                magTraces.push({
-                    x: times, y: filteredData.map(r => r.B_mag),
-                    name: '|B|', type: 'scatter', mode: 'lines',
-                    line: { color: '#ffffff', width: 2 }
-                });
-            }
-
-            if (visibleVars.Bz) {
-                magTraces.push({
-                    x: times, y: filteredData.map(r => r.Bz),
-                    name: 'Bz', type: 'scatter', mode: 'lines',
-                    line: { color: '#ff5252', width: 1.5, dash: 'dot' }
-                });
-            }
-
-            const magLayout = {
-                paper_bgcolor: 'transparent',
-                plot_bgcolor: 'rgba(5,10,20,0.6)',
-                font: { family: 'JetBrains Mono', color: '#a8b4c8', size: 11 },
-                xaxis: { gridcolor: 'rgba(0,212,255,0.08)', title: 'Time' },
-                yaxis: { gridcolor: 'rgba(0,212,255,0.08)', title: 'B [nT]' },
-                margin: { l: 55, r: 20, t: 20, b: 40 },
-                showlegend: true
-            };
-
-            Plotly.newPlot('chart-magnetic', magTraces, magLayout, { responsive: true, displaylogo: false });
-        }
-
-        // --- CDF Upload Handler ---
-        function handleCdfUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            document.getElementById('file-info').textContent = `Loaded: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
-
-            // Note: Actual CDF parsing would require cdflib-wasm or a backend
-            // For now, we show a message about the limitation
-            alert('CDF file uploaded. Note: Browser-based CDF parsing requires cdflib-wasm. For full analysis, please use the Python pipeline.');
-        }
-
-        // --- Export CSV ---
-        function exportCSV() {
-            if (!filteredData || filteredData.length === 0) {
-                alert('No data to export');
-                return;
-            }
-
-            const headers = ['time', 'density', 'velocity', 'temperature', 'B_mag', 'Bz', 'beta', 'va_kms'];
-            const rows = filteredData.map(r =>
-                headers.map(h => r[h] || '').join(',')
-            );
-
-            const csv = [headers.join(','), ...rows].join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'aditya-l1_data_' + new Date().toISOString().slice(0,10) + '.csv';
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        // --- Export PNG ---
-        function exportPNG() {
-            Plotly.downloadImage('chart-plasma', {
-                format: 'png',
-                width: 1200,
-                height: 600,
-                filename: 'aditya-l1_plasma_plot'
-            });
-        }
-    </script>
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="js/nova.js"></script>
+    <script src="js/dashboard.js"></script>
 </body>
 </html>

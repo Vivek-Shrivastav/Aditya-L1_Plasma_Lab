@@ -3,912 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aditya-L1 Plasma Dashboard</title>
-
+    <title>Aditya-L1 • Mission Control Dashboard</title>
+    
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
-
-    <!-- Plotly.js -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- Scripts -->
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/nova.css">
     <style>
-        /* --- Design tokens --- */
-        :root {
-            --bg-base: #050a14;
-            --bg-panel: rgba(255,255,255,0.04);
-            --bg-panel-hover: rgba(255,255,255,0.07);
-            --accent-blue: #00d4ff;
-            --accent-orange: #ff8c42;
-            --accent-green: #39ff14;
-            --accent-red: #ff3366;
-            --text-primary: #e0f0ff;
-            --text-secondary: #8ba3c4;
-            --text-dim: #4a6080;
-            --border-glow: rgba(0,212,255,0.15);
-            --border-strong: rgba(0,212,255,0.30);
-            --font-ui: 'Inter', sans-serif;
-            --font-data: 'JetBrains Mono', monospace;
-            --font-title: 'Orbitron', sans-serif;
-            --radius-sm: 6px;
-            --radius-md: 10px;
-            --radius-lg: 16px;
-            --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
-        }
-
-        /* --- Reset --- */
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
-        body {
-            background: var(--bg-base);
-            color: var(--text-primary);
-            font-family: var(--font-ui);
-            font-size: 14px;
-            line-height: 1.6;
+        .dashboard-main {
+            padding-top: 100px;
+            padding-bottom: 50px;
             min-height: 100vh;
+            background: url('assets/dashboard_bg.png') no-repeat center center fixed;
+            background-size: cover;
         }
-
-        /* Subtle starfield background */
-        body::before {
-            content: '';
+        .dashboard-overlay {
             position: fixed; inset: 0;
-            background:
-                radial-gradient(ellipse at 20% 30%, rgba(0,100,200,0.06) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 70%, rgba(0,180,100,0.04) 0%, transparent 50%);
-            pointer-events: none; z-index: 0;
-        }
-
-        /* --- Navigation --- */
-        .nav-bar {
-            position: sticky; top: 0; z-index: 100;
-            display: flex; align-items: center; gap: 24px;
-            padding: 0 24px; height: 58px;
-            background: rgba(5,10,20,0.85);
-            backdrop-filter: blur(20px) saturate(180%);
-            border-bottom: 1px solid var(--border-glow);
-        }
-        .nav-brand {
-            display: flex; align-items: baseline; gap: 8px;
-            text-decoration: none;
-        }
-        .nav-logo { font-size: 22px; }
-        .nav-title { font-family: var(--font-title); font-size: 14px;
-                    letter-spacing: 0.12em; color: var(--accent-blue); }
-        .nav-sub { font-size: 10px; color: var(--text-secondary);
-                  letter-spacing: 0.08em; }
-        .nav-links { display: flex; gap: 4px; margin-left: auto; }
-        .nav-links a {
-            padding: 6px 14px; border-radius: var(--radius-sm);
-            color: var(--text-secondary); text-decoration: none;
-            font-size: 13px; font-weight: 500;
-            transition: var(--transition);
-        }
-        .nav-links a:hover, .nav-links a.active {
-            color: var(--accent-blue);
-            background: rgba(0,212,255,0.08);
-        }
-        .nav-links a.active {
-            border-bottom: 2px solid var(--accent-blue);
-        }
-        .nav-status {
-            display: flex; align-items: center; gap: 10px;
-            font-family: var(--font-data); font-size: 12px;
-            color: var(--text-secondary);
-        }
-        #sync-btn {
-            padding: 5px 12px; border-radius: var(--radius-sm);
-            border: 1px solid var(--border-glow);
-            background: rgba(0,212,255,0.06);
-            color: var(--accent-blue); font-size: 12px;
-            cursor: pointer; transition: var(--transition);
-            font-family: var(--font-data);
-        }
-        #sync-btn:hover { background: rgba(0,212,255,0.14); }
-        #sync-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        /* --- Glass panels --- */
-        .panel {
-            background: var(--bg-panel);
-            border: 1px solid var(--border-glow);
-            border-radius: var(--radius-lg);
-            padding: 20px;
-            transition: border-color var(--transition), background var(--transition);
-        }
-        .panel:hover {
-            background: var(--bg-panel-hover);
-            border-color: var(--border-strong);
-        }
-
-        /* --- Metric cards --- */
-        .metric-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            padding: 16px 24px;
-        }
-        .metric-card {
-            position: relative;
-            padding: 18px 20px 16px;
-            background: var(--bg-panel);
-            border: 1px solid var(--border-glow);
-            border-radius: var(--radius-lg);
-            cursor: default;
-            transition: var(--transition);
-            overflow: hidden;
-        }
-        .metric-card::before {
-            content: '';
-            position: absolute; top: 0; left: 0; right: 0; height: 2px;
-            background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
-            opacity: 0; transition: opacity var(--transition);
-        }
-        .metric-card:hover { border-color: var(--border-strong); }
-        .metric-card:hover::before { opacity: 1; }
-
-        .metric-source {
-            font-family: var(--font-data); font-size: 10px;
-            color: var(--accent-blue); letter-spacing: 0.06em;
-            text-transform: uppercase; margin-bottom: 4px;
-        }
-        .metric-label {
-            font-size: 11px; color: var(--text-secondary);
-            letter-spacing: 0.05em; text-transform: uppercase;
-            margin-bottom: 10px;
-        }
-        .metric-value {
-            font-family: var(--font-data); font-size: 32px; font-weight: 500;
-            color: var(--text-primary); line-height: 1;
-            margin-bottom: 4px;
-        }
-        .metric-unit {
-            font-family: var(--font-data); font-size: 12px;
-            color: var(--text-secondary);
-        }
-        .metric-range-bar {
-            height: 4px; border-radius: 2px;
-            background: rgba(255,255,255,0.08);
-            margin: 10px 0 8px;
-            overflow: hidden;
-        }
-        .metric-range-fill {
-            height: 100%; border-radius: 2px;
-            transition: width 0.5s ease;
-        }
-        .metric-context {
-            font-size: 11px; color: var(--text-dim);
-        }
-
-        /* Tooltip panel */
-        .metric-tooltip {
-            position: absolute; bottom: calc(100% + 8px); left: 0; right: 0;
-            background: rgba(5,10,20,0.97);
-            border: 1px solid var(--border-strong);
-            border-radius: var(--radius-md);
-            padding: 14px 16px;
-            z-index: 50; pointer-events: none;
-            opacity: 0; transform: translateY(6px);
-            transition: opacity 0.2s ease, transform 0.2s ease;
-            font-size: 12px; line-height: 1.7;
-        }
-        .metric-card:hover .metric-tooltip {
-            opacity: 1; transform: translateY(0);
-        }
-        .tooltip-formula {
-            font-family: var(--font-data); font-size: 11px;
-            color: var(--accent-blue);
-            background: rgba(0,212,255,0.06);
-            padding: 4px 8px; border-radius: 4px;
-            margin-bottom: 8px; display: block;
-        }
-
-        /* --- Tab navigation --- */
-        .tab-bar {
-            display: flex; gap: 2px; padding: 8px 24px 0;
-            border-bottom: 1px solid var(--border-glow);
-            overflow-x: auto; scrollbar-width: none;
-        }
-        .tab-bar::-webkit-scrollbar { display: none; }
-        .tab-btn {
-            padding: 8px 18px; border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-            background: none; border: none;
-            color: var(--text-secondary); font-size: 13px; font-weight: 500;
-            cursor: pointer; white-space: nowrap;
-            transition: var(--transition); position: relative;
-        }
-        .tab-btn::after {
-            content: '';
-            position: absolute; bottom: -1px; left: 0; right: 0; height: 2px;
-            background: var(--accent-blue); opacity: 0; transition: opacity var(--transition);
-        }
-        .tab-btn:hover { color: var(--text-primary); background: rgba(0,212,255,0.04); }
-        .tab-btn.active { color: var(--accent-blue); }
-        .tab-btn.active::after { opacity: 1; }
-
-        /* --- Charts --- */
-        .chart-container { padding: 16px 24px; }
-        .chart-panel { height: 320px; }
-        .spectrogram-panel { height: 400px; }
-        .history-panel { height: 180px; margin-bottom: 8px; }
-
-        /* --- Events log --- */
-        .event-card {
-            display: grid; grid-template-columns: 40px 1fr auto;
-            gap: 12px; align-items: start;
-            padding: 14px 18px; margin-bottom: 10px;
-            background: var(--bg-panel);
-            border: 1px solid var(--border-glow);
-            border-left: 3px solid var(--accent-orange);
-            border-radius: var(--radius-md);
-            cursor: pointer; transition: var(--transition);
-        }
-        .event-card:hover { background: var(--bg-panel-hover); }
-        .event-icon { font-size: 22px; text-align: center; }
-        .event-type { font-size: 12px; font-weight: 600;
-                      color: var(--text-primary); margin-bottom: 3px;
-                      letter-spacing: 0.04em; text-transform: uppercase; }
-        .event-desc { font-size: 12px; color: var(--text-secondary); }
-        .event-time { font-family: var(--font-data); font-size: 10px;
-                      color: var(--text-dim); white-space: nowrap; }
-        .badge {
-            display: inline-block; padding: 2px 8px;
-            border-radius: 4px; font-size: 10px; font-weight: 600;
-            letter-spacing: 0.06em; text-transform: uppercase;
-        }
-        .badge-warn  { background: rgba(255,140,66,0.15); color: var(--accent-orange);
-                       border: 1px solid rgba(255,140,66,0.3); }
-        .badge-danger{ background: rgba(255,51,102,0.15); color: var(--accent-red);
-                       border: 1px solid rgba(255,51,102,0.3); }
-        .badge-ok    { background: rgba(57,255,20,0.10); color: var(--accent-green);
-                       border: 1px solid rgba(57,255,20,0.25); }
-        .hidden { display: none !important; }
-
-        /* --- Toast notifications --- */
-        #toast-container {
-            position: fixed; bottom: 24px; right: 24px;
-            z-index: 9999; display: flex; flex-direction: column; gap: 8px;
-        }
-        .toast {
-            padding: 10px 16px; border-radius: var(--radius-md);
-            font-size: 13px; font-family: var(--font-data);
-            backdrop-filter: blur(16px);
-            animation: slide-in 0.25s ease;
-        }
-        .toast-success { background: rgba(57,255,20,0.12);
-                         border: 1px solid rgba(57,255,20,0.25); color: var(--accent-green); }
-        .toast-warn    { background: rgba(255,140,66,0.12);
-                         border: 1px solid rgba(255,140,66,0.25); color: var(--accent-orange); }
-        .toast-error   { background: rgba(255,51,102,0.12);
-                         border: 1px solid rgba(255,51,102,0.25); color: var(--accent-red); }
-        @keyframes slide-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; } }
-
-        /* --- Live indicator --- */
-        .live-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: var(--accent-green);
-            display: inline-block;
-            animation: pulse-dot 2s ease-in-out infinite;
-        }
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--accent-green); }
-            50%       { opacity: 0.3; box-shadow: none; }
-        }
-
-        /* --- MVA Table --- */
-        .mva-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-family: var(--font-data);
-            font-size: 12px;
-        }
-        .mva-table th, .mva-table td {
-            padding: 8px 12px;
-            text-align: left;
-            border-bottom: 1px solid var(--border-glow);
-        }
-        .mva-table th {
-            color: var(--accent-blue);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 10px;
-            letter-spacing: 0.05em;
-        }
-        .mva-table td { color: var(--text-secondary); }
-
-        /* --- Responsive --- */
-        @media (max-width: 768px) {
-            .nav-links { display: none; }
-            .nav-links.open { display: flex; flex-direction: column; position: absolute;
-                            top: 58px; left: 0; right: 0;
-                            background: rgba(5,10,20,0.97); padding: 12px;
-                            border-bottom: 1px solid var(--border-glow); }
-            .hamburger { display: flex; }
-            .metric-grid { grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 16px; }
-            .metric-value { font-size: 24px; }
-            .chart-panel { height: 240px; }
-            .tab-bar { padding: 6px 12px 0; }
-            .tab-btn { padding: 6px 12px; font-size: 12px; }
-        }
-        @media (max-width: 480px) {
-            .metric-grid { grid-template-columns: 1fr; }
-            .nav-status #last-sync-time { display: none; }
-        }
-
-        /* --- Main content area --- */
-        main {
-            padding: 20px 24px;
-            max-width: 1600px;
-            margin: 0 auto;
-        }
-        .content-section {
-            display: none;
-        }
-        .content-section.active {
-            display: block;
+            background: radial-gradient(circle at center, rgba(3,2,10,0.6) 0%, rgba(3,2,10,0.95) 100%);
+            z-index: 1; pointer-events: none;
         }
     </style>
 </head>
 <body>
+
     <!-- Navigation -->
-    <nav class="nav-bar">
-        <div class="nav-brand">
-            <span class="nav-logo">☀</span>
-            <span class="nav-title">ADITYA-L1</span>
-            <span class="nav-sub">PLASMA LAB</span>
-        </div>
+    <nav class="nova-nav">
+        <a href="index.html" class="nav-brand">ADITYA-L1 // PLASMA LAB</a>
         <div class="nav-links">
-            <a href="index.html">Learn</a>
-            <a href="dashboard.html" class="active">Dashboard</a>
-            <a href="visualizer.html">Visualizer</a>
-            <a href="explorer.html">Explorer</a>
-            <a href="lab.html">Lab</a>
-        </div>
-        <div class="nav-status">
-            <span class="live-dot" id="live-indicator"></span>
-            <span id="last-sync-time">--:--:--</span>
-            <button id="sync-btn" onclick="syncData()">⟳ Live Sync</button>
-            <span id="simulated-badge" class="badge badge-warn hidden">SIMULATED</span>
+            <a href="index.html" class="nav-link">SCIENCE</a>
+            <a href="dashboard.html" class="nav-link">DASHBOARD</a>
+            <a href="visualizer.html" class="nav-link">VISUALIZER</a>
+            <a href="explorer.html" class="nav-link">EXPLORER</a>
+            <a href="lab.html" class="nav-link">LAB</a>
         </div>
     </nav>
 
-    <main>
-        <!-- Metric Cards -->
-        <div class="metric-grid">
-            <!-- Proton Density -->
-            <div class="metric-card" id="card-density">
-                <div class="metric-source">SWIS/PAPA <span style="float:right" id="density-live">[●LIVE]</span></div>
-                <div class="metric-label">Proton Density</div>
-                <div class="metric-value" id="val-density">--.-</div>
-                <div class="metric-unit">cm⁻³</div>
-                <div class="metric-range-bar">
-                    <div class="metric-range-fill" id="fill-density" style="width: 0%; background: var(--accent-blue);"></div>
-                </div>
-                <div class="metric-context">Quiet wind: 3-10 cm⁻³</div>
-                <div class="metric-tooltip">
-                    <span class="tooltip-formula">n = N_p / V (cm⁻³)</span>
-                    <strong>Physical meaning:</strong> Number of protons per cubic centimeter.<br>
-                    <strong>Typical range:</strong> 3-10 cm⁻³ (slow wind), 10-30 cm⁻³ (CME sheath)<br>
-                    <strong>Anomaly:</strong> Values &gt;20 may indicate shock compression.
-                </div>
-            </div>
+    <div class="dashboard-overlay"></div>
 
-            <!-- Bulk Speed -->
-            <div class="metric-card" id="card-speed">
-                <div class="metric-source">SWIS <span style="float:right" id="speed-live">[●LIVE]</span></div>
-                <div class="metric-label">Bulk Speed</div>
-                <div class="metric-value" id="val-speed">---</div>
-                <div class="metric-unit">km/s</div>
-                <div class="metric-range-bar">
-                    <div class="metric-range-fill" id="fill-speed" style="width: 0%; background: var(--accent-orange);"></div>
+    <main class="dashboard-main">
+        <div class="nova-container">
+            
+            <header class="page-header reveal-text">
+                <span class="chapter-label">[ L1 TELEMETRY • MISSION CONTROL ]</span>
+                <h1>MISSION MONITORING</h1>
+                <p>Real-time plasma parameters and magnetic field vectors streamed from the Sun-Earth L1 point.</p>
+                <div style="margin-top: 1.5rem;">
+                    <button id="sync-btn" class="nova-btn btn-ghost" style="padding: 0.6rem 1.2rem; font-size: 0.7rem;">⟳ SYNCING...</button>
                 </div>
-                <div class="metric-context" id="speed-regime">Slow wind — coronal streamer belt</div>
-                <div class="metric-tooltip">
-                    <span class="tooltip-formula">V = |v_p| (km/s)</span>
-                    <strong>Physical meaning:</strong> Velocity of proton bulk flow.<br>
-                    <strong>Typical range:</strong> 300-450 km/s (slow), 550-800 km/s (fast)<br>
-                    <strong>Anomaly:</strong> Jumps &gt;100 km/s may indicate shocks.
-                </div>
-            </div>
+            </header>
 
-            <!-- Temperature -->
-            <div class="metric-card" id="card-temp">
-                <div class="metric-source">SWIS <span style="float:right" id="temp-live">[●LIVE]</span></div>
-                <div class="metric-label">Temperature</div>
-                <div class="metric-value" id="val-temp">--.-</div>
-                <div class="metric-unit">eV</div>
-                <div class="metric-range-bar">
-                    <div class="metric-range-fill" id="fill-temp" style="width: 0%; background: var(--accent-green);"></div>
+            <!-- Metrics HUD -->
+            <div class="hud-grid reveal-text" style="margin-bottom: 3rem;">
+                <div class="hud-card">
+                    <span class="hud-label">Proton Density</span>
+                    <span class="hud-value" id="val-density">--.--</span>
+                    <span class="hud-unit">cm⁻³</span>
                 </div>
-                <div class="metric-context">1 eV ≈ 11,604 K</div>
-                <div class="metric-tooltip">
-                    <span class="tooltip-formula">T_p = (m_p v_th²) / (2k_B)</span>
-                    <strong>Physical meaning:</strong> Proton thermal energy.<br>
-                    <strong>Typical range:</strong> 5-20 eV (nominal)<br>
-                    <strong>Anomaly:</strong> Low T with high V suggests CME ejecta.
+                <div class="hud-card">
+                    <span class="hud-label">Bulk Speed</span>
+                    <span class="hud-value" id="val-speed">---</span>
+                    <span class="hud-unit">km/s</span>
+                </div>
+                <div class="hud-card">
+                    <span class="hud-label">Temperature</span>
+                    <span class="hud-value" id="val-temp">--.--</span>
+                    <span class="hud-unit">eV</span>
+                </div>
+                <div class="hud-card">
+                    <span class="hud-label">Magnetic Field |B|</span>
+                    <span class="hud-value" id="val-mag">--.--</span>
+                    <span class="hud-unit">nT</span>
                 </div>
             </div>
 
-            <!-- Magnetic Field -->
-            <div class="metric-card" id="card-mag">
-                <div class="metric-source">MAG <span style="float:right" id="mag-live">[●LIVE]</span></div>
-                <div class="metric-label">IMF |B|</div>
-                <div class="metric-value" id="val-mag">--.-</div>
-                <div class="metric-unit" id="val-bz">Bz: -.-- nT</div>
-                <div class="metric-range-bar">
-                    <div class="metric-range-fill" id="fill-mag" style="width: 0%; background: #ffffff;"></div>
+            <!-- Visualization Tabs -->
+            <div class="hologram-panel reveal-text">
+                <div style="display: flex; gap: 1rem; border-bottom: 1px solid var(--border-glow); margin-bottom: 2rem;">
+                    <a href="#" class="nav-link active" style="padding: 1rem 0;">OVERVIEW MONITOR</a>
+                    <a href="#" class="nav-link" style="padding: 1rem 0; opacity: 0.5;">MAG-FIELD VECTORS</a>
+                    <a href="#" class="nav-link" style="padding: 1rem 0; opacity: 0.5;">SPECTRAL FLUX</a>
                 </div>
-                <div class="metric-context" id="bz-status">Northward — minimal coupling</div>
-                <div class="metric-tooltip">
-                    <span class="tooltip-formula">|B| = √(Bx² + By² + Bz²)</span>
-                    <strong>Physical meaning:</strong> Total interplanetary magnetic field.<br>
-                    <strong>Typical range:</strong> 3-10 nT at L1<br>
-                    <strong>Anomaly:</strong> Bz &lt; -5 nT drives geomagnetic activity.
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab Navigation -->
-        <div class="tab-bar">
-            <button class="tab-btn active" data-tab="overview">Overview</button>
-            <button class="tab-btn" data-tab="magnetic">Magnetic Field</button>
-            <button class="tab-btn" data-tab="particles">Particles</button>
-            <button class="tab-btn" data-tab="physics">Physics</button>
-            <button class="tab-btn" data-tab="history">6-Month History</button>
-            <button class="tab-btn" data-tab="events">Events</button>
-        </div>
-
-        <!-- Chart Panels -->
-        <div class="chart-container">
-            <!-- Overview Tab -->
-            <div id="overview-section" class="content-section active">
-                <div id="chart-overview" class="chart-panel"></div>
+                
+                <div id="chart-overview" style="height: 450px; width: 100%;"></div>
             </div>
 
-            <!-- Magnetic Field Tab -->
-            <div id="magnetic-section" class="content-section">
-                <div id="chart-magnetic" class="chart-panel"></div>
-            </div>
-
-            <!-- Particles Tab -->
-            <div id="particles-section" class="content-section">
-                <div id="chart-spectrogram" class="spectrogram-panel"></div>
-            </div>
-
-            <!-- Physics Tab -->
-            <div id="physics-section" class="content-section">
-                <div id="chart-physics" class="chart-panel"></div>
-                <div style="margin-top: 16px;">
-                    <h3 style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">MVA Results</h3>
-                    <table class="mva-table" id="mva-table">
-                        <thead>
-                            <tr>
-                                <th>λ_min</th>
-                                <th>λ_int</th>
-                                <th>λ_max</th>
-                                <th>Ratio</th>
-                                <th>Quality</th>
-                                <th>Normal (GSE)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="mva-body">
-                            <tr><td colspan="6">Loading...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- History Tab -->
-            <div id="history-section" class="content-section">
-                <div id="chart-history-density" class="history-panel"></div>
-                <div id="chart-history-speed" class="history-panel"></div>
-                <div id="chart-history-bz" class="history-panel"></div>
-                <div id="chart-history-beta" class="history-panel"></div>
-            </div>
-
-            <!-- Events Tab -->
-            <div id="events-section" class="content-section">
-                <div id="events-container"></div>
-            </div>
+            <footer style="margin-top: 5rem; text-align: center; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em;">
+                SECURE DATA LINK // PRADAN PIPELINE ESTABLISHED // SYSTEM NOMINAL
+            </footer>
         </div>
     </main>
 
-    <!-- Toast Container -->
-    <div id="toast-container"></div>
-
-    <script>
-        // --- Configuration ---
-        const LATEST_URL = 'data/latest.json';
-        const HISTORY_URL = 'data/history.json';
-
-        // --- Plotly Layout Base ---
-        const LAYOUT_BASE = {
-            paper_bgcolor: 'transparent',
-            plot_bgcolor: 'rgba(5,10,20,0.6)',
-            font: { family: 'JetBrains Mono, monospace', color: '#a8b4c8', size: 11 },
-            xaxis: {
-                gridcolor: 'rgba(0,212,255,0.08)',
-                linecolor: 'rgba(0,212,255,0.2)',
-                tickfont: { color: '#6b7d96' },
-                zerolinecolor: 'rgba(0,212,255,0.15)',
-            },
-            yaxis: {
-                gridcolor: 'rgba(0,212,255,0.08)',
-                linecolor: 'rgba(0,212,255,0.2)',
-                tickfont: { color: '#6b7d96' },
-            },
-            legend: { bgcolor: 'rgba(0,0,0,0)', font: { color: '#a8b4c8' } },
-            margin: { l: 55, r: 20, t: 30, b: 45 },
-            modebar: { bgcolor: 'transparent', color: '#00d4ff', activecolor: '#ffffff' },
-            hoverlabel: {
-                bgcolor: 'rgba(5,10,20,0.9)',
-                bordercolor: '#00d4ff',
-                font: { family: 'JetBrains Mono', color: '#e0f0ff' }
-            }
-        };
-
-        const PLOTLY_CONFIG = {
-            responsive: true,
-            displaylogo: false,
-            modeBarButtonsToRemove: ['select2d', 'lasso2d']
-        };
-
-        // --- State ---
-        let latestData = null;
-        let historyData = null;
-        let currentTab = 'overview';
-
-        // --- Tab Handling ---
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentTab = btn.dataset.tab;
-
-                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-                document.getElementById(currentTab + '-section').classList.add('active');
-
-                renderTabCharts();
-            });
-        });
-
-        // --- Core Sync Function ---
-        async function syncData() {
-            const btn = document.getElementById('sync-btn');
-            btn.textContent = '⟳ Syncing...';
-            btn.disabled = true;
-
-            try {
-                const [latestRes, historyRes] = await Promise.all([
-                    fetch(LATEST_URL + '?t=' + Date.now()),
-                    fetch(HISTORY_URL + '?t=' + Date.now())
-                ]);
-
-                if (!latestRes.ok) throw new Error(`HTTP ${latestRes.status}`);
-                if (!historyRes.ok) throw new Error(`HTTP ${historyRes.status}`);
-
-                latestData = await latestRes.json();
-                historyData = await historyRes.json();
-
-                updateMetricCards();
-                renderTabCharts();
-                updateEventsLog();
-
-                const ts = new Date(latestData.run_time);
-                document.getElementById('last-sync-time').textContent =
-                    ts.toLocaleTimeString('en-GB') + ' UTC';
-
-                const badge = document.getElementById('simulated-badge');
-                badge.classList.toggle('hidden', !latestData.simulated);
-
-                showToast(latestData.simulated
-                    ? '⚠ Simulated data (PRADAN credentials not set)'
-                    : '✓ Real Aditya-L1 data loaded', latestData.simulated ? 'warn' : 'success');
-
-            } catch (err) {
-                showToast(`✕ Sync failed: ${err.message}`, 'error');
-            } finally {
-                btn.textContent = '⟳ Live Sync';
-                btn.disabled = false;
-            }
-        }
-
-        // --- Update Metric Cards ---
-        function updateMetricCards() {
-            if (!latestData) return;
-
-            const s = latestData.scalars;
-            const mom = latestData.moments;
-
-            // Density
-            document.getElementById('val-density').textContent = s.density_cm3?.toFixed(2) || '--.-';
-            const densityPct = Math.min(100, (s.density_cm3 / 30) * 100);
-            document.getElementById('fill-density').style.width = densityPct + '%';
-
-            // Speed
-            document.getElementById('val-speed').textContent = s.velocity_kms?.toFixed(0) || '---';
-            const speedPct = Math.min(100, ((s.velocity_kms - 300) / 500) * 100);
-            document.getElementById('fill-speed').style.width = speedPct + '%';
-            document.getElementById('speed-regime').textContent = latestData.sw_regime || '---';
-
-            // Temperature
-            document.getElementById('val-temp').textContent = s.temperature_eV?.toFixed(1) || '--.-';
-            const tempPct = Math.min(100, (s.temperature_eV / 50) * 100);
-            document.getElementById('fill-temp').style.width = tempPct + '%';
-
-            // Magnetic
-            document.getElementById('val-mag').textContent = s.B_mag_nT?.toFixed(1) || '--.-';
-            document.getElementById('val-bz').textContent = `Bz: ${s.Bz_nT?.toFixed(1) || '-.--'} nT`;
-            const magPct = Math.min(100, (s.B_mag_nT / 20) * 100);
-            document.getElementById('fill-mag').style.width = magPct + '%';
-            document.getElementById('bz-status').textContent = latestData.bz_status?.label || '---';
-
-            // MVA Table
-            const mva = latestData.mva;
-            if (mva && mva.valid !== undefined) {
-                document.getElementById('mva-body').innerHTML = `
-                    <tr>
-                        <td>${mva.lambda_min?.toFixed(4) || '---'}</td>
-                        <td>${mva.lambda_int?.toFixed(4) || '---'}</td>
-                        <td>${mva.lambda_max?.toFixed(4) || '---'}</td>
-                        <td>${mva.lambda_ratio?.toFixed(2) || '---'}</td>
-                        <td>${mva.quality || '---'}</td>
-                        <td>[${mva.normal_dir?.map(x => x.toFixed(2)).join(', ') || '---'}]</td>
-                    </tr>
-                `;
-            }
-        }
-
-        // --- Render Charts for Current Tab ---
-        function renderTabCharts() {
-            if (!latestData) return;
-
-            if (currentTab === 'overview') renderOverviewChart();
-            else if (currentTab === 'magnetic') renderMagneticChart();
-            else if (currentTab === 'particles') renderSpectrogramChart();
-            else if (currentTab === 'physics') renderPhysicsChart();
-            else if (currentTab === 'history') renderHistoryCharts();
-            else if (currentTab === 'events') renderEventsLog();
-        }
-
-        // --- Overview Chart ---
-        function renderOverviewChart() {
-            const mom = latestData.moments;
-            const times = mom.times.map(t => new Date(t));
-
-            const traceDensity = {
-                x: times, y: mom.density,
-                name: 'Density', type: 'scatter', mode: 'lines',
-                line: { color: '#00d4ff', width: 2 },
-                fill: 'tozeroy', fillcolor: 'rgba(0, 212, 255, 0.15)'
-            };
-
-            const traceSpeed = {
-                x: times, y: mom.velocity,
-                name: 'Speed', type: 'scatter', mode: 'lines',
-                line: { color: '#ff8c42', width: 2 },
-                fill: 'tozeroy', fillcolor: 'rgba(255, 140, 66, 0.10)',
-                yaxis: 'y2'
-            };
-
-            const layout = JSON.parse(JSON.stringify(LAYOUT_BASE));
-            layout.yaxis = {
-                ...layout.yaxis,
-                title: 'Density [cm⁻³]',
-                side: 'left'
-            };
-            layout.yaxis2 = {
-                title: 'Speed [km/s]',
-                overlaying: 'y',
-                side: 'right',
-                gridcolor: 'transparent',
-                zeroline: false
-            };
-            layout.showlegend = true;
-            layout.legend = { ...layout.legend, y: 1.1 };
-
-            Plotly.newPlot('chart-overview', [traceDensity, traceSpeed], layout, PLOTLY_CONFIG);
-        }
-
-        // --- Magnetic Field Chart ---
-        function renderMagneticChart() {
-            const mag = latestData.mag;
-            const times = mag.times.map(t => new Date(t));
-
-            const traceBx = { x: times, y: mag.Bx, name: 'Bx', line: { color: '#4fc3f7', width: 1.5 } };
-            const traceBy = { x: times, y: mag.By, name: 'By', line: { color: '#ffd54f', width: 1.5 } };
-            const traceBz = {
-                x: times, y: mag.Bz, name: 'Bz',
-                line: { color: '#ff5252', width: 1.5, dash: 'dot' }
-            };
-            const traceBmag = { x: times, y: mag.B_mag, name: '|B|', line: { color: '#ffffff', width: 2 } };
-
-            const layout = JSON.parse(JSON.stringify(LAYOUT_BASE));
-            layout.yaxis.title = 'B [nT]';
-            layout.shapes = [{
-                type: 'line', x0: times[0], x1: times[times.length - 1],
-                y0: 0, y1: 0, line: { color: '#666', width: 1, dash: 'dash' }
-            }];
-
-            Plotly.newPlot('chart-magnetic', [traceBx, traceBy, traceBz, traceBmag], layout, PLOTLY_CONFIG);
-        }
-
-        // --- Spectrogram Chart ---
-        function renderSpectrogramChart() {
-            const steps = latestData.steps;
-            if (!steps || !steps.flux) return;
-
-            const fluxMatrix = steps.flux;
-            const nTime = fluxMatrix.length;
-            const nEnergy = fluxMatrix[0].length;
-
-            // Transpose for Plotly heatmap (y = energy, x = time)
-            const z = [];
-            for (let i = 0; i < nEnergy; i++) {
-                const row = [];
-                for (let j = 0; j < nTime; j++) {
-                    row.push(Math.log10(Math.max(fluxMatrix[j][i], 1e-30)));
-                }
-                z.push(row);
-            }
-
-            const trace = {
-                z: z,
-                x: steps.times.map(t => new Date(t)),
-                y: steps.energies_keV,
-                type: 'heatmap',
-                colorscale: [
-                    [0, '#050a14'],
-                    [0.2, '#0a2a6e'],
-                    [0.4, '#1565c0'],
-                    [0.6, '#f57f17'],
-                    [0.8, '#e53935'],
-                    [1.0, '#ffffff']
-                ],
-                zsmooth: 'best',
-                colorbar: {
-                    title: 'log₁₀ Flux',
-                    tickfont: { color: '#a8b4c8' }
-                }
-            };
-
-            const layout = JSON.parse(JSON.stringify(LAYOUT_BASE));
-            layout.yaxis.type = 'log';
-            layout.yaxis.title = 'Energy [keV]';
-            layout.xaxis.title = 'Time [UTC]';
-            layout.margin.b = 60;
-
-            Plotly.newPlot('chart-spectrogram', [trace], layout, PLOTLY_CONFIG);
-        }
-
-        // --- Physics Chart ---
-        function renderPhysicsChart() {
-            const der = latestData.derived;
-            const mom = latestData.moments;
-            const times = mom.times.map(t => new Date(t));
-
-            // Compute beta, V_A, M_A time series (simplified - using latest values)
-            const beta = mom.density.map((_, i) => der.plasma_beta);
-            const va = mom.density.map((_, i) => der.alfven_speed_kms);
-            const ma = mom.density.map((_, i) => der.alfvenic_mach);
-
-            const traceBeta = { x: times, y: beta, name: 'β', line: { color: '#00d4ff', width: 2 } };
-            const traceVa = { x: times, y: va, name: 'V_A [km/s]', line: { color: '#ff8c42', width: 2 } };
-            const traceMa = { x: times, y: ma, name: 'M_A', line: { color: '#39ff14', width: 2 }, yaxis: 'y2' };
-
-            const layout = JSON.parse(JSON.stringify(LAYOUT_BASE));
-            layout.yaxis = { title: 'β, V_A', side: 'left' };
-            layout.yaxis2 = { title: 'M_A', overlaying: 'y', side: 'right', gridcolor: 'transparent' };
-            layout.showlegend = true;
-
-            Plotly.newPlot('chart-physics', [traceBeta, traceVa, traceMa], layout, PLOTLY_CONFIG);
-        }
-
-        // --- History Charts ---
-        function renderHistoryCharts() {
-            if (!historyData || !historyData.records) return;
-
-            const records = historyData.records;
-            const times = records.map(r => new Date(r.time));
-
-            const makeTrace = (y, name, color) => ({
-                x: times, y: y, name: name,
-                type: 'scatter', mode: 'lines',
-                line: { color: color, width: 1.5 }
-            });
-
-            const densityTrace = makeTrace(records.map(r => r.density), 'Density', '#00d4ff');
-            const speedTrace = makeTrace(records.map(r => r.velocity), 'Speed', '#ff8c42');
-            const bzTrace = makeTrace(records.map(r => r.Bz), 'Bz', '#ff5252');
-            const betaTrace = makeTrace(records.map(r => r.beta), 'β', '#39ff14');
-
-            const commonLayout = {
-                ...LAYOUT_BASE,
-                xaxis: { ...LAYOUT_BASE.xaxis, title: 'Time' }
-            };
-
-            const layoutDensity = { ...commonLayout, yaxis: { ...commonLayout.yaxis, title: 'n [cm⁻³]' } };
-            const layoutSpeed = { ...commonLayout, yaxis: { ...commonLayout.yaxis, title: 'V [km/s]' } };
-            const layoutBz = { ...commonLayout, yaxis: { ...commonLayout.yaxis, title: 'Bz [nT]' } };
-            const layoutBeta = { ...commonLayout, yaxis: { ...commonLayout.yaxis, title: 'β' } };
-
-            Plotly.newPlot('chart-history-density', [densityTrace], layoutDensity, PLOTLY_CONFIG);
-            Plotly.newPlot('chart-history-speed', [speedTrace], layoutSpeed, PLOTLY_CONFIG);
-            Plotly.newPlot('chart-history-bz', [bzTrace], layoutBz, PLOTLY_CONFIG);
-            Plotly.newPlot('chart-history-beta', [betaTrace], layoutBeta, PLOTLY_CONFIG);
-
-            // Sync x-axis ranges
-            const charts = ['chart-history-density', 'chart-history-speed', 'chart-history-bz', 'chart-history-beta'];
-            charts.forEach((id, idx) => {
-                document.getElementById(id).on('plotly_relayout', (e) => {
-                    if (e['xaxis.range[0]']) {
-                        const range = [e['xaxis.range[0]'], e['xaxis.range[1]']];
-                        charts.forEach((otherId, otherIdx) => {
-                            if (otherIdx !== idx) {
-                                Plotly.relayout(otherId, { 'xaxis.range': range });
-                            }
-                        });
-                    }
-                });
-            });
-        }
-
-        // --- Events Log ---
-        function updateEventsLog() {
-            const container = document.getElementById('events-container');
-            const events = latestData.events || [];
-
-            if (events.length === 0) {
-                container.innerHTML = '<div class="panel" style="text-align:center;color:var(--text-secondary);">No significant plasma events detected in current window.</div>';
-                return;
-            }
-
-            container.innerHTML = events.map(ev => `
-                <div class="event-card" onclick="highlightEvent('${ev.time}')">
-                    <div class="event-icon">${ev.icon || '⚡'}</div>
-                    <div>
-                        <div class="event-type">${ev.type}</div>
-                        <div class="event-desc">${ev.explanation || 'No description'}</div>
-                        <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">
-                            ${Object.entries(ev.values || {}).map(([k,v]) => `
-                                <span class="badge badge-ok" style="font-size:9px;">${k}: ${v}</span>
-                            `).join('')}
-                        </div>
-                    </div>
-                    <div class="event-time">${ev.time ? new Date(ev.time).toLocaleString() : 'Ongoing'}</div>
-                </div>
-            `).join('');
-        }
-
-        function renderEventsLog() {
-            updateEventsLog();
-        }
-
-        function highlightEvent(time) {
-            if (!time) return;
-            // Could implement chart highlighting here
-            showToast('Event time: ' + time, 'success');
-        }
-
-        // --- Toast Notifications ---
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            toast.textContent = message;
-            container.appendChild(toast);
-
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                setTimeout(() => toast.remove(), 300);
-            }, 4000);
-        }
-
-        // --- Initialize ---
-        window.addEventListener('DOMContentLoaded', () => {
-            syncData();
-            setInterval(syncData, 6 * 60 * 1000); // Auto-sync every 6 minutes
-        });
-    </script>
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="js/nova.js"></script>
+    <script src="js/dashboard.js"></script>
 </body>
 </html>
