@@ -3,189 +3,340 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aditya-L1 • The Physics of the Solar Wind</title>
+    <title>☀️ Aditya-L1 Plasma Lab</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="css/nova.css">
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- External Scripts -->
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 </head>
 <body>
 
-    <!-- Section 0: Preloader -->
-    <div id="preloader">
-        <div class="preloader-status">INITIALISING ADITYA-L1 PLASMA LAB...</div>
-        <div class="preloader-bar-bg"><div class="preloader-bar-fill"></div></div>
+    <!-- SPA Shell -->
+    <div class="app-container">
+        
+        <!-- Navigation -->
+        <nav class="nova-nav">
+            <div class="nav-left">
+                <a href="#" class="brand" data-view="home">☀️ ADITYA-L1 PLASMA LAB</a>
+                <div class="nav-links">
+                    <span class="nav-link active" data-view="home">Home</span>
+                    <span class="nav-link" data-view="dashboard">Dashboard</span>
+                    <span class="nav-link" data-view="visualizer">Visualizer</span>
+                    <span class="nav-link" data-view="explorer">Explorer</span>
+                    <span class="nav-link" data-view="lab">Analysis Lab</span>
+                </div>
+            </div>
+            <div class="nav-right">
+                <div id="mission-timer" class="mono">MET: --D --:--:--</div>
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span class="status-text mono">OFFLINE</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Dynamic Views -->
+        <main class="content-shell">
+
+            <!-- HOME VIEW -->
+            <section id="home-view" class="view active">
+                <div class="nova-container">
+                    <div class="hero">
+                        <h1>ADITYA-L1 — LIVE SOLAR WIND MONITOR</h1>
+                        <p>Real-time tracked data from the Sun-Earth L1 Lagrange point, providing primary warning of solar storms and space weather events.</p>
+                        
+                        <!-- Geometry SVG -->
+                        <div style="margin: 2rem 0;">
+                            <svg width="400" height="100" viewBox="0 0 400 100">
+                                <circle cx="30" cy="50" r="20" fill="var(--accent-solar)">
+                                    <animate attributeName="r" values="18;22;18" dur="3s" repeatCount="indefinite" />
+                                </circle>
+                                <text x="30" y="85" fill="var(--text-secondary)" font-size="10" text-anchor="middle">SUN</text>
+                                
+                                <line x1="50" y1="50" x2="330" y2="50" stroke="var(--glass-border)" stroke-dasharray="5,5" />
+                                
+                                <circle cx="180" cy="50" r="4" fill="var(--accent-plasma)" />
+                                <text x="180" y="65" fill="var(--accent-plasma)" font-size="10" text-anchor="middle">L1 Point (Aditya)</text>
+                                
+                                <circle cx="370" cy="50" r="12" fill="#4B9CD3" />
+                                <text x="370" y="85" fill="var(--text-secondary)" font-size="10" text-anchor="middle">EARTH</text>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Snapshot Panel -->
+                    <div class="snapshot-grid">
+                        <div class="glass-panel snapshot-card">
+                            <span class="snapshot-label">Proton Density</span>
+                            <div class="snapshot-value mono"><span id="snap-density">--.-</span> <span style="font-size: 0.8rem;">cm⁻³</span></div>
+                            <div id="badge-density" class="snapshot-badge">N/A</div>
+                        </div>
+                        <div class="glass-panel snapshot-card">
+                            <span class="snapshot-label">Bulk Speed</span>
+                            <div class="snapshot-value mono"><span id="snap-speed">---</span> <span style="font-size: 0.8rem;">km/s</span></div>
+                            <div id="badge-speed" class="snapshot-badge">N/A</div>
+                        </div>
+                        <div class="glass-panel snapshot-card">
+                            <span class="snapshot-label">Temperature</span>
+                            <div class="snapshot-value mono"><span id="snap-temp">--.-</span> <span style="font-size: 0.8rem;">K</span></div>
+                            <div id="badge-temp" class="snapshot-badge">N/A</div>
+                        </div>
+                        <div class="glass-panel snapshot-card">
+                            <span class="snapshot-label">Magnetic Field |B|</span>
+                            <div class="snapshot-value mono"><span id="snap-mag">--.-</span> <span style="font-size: 0.8rem;">nT</span></div>
+                            <div id="badge-bz" class="snapshot-badge">N/A</div>
+                        </div>
+                    </div>
+
+                    <!-- Explainer -->
+                    <div class="info-grid">
+                        <div class="glass-panel">
+                            <h3>🛰️ What is Aditya-L1?</h3>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 1rem;">
+                                India's first dedicated solar mission. Launched by ISRO, it carries instruments like ASPEX and MAG to study solar activities from a stable vantage point.
+                            </p>
+                        </div>
+                        <div class="glass-panel">
+                            <h3>💨 What is Solar Wind?</h3>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 1rem;">
+                                A constant stream of charged particles (plasma) flowing out from the Sun's corona at speeds up to 800 km/s, carrying the interplanetary magnetic field.
+                            </p>
+                        </div>
+                        <div class="glass-panel">
+                            <h3>📍 What is L1?</h3>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 1rem;">
+                                The First Lagrange point, located 1.5 million km from Earth. Here, gravitational forces balance, allowing a spacecraft to "hover" and watch the Sun 24/7.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Quick Links -->
+                    <div style="text-align: center; margin-top: 3rem;">
+                        <button class="nova-btn btn-plasma" data-view="dashboard">Enter Mission Dashboard</button>
+                        <button class="nova-btn btn-ghost" data-view="visualizer" style="margin-left: 1rem;">Data Visualizer</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DASHBOARD VIEW -->
+            <section id="dashboard-view" class="view">
+                <div class="nova-container dashboard-layout">
+                    <!-- Sidebar Controls -->
+                    <aside class="sidebar glass-panel">
+                        <h4 style="margin-bottom: 1rem;">Controls</h4>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="font-size: 0.8rem; color: var(--text-secondary);">TIME RANGE</label>
+                            <select class="nova-btn btn-ghost" style="width: 100%; margin-top: 0.5rem; background: var(--bg-dark);">
+                                <option>Last 6 Hours</option>
+                                <option selected>Last 24 Hours</option>
+                                <option>Last 7 Days</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="font-size: 0.8rem; color: var(--text-secondary);">PARAMETERS</label>
+                            <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem;">
+                                <label><input type="checkbox" checked> Density & Speed</label>
+                                <label><input type="checkbox" checked> IMF (Bx, By, Bz)</label>
+                                <label><input type="checkbox" checked> Temperature</label>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <span style="font-size: 0.8rem;">Auto-refresh</span>
+                            <input type="checkbox" checked>
+                        </div>
+                        <button class="nova-btn btn-ghost" style="width: 100%;">Download CSV</button>
+                        <p style="font-size: 0.6rem; color: var(--text-secondary); margin-top: 2rem; text-align: center;">
+                            Last Update: <span class="last-update">--:--:--</span>
+                        </p>
+                    </aside>
+
+                    <!-- Main Charts -->
+                    <div class="chart-grid">
+                        <div class="glass-panel">
+                            <h4>Solar Wind Plasma</h4>
+                            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1rem;">Density in Blue, Speed in Orange. High density + low speed suggests compressed regions.</p>
+                            <div id="chart-plasma" class="chart-container"></div>
+                        </div>
+                        <div class="glass-panel">
+                            <h4>IMF (Interplanetary Magnetic Field)</h4>
+                            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1rem;">Positive Bz is stable; sustained Southward (negative) Bz can trigger geomagnetic storms.</p>
+                            <div id="chart-mag" class="chart-container"></div>
+                        </div>
+                        <div class="glass-panel">
+                            <h4>Proton Temperature (eV)</h4>
+                            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1rem;">Values above 30 eV indicate high-energy heating events.</p>
+                            <div id="chart-temp" class="chart-container"></div>
+                        </div>
+                        <div class="glass-panel">
+                            <h4>24h Summary Statistics</h4>
+                            <table class="stats-table">
+                                <thead>
+                                    <tr><th>Metric</th><th>Avg</th><th>Max</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Density</td><td id="stat-den-avg">--</td><td id="stat-den-max">--</td></tr>
+                                    <tr><td>Speed</td><td id="stat-spd-avg">--</td><td id="stat-spd-max">--</td></tr>
+                                    <tr><td>Bz-Min</td><td id="stat-bz-min" colspan="2">--</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VISUALIZER VIEW -->
+            <section id="visualizer-view" class="view">
+                <div class="nova-container">
+                    <header style="margin-bottom: 3rem; text-align: center;">
+                        <h1>SOLAR WIND GEOSPHERE</h1>
+                        <p>2D projection of the interplanetary environment</p>
+                    </header>
+
+                    <div class="info-grid">
+                        <div class="glass-panel" style="text-align: center;">
+                            <h4>IMF Clock Angle Dial</h4>
+                            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 2rem;">Projection of the IMF vector on the Y-Z plane. North (0°) is quiet; South (180°) is active.</p>
+                            <canvas id="mag-clock-canvas" width="300" height="300"></canvas>
+                        </div>
+                        <div class="glass-panel">
+                            <h4>Kp Index Estimator</h4>
+                            <div style="height: 200px; display: flex; align-items: center; justify-content: center; font-size: 3rem; font-weight: 700; color: var(--accent-magnetic);">
+                                Kp <span id="kp-estimate">1</span>
+                            </div>
+                            <p style="font-size: 0.8rem; color: var(--text-secondary);">
+                                An estimate of the 3-hour planetary K-index based on current Bz conditions. Kp > 5 signals a geomagnetic storm.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel" style="margin-top: 2rem; height: 300px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
+                         <!-- Wind Stream Placeholder -->
+                         <div style="position: absolute; left: 0; top: 50%; width: 100%; height: 2px; background: linear-gradient(to right, transparent, var(--accent-plasma), transparent); opacity: 0.2;"></div>
+                         <h2 style="z-index: 1; opacity: 0.5;">[ STREAM VISUALIZER ACTIVE ]</h2>
+                    </div>
+                </div>
+            </section>
+
+            <!-- EXPLORER VIEW -->
+            <section id="explorer-view" class="view">
+                <div class="nova-container">
+                    <div class="glass-panel" style="margin-bottom: 2rem;">
+                        <h2>Scientific Reference</h2>
+                        <p>Detailed specifications of the mission and the physics it measures.</p>
+                    </div>
+
+                    <div class="info-grid">
+                        <div class="glass-panel">
+                            <h3>🛰️ Payload Overview</h3>
+                            <table class="stats-table" style="font-size: 0.85rem;">
+                                <tr><td>SWIS</td><td>Solar Wind Ion Spectrometer</td><td>E: 100eV-20keV</td></tr>
+                                <tr><td>STEPS</td><td>Energy Pulse Spectrometer</td><td>Supra-thermal ions</td></tr>
+                                <tr><td>MAG</td><td>Digital Magnetometer</td><td>Interplanetary Field</td></tr>
+                            </table>
+                        </div>
+                        <div class="glass-panel">
+                            <h3>📖 Solar Wind Primer</h3>
+                            <div class="accordion">
+                                <div class="accordion-item open">
+                                    <div class="accordion-header">What is Plasma?</div>
+                                    <div class="accordion-content">
+                                        <p style="padding-top: 0.5rem; font-size: 0.85rem;">The fourth state of matter — a gas of ions and free electrons. It behaves collectively due to electromagnetic forces.</p>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <div class="accordion-header">Speed Classes</div>
+                                    <div class="accordion-content">
+                                        <p style="padding-top: 0.5rem; font-size: 0.85rem;">Slow wind (~400km/s) from coronal streamers; Fast wind (~700-800km/s) from coronal holes.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel" style="margin-top: 2rem;">
+                        <h3>🔬 Glossary</h3>
+                        <dl style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem; margin-top: 1rem; font-size: 0.9rem;">
+                            <dt class="mono" style="color: var(--accent-plasma);">Bz</dt>
+                            <dd>North-South component of the magnetic field. Critical for storm prediction.</dd>
+                            <dt class="mono" style="color: var(--accent-solar);">CME</dt>
+                            <dd>Coronal Mass Ejection: A massive burst of solar wind and magnetic field.</dd>
+                            <dt class="mono" style="color: var(--accent-magnetic);">nT</dt>
+                            <dd>Nanotesla: The unit of magnetic field strength in space.</dd>
+                        </dl>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ANALYSIS LAB VIEW -->
+            <section id="lab-view" class="view">
+                <div class="nova-container">
+                    <div class="info-grid">
+                        <div class="glass-panel">
+                            <h4>Spectral Analysis (PSD)</h4>
+                            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 2rem;">Power Spectral Density of magnetic field fluctuations. High power at low frequencies indicates turbulent energy cascade.</p>
+                            <div id="chart-psd" style="height: 350px;"></div>
+                        </div>
+                        <div class="glass-panel">
+                            <h4>Plasma Moments Calculator</h4>
+                            <div style="display: grid; gap: 1rem; margin-bottom: 2rem;">
+                                <div>
+                                    <label style="font-size: 0.7rem;">DENSITY (cm⁻³)</label>
+                                    <input id="in-n" type="number" value="5" class="terminal-input lab-input" style="width: 100%;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.7rem;">MAG FIELD (nT)</label>
+                                    <input id="in-b" type="number" value="5" class="terminal-input lab-input" style="width: 100%;">
+                                </div>
+                            </div>
+                            <div class="glass-panel" style="background: rgba(0,0,0,0.2);">
+                                <span style="font-size: 0.7rem; color: var(--text-secondary);">ALFVEN SPEED</span>
+                                <div id="out-va" class="mono" style="font-size: 1.5rem; color: var(--accent-plasma);">-- km/s</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-panel" style="margin-top: 2rem;">
+                        <h4>Event Detector (Prototype)</h4>
+                        <div id="event-log" class="mono" style="font-size: 0.8rem; background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 0.5rem;">
+                            Scanning window [T-7d]... <br>
+                            > NO CME SIGNATURES DETECTED IN LAST 24H <br>
+                            > NOMINAL SOLAR WIND FLOW (QUIET)
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="nova-nav" style="border-top: 1px solid var(--glass-border); border-bottom: none; margin-top: auto; padding: 2rem 5vw;">
+            <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                Live data provided by <strong>NOAA SWPC DSCOVR</strong> <br>
+                Proprietary Mission Reference: <strong>ISRO Aditya-L1 Mission</strong>
+            </div>
+            <div style="text-align: right; font-size: 0.75rem; color: var(--text-secondary);">
+                © 2026 Aditya-L1 Plasma Lab <br>
+                <span class="status-indicator">Updated: <span class="last-update">--:--:--</span> UTC</span>
+            </div>
+        </footer>
     </div>
 
-    <!-- Navigation HUD -->
-    <nav class="nova-nav">
-        <div class="nav-brand-group">
-            <a href="index.html" class="nav-brand" style="color: var(--accent-plasma); text-decoration: none; font-family: var(--font-display); font-weight: 700;">ADITYA-L1</a>
-            <div id="mission-timer">MET: ---D --:--:--</div>
-        </div>
-        
-        <div class="mini-hud-strip">
-            <div class="hud-metric">
-                <span class="hud-metric-label">Density</span>
-                <span class="hud-metric-value" id="hud-density">--.-<span>cm⁻³</span></span>
-            </div>
-            <div class="hud-metric">
-                <span class="hud-metric-label">Velocity</span>
-                <span class="hud-metric-value" id="hud-speed">---<span>km/s</span></span>
-            </div>
-            <div class="hud-metric">
-                <span class="hud-metric-label">B-Field</span>
-                <span class="hud-metric-value" id="hud-mag">--.-<span>nT</span></span>
-            </div>
-        </div>
-
-        <div class="nav-links">
-            <a href="index.html" class="nav-link active">SCIENCE</a>
-            <a href="dashboard.html" class="nav-link">DASHBOARD</a>
-            <a href="visualizer.html" class="nav-link">VISUALIZER</a>
-            <a href="explorer.html" class="nav-link">EXPLORER</a>
-            <a href="lab.html" class="nav-link">LAB</a>
-        </div>
-    </nav>
-
-    <canvas id="solar-wind-canvas"></canvas>
-
-    <!-- Section 1: Hero -->
-    <section class="nova-section hero">
-        <div class="vignette"></div>
-        <img src="assets/sun_hero.png" alt="The Sun" class="sun-bg sun-parallax">
-        
-        <div class="nova-container">
-            <span class="chapter-label hero-reveal">[ ADITYA-L1 • ISRO ]</span>
-            <h1 class="clamp-huge hero-headline">THE PHYSICS OF THE<br>SOLAR WIND</h1>
-            <p class="narrative-text hero-reveal" style="margin: 2rem 0;">
-                Explore the dynamic plasma environment at the Sun-Earth L1 point with real-time data from Aditya-L1's in-situ instruments.
-            </p>
-            <div class="cta-group hero-reveal" style="display: flex; gap: 1rem; margin-top: 3rem;">
-                <a href="dashboard.html" class="nova-btn btn-plasma">View Live Data →</a>
-                <a href="#journey" class="nova-btn btn-ghost">Begin Journey ↓</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Section 2: Distance -->
-    <section id="journey" class="nova-section">
-        <div class="glow-orb orb-plasma" style="top: 20%; right: 10%; width: 500px; height: 500px;"></div>
-        <div class="nova-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
-            <div class="reveal-text">
-                <span class="chapter-label">[ Chapter 01 ] Distance</span>
-                <h2 class="clamp-large">The L1 Vantage Point</h2>
-                <p class="narrative-text">
-                    Stationed at the first Lagrange point (L1), Aditya-L1 maintains a gravitational balance between the Earth and the Sun. 1.5 million kilometres away, it has an uninterrupted view of the Sun.
-                </p>
-                <a href="explorer.html" class="nova-btn btn-ghost" style="margin-top: 2rem; padding: 0.6rem 1.2rem; font-size: 0.7rem;">Reference: L1 Physics</a>
-            </div>
-            <div class="reveal-text" style="text-align: right;">
-                <div style="font-family: 'JetBrains Mono'; font-size: 5rem; color: var(--accent-solar); font-weight: 700;">1,500,000</div>
-                <div style="font-family: 'JetBrains Mono'; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;">kilometres from earth</div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Section 3: Live HUD -->
-    <section class="nova-section" style="background: var(--bg-secondary);">
-        <div class="nova-container">
-            <div class="reveal-text" style="text-align: center; margin-bottom: 4rem;">
-                <span class="chapter-label">[ Chapter 02 ] Live Telemetry</span>
-                <h2 class="clamp-large">Plasma Conditions</h2>
-                <p class="narrative-text" style="margin: 0 auto;">Real-time measurements from the ASPEX payload.</p>
-                <div style="margin-top: 2rem;">
-                    <a href="dashboard.html" class="nova-btn btn-plasma" style="padding: 0.6rem 1.2rem; font-size: 0.7rem;">Enter Mission Control →</a>
-                </div>
-            </div>
-            
-            <div class="hud-grid reveal-text">
-                <div class="hud-card">
-                    <span class="hud-label">Proton Density</span>
-                    <span class="hud-value" id="val-density">--</span>
-                    <span class="hud-unit">cm⁻³</span>
-                </div>
-                <div class="hud-card">
-                    <span class="hud-label">Bulk Velocity</span>
-                    <span class="hud-value" id="val-speed">--</span>
-                    <span class="hud-unit">km/s</span>
-                </div>
-                <div class="hud-card">
-                    <span class="hud-label">Temperature</span>
-                    <span class="hud-value" id="val-temp">--</span>
-                    <span class="hud-unit">eV</span>
-                </div>
-                <div class="hud-card">
-                    <span class="hud-label">Magnetic Field |B|</span>
-                    <span class="hud-value" id="val-mag">--</span>
-                    <span class="hud-unit">nT</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Section 4: The Corona -->
-    <section class="nova-section">
-        <div class="vignette"></div>
-        <img src="assets/cme.png" alt="Solar Coronal Anatomy" class="sun-bg sun-parallax" style="opacity: 0.4;">
-        <div class="nova-container">
-            <div class="reveal-text">
-                <span class="chapter-label">[ Chapter 03 ] Dynamics</span>
-                <h2 class="clamp-huge">THE SOLAR<br>CORONA</h2>
-                <p class="narrative-text" style="margin-top: 2rem;">
-                    The Sun's outer atmosphere is a region of million-degree plasma. It is here that the solar wind is accelerated to supersonic speeds.
-                </p>
-                <a href="visualizer.html" class="nova-btn btn-ghost" style="margin-top: 2rem; padding: 0.6rem 1.2rem; font-size: 0.7rem;">Visualize Temporal Flux</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Section 5: Ask SURYA -->
-    <section class="nova-section">
-        <div class="glow-orb orb-solar" style="bottom: 10%; left: 50%; transform: translateX(-50%); width: 600px; height: 600px;"></div>
-        <div class="nova-container" style="text-align: center;">
-            <div class="reveal-text">
-                <span class="chapter-label">SURYA • AI</span>
-                <h2 class="clamp-large">Mission Intelligence</h2>
-                <p class="narrative-text" style="margin: 0 auto 3rem;">Inquire about coronal mass ejections or L1 physics.</p>
-                
-                <div style="max-width: 600px; margin: 0 auto;">
-                    <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
-                        <input type="text" id="surya-input" placeholder="What is the current solar wind velocity?" class="terminal-input" style="flex: 1; margin: 0;">
-                        <button id="surya-submit" class="nova-btn btn-plasma" style="padding: 0 2rem;">Query</button>
-                    </div>
-                    <div id="surya-output" class="hologram-panel" style="text-align: left; min-height: 100px; font-style: italic; color: var(--text-muted);">
-                        Waiting for inquiry...
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="nova-section" style="min-height: auto; padding: 10vh 5vw; border-top: 1px solid rgba(255,107,26,0.1);">
-        <div class="nova-container" style="text-align: center;">
-            <div style="font-family: var(--font-display); font-size: 1.5rem; letter-spacing: 0.1em; color: var(--accent-plasma); margin-bottom: 2rem;">ADITYA-L1 // PLASMA LAB</div>
-            <div style="display: flex; gap: 2rem; justify-content: center; font-family: 'JetBrains Mono'; font-size: 0.8rem; margin-bottom: 3rem;">
-                <a href="dashboard.html" class="nav-link">DASHBOARD</a>
-                <a href="lab.html" class="nav-link">ANALYSIS LAB</a>
-                <a href="visualizer.html" class="nav-link">VISUALIZER</a>
-                <a href="explorer.html" class="nav-link">EXPLORER</a>
-            </div>
-            <div style="font-size: 0.7rem; color: var(--text-muted); font-family: 'JetBrains Mono';">
-                © 2024 • DATA FROM ISRO PRADAN PIPELINE • ADITYA-L1 MISSION SCIENCE
-            </div>
-        </div>
-    </footer>
-
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
-    <script src="js/nova.js"></script>
+    <!-- Core App Logic -->
+    <script src="js/app.js"></script>
+    <script>
+        // Simple Accordion Handler
+        document.querySelectorAll('.accordion-header').forEach(h => {
+            h.addEventListener('click', () => {
+                h.parentElement.classList.toggle('open');
+            });
+        });
+    </script>
 </body>
 </html>
