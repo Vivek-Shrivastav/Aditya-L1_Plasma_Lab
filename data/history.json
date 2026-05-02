@@ -2021,5 +2021,24 @@
     "Pb_nPa": 0.04,
     "event_types": [],
     "sw_regime": "Intermediate / transitional wind"
+  },
+  {
+    "time": "2026-05-02T07:40:55.091479+00:00",
+    "run_id": "f512373e",
+    "simulated": true,
+    "density": 6.78,
+    "velocity": 431.3,
+    "temperature": 14.04,
+    "B_mag": 7.15,
+    "Bz": -6.69,
+    "beta": 0.75,
+    "va_kms": 59.9,
+    "mach_a": 7.2,
+    "Pt_nPa": 0.015,
+    "Pb_nPa": 0.02,
+    "event_types": [
+      "SOUTHWARD IMF"
+    ],
+    "sw_regime": "Slow wind \u2014 coronal streamer belt"
   }
 ]
