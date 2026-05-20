@@ -3231,5 +3231,22 @@
     "Pb_nPa": 0.053,
     "event_types": [],
     "sw_regime": "Intermediate / transitional wind"
+  },
+  {
+    "time": "2026-05-20T02:57:41.800117+00:00",
+    "run_id": "0f82a8bf",
+    "simulated": true,
+    "density": 4.87,
+    "velocity": 476.9,
+    "temperature": 10.51,
+    "B_mag": 9.45,
+    "Bz": 7.45,
+    "beta": 0.231,
+    "va_kms": 93.4,
+    "mach_a": 5.11,
+    "Pt_nPa": 0.008,
+    "Pb_nPa": 0.036,
+    "event_types": [],
+    "sw_regime": "Intermediate / transitional wind"
   }
 ]
