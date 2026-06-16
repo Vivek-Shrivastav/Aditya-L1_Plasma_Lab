@@ -5166,5 +5166,22 @@
     "Pb_nPa": 0.019,
     "event_types": [],
     "sw_regime": "Intermediate / transitional wind"
+  },
+  {
+    "time": "2026-06-16T20:47:18.658303+00:00",
+    "run_id": "dcbc543a",
+    "simulated": true,
+    "density": 6.46,
+    "velocity": 421.8,
+    "temperature": 11.6,
+    "B_mag": 4.56,
+    "Bz": -1.56,
+    "beta": 1.451,
+    "va_kms": 39.1,
+    "mach_a": 10.78,
+    "Pt_nPa": 0.012,
+    "Pb_nPa": 0.008,
+    "event_types": [],
+    "sw_regime": "Intermediate / transitional wind"
   }
 ]
