@@ -6127,5 +6127,24 @@
       "LOW-BETA INTERVAL"
     ],
     "sw_regime": "Slow wind \u2014 coronal streamer belt"
+  },
+  {
+    "time": "2026-06-30T14:13:17.272744+00:00",
+    "run_id": "21a64d08",
+    "simulated": true,
+    "density": 5.93,
+    "velocity": 459.8,
+    "temperature": 15.89,
+    "B_mag": 8.2,
+    "Bz": -6.3,
+    "beta": 0.564,
+    "va_kms": 73.4,
+    "mach_a": 6.26,
+    "Pt_nPa": 0.015,
+    "Pb_nPa": 0.027,
+    "event_types": [
+      "SOUTHWARD IMF"
+    ],
+    "sw_regime": "Slow wind \u2014 coronal streamer belt"
   }
 ]
