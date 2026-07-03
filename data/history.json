@@ -6322,5 +6322,22 @@
     "Pb_nPa": 0.007,
     "event_types": [],
     "sw_regime": "Intermediate / transitional wind"
+  },
+  {
+    "time": "2026-07-03T08:58:16.830164+00:00",
+    "run_id": "252dc93d",
+    "simulated": true,
+    "density": 5.11,
+    "velocity": 430.7,
+    "temperature": 6.04,
+    "B_mag": 5.89,
+    "Bz": -1.35,
+    "beta": 0.358,
+    "va_kms": 56.8,
+    "mach_a": 7.58,
+    "Pt_nPa": 0.005,
+    "Pb_nPa": 0.014,
+    "event_types": [],
+    "sw_regime": "Intermediate / transitional wind"
   }
 ]
