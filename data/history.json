@@ -6604,5 +6604,24 @@
     "Pb_nPa": 0.009,
     "event_types": [],
     "sw_regime": "Slow wind \u2014 coronal streamer belt"
+  },
+  {
+    "time": "2026-07-07T09:36:12.451513+00:00",
+    "run_id": "5ddbe641",
+    "simulated": true,
+    "density": 5.94,
+    "velocity": 376.9,
+    "temperature": 13.17,
+    "B_mag": 5.76,
+    "Bz": -5.51,
+    "beta": 0.949,
+    "va_kms": 51.5,
+    "mach_a": 7.31,
+    "Pt_nPa": 0.013,
+    "Pb_nPa": 0.013,
+    "event_types": [
+      "SOUTHWARD IMF"
+    ],
+    "sw_regime": "Slow wind \u2014 coronal streamer belt"
   }
 ]
