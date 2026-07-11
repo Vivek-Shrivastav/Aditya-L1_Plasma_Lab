@@ -6916,5 +6916,22 @@
     "Pb_nPa": 0.01,
     "event_types": [],
     "sw_regime": "Intermediate / transitional wind"
+  },
+  {
+    "time": "2026-07-11T18:58:19.895562+00:00",
+    "run_id": "be916139",
+    "simulated": true,
+    "density": 3.29,
+    "velocity": 495.0,
+    "temperature": 15.14,
+    "B_mag": 3.82,
+    "Bz": 1.2,
+    "beta": 1.375,
+    "va_kms": 45.9,
+    "mach_a": 10.78,
+    "Pt_nPa": 0.008,
+    "Pb_nPa": 0.006,
+    "event_types": [],
+    "sw_regime": "Intermediate / transitional wind"
   }
 ]
