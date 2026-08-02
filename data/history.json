@@ -8451,5 +8451,22 @@
       "LOW-BETA INTERVAL"
     ],
     "sw_regime": "Slow wind \u2014 coronal streamer belt"
+  },
+  {
+    "time": "2026-08-02T19:04:45.625137+00:00",
+    "run_id": "e5a745a2",
+    "simulated": true,
+    "density": 6.06,
+    "velocity": 427.6,
+    "temperature": 12.76,
+    "B_mag": 6.31,
+    "Bz": 5.8,
+    "beta": 0.782,
+    "va_kms": 55.9,
+    "mach_a": 7.65,
+    "Pt_nPa": 0.012,
+    "Pb_nPa": 0.016,
+    "event_types": [],
+    "sw_regime": "Slow wind \u2014 coronal streamer belt"
   }
 ]
