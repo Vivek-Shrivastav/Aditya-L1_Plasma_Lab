@@ -8538,5 +8538,22 @@
       "SOUTHWARD IMF"
     ],
     "sw_regime": "Slow wind \u2014 coronal streamer belt"
+  },
+  {
+    "time": "2026-08-04T02:12:42.627121+00:00",
+    "run_id": "ca0763e1",
+    "simulated": true,
+    "density": 3.49,
+    "velocity": 407.3,
+    "temperature": 11.91,
+    "B_mag": 10.5,
+    "Bz": 8.53,
+    "beta": 0.152,
+    "va_kms": 122.6,
+    "mach_a": 3.32,
+    "Pt_nPa": 0.007,
+    "Pb_nPa": 0.044,
+    "event_types": [],
+    "sw_regime": "Slow wind \u2014 coronal streamer belt"
   }
 ]
