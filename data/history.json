@@ -9122,5 +9122,22 @@
     "Pb_nPa": 0.014,
     "event_types": [],
     "sw_regime": "Intermediate / transitional wind"
+  },
+  {
+    "time": "2026-08-12T13:01:40.611454+00:00",
+    "run_id": "ccf7106f",
+    "simulated": true,
+    "density": 4.31,
+    "velocity": 438.1,
+    "temperature": 9.29,
+    "B_mag": 4.48,
+    "Bz": -3.52,
+    "beta": 0.803,
+    "va_kms": 47.1,
+    "mach_a": 9.31,
+    "Pt_nPa": 0.006,
+    "Pb_nPa": 0.008,
+    "event_types": [],
+    "sw_regime": "Intermediate / transitional wind"
   }
 ]
