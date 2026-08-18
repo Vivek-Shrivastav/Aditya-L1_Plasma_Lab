@@ -9500,5 +9500,22 @@
     "Pb_nPa": 0.014,
     "event_types": [],
     "sw_regime": "Intermediate / transitional wind"
+  },
+  {
+    "time": "2026-08-18T01:02:56.633528+00:00",
+    "run_id": "13540d79",
+    "simulated": true,
+    "density": 5.44,
+    "velocity": 421.1,
+    "temperature": 3.79,
+    "B_mag": 3.64,
+    "Bz": -2.7,
+    "beta": 0.627,
+    "va_kms": 34.0,
+    "mach_a": 12.37,
+    "Pt_nPa": 0.003,
+    "Pb_nPa": 0.005,
+    "event_types": [],
+    "sw_regime": "Slow wind \u2014 coronal streamer belt"
   }
 ]
