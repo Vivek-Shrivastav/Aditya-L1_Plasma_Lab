@@ -10383,5 +10383,22 @@
     "Pb_nPa": 0.02,
     "event_types": [],
     "sw_regime": "Slow wind \u2014 coronal streamer belt"
+  },
+  {
+    "time": "2026-09-01T11:03:49.313102+00:00",
+    "run_id": "e2970129",
+    "simulated": true,
+    "density": 8.04,
+    "velocity": 414.1,
+    "temperature": 10.95,
+    "B_mag": 4.12,
+    "Bz": 3.68,
+    "beta": 2.088,
+    "va_kms": 31.7,
+    "mach_a": 13.07,
+    "Pt_nPa": 0.014,
+    "Pb_nPa": 0.007,
+    "event_types": [],
+    "sw_regime": "Slow wind \u2014 coronal streamer belt"
   }
 ]
