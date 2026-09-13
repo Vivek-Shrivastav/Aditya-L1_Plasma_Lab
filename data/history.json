@@ -11244,5 +11244,22 @@
       "LOW-BETA INTERVAL"
     ],
     "sw_regime": "Intermediate / transitional wind"
+  },
+  {
+    "time": "2026-09-13T15:35:05.173302+00:00",
+    "run_id": "ed5522b8",
+    "simulated": true,
+    "density": 5.25,
+    "velocity": 381.8,
+    "temperature": 9.58,
+    "B_mag": 5.58,
+    "Bz": 4.35,
+    "beta": 0.65,
+    "va_kms": 53.1,
+    "mach_a": 7.19,
+    "Pt_nPa": 0.008,
+    "Pb_nPa": 0.012,
+    "event_types": [],
+    "sw_regime": "Slow wind \u2014 coronal streamer belt"
   }
 ]
