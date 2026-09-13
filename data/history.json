@@ -11225,5 +11225,24 @@
       "SOUTHWARD IMF"
     ],
     "sw_regime": "Intermediate / transitional wind"
+  },
+  {
+    "time": "2026-09-13T11:03:34.753088+00:00",
+    "run_id": "27a0ad9d",
+    "simulated": true,
+    "density": 2.78,
+    "velocity": 459.4,
+    "temperature": 5.97,
+    "B_mag": 8.94,
+    "Bz": -2.51,
+    "beta": 0.084,
+    "va_kms": 117.0,
+    "mach_a": 3.93,
+    "Pt_nPa": 0.003,
+    "Pb_nPa": 0.032,
+    "event_types": [
+      "LOW-BETA INTERVAL"
+    ],
+    "sw_regime": "Intermediate / transitional wind"
   }
 ]
