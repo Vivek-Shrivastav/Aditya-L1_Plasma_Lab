@@ -1,22 +1,5 @@
 [
   {
-    "time": "2026-04-16T07:29:12.405802+00:00",
-    "run_id": "cc18f8c3",
-    "simulated": true,
-    "density": 7.4,
-    "velocity": 425.4,
-    "temperature": 8.51,
-    "B_mag": 7.44,
-    "Bz": 0.09,
-    "beta": 0.458,
-    "va_kms": 59.7,
-    "mach_a": 7.13,
-    "Pt_nPa": 0.01,
-    "Pb_nPa": 0.022,
-    "event_types": [],
-    "sw_regime": "Intermediate / transitional wind"
-  },
-  {
     "time": "2026-04-16T13:26:39.896929+00:00",
     "run_id": "d0c2c807",
     "simulated": true,
@@ -12517,6 +12500,23 @@
     "mach_a": 4.52,
     "Pt_nPa": 0.005,
     "Pb_nPa": 0.043,
+    "event_types": [],
+    "sw_regime": "Intermediate / transitional wind"
+  },
+  {
+    "time": "2026-10-18T02:57:54.791345+00:00",
+    "run_id": "36c3fbce",
+    "simulated": true,
+    "density": 6.23,
+    "velocity": 466.7,
+    "temperature": 4.32,
+    "B_mag": 6.07,
+    "Bz": -3.18,
+    "beta": 0.294,
+    "va_kms": 53.0,
+    "mach_a": 8.8,
+    "Pt_nPa": 0.004,
+    "Pb_nPa": 0.015,
     "event_types": [],
     "sw_regime": "Intermediate / transitional wind"
   }
