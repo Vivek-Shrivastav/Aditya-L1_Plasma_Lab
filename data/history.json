@@ -1,22 +1,5 @@
 [
   {
-    "time": "2026-04-18T18:46:07.438388+00:00",
-    "run_id": "c8377420",
-    "simulated": true,
-    "density": 8.14,
-    "velocity": 460.8,
-    "temperature": 11.15,
-    "B_mag": 6.01,
-    "Bz": 3.84,
-    "beta": 1.012,
-    "va_kms": 45.9,
-    "mach_a": 10.03,
-    "Pt_nPa": 0.015,
-    "Pb_nPa": 0.014,
-    "event_types": [],
-    "sw_regime": "Slow wind \u2014 coronal streamer belt"
-  },
-  {
     "time": "2026-04-19T02:29:44.027614+00:00",
     "run_id": "481805f0",
     "simulated": true,
@@ -12515,5 +12498,22 @@
     "Pb_nPa": 0.01,
     "event_types": [],
     "sw_regime": "Slow wind \u2014 coronal streamer belt"
+  },
+  {
+    "time": "2026-10-21T11:07:50.403949+00:00",
+    "run_id": "bf078a59",
+    "simulated": true,
+    "density": 3.86,
+    "velocity": 452.0,
+    "temperature": 16.24,
+    "B_mag": 2.01,
+    "Bz": 0.59,
+    "beta": 6.248,
+    "va_kms": 22.3,
+    "mach_a": 20.26,
+    "Pt_nPa": 0.01,
+    "Pb_nPa": 0.002,
+    "event_types": [],
+    "sw_regime": "Intermediate / transitional wind"
   }
 ]
